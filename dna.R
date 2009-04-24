@@ -1,6 +1,12 @@
 nimblegenPrimers<-c('CTCGAGAATTCTGGATCCTC','GAGGATCCAGAATTCTCGAGTT')
 primers454<-c("GCCTCCCTCGCGCCATCAG","GCCTTGCCAGCCCGCTCAG")
 
+#convenience function for stop(simpleError())
+stopError<-function(...){
+	stop(simpleError(paste(...,sep='')))
+}
+
+
 #pastes characters into string
 #chars: an array of characters
 #returns: string
@@ -74,14 +80,14 @@ checkCoverage<-function(totalNumBases,starts,lengths){
 }
 gap2NoGap<-function(gapSeq,coords){
 	gapSeqSplit<-strsplit(gapSeq,'')[[1]]
-	nonDash<-gapSeqSplit!='-'
+	nonDash<-!gapSeqSplit %in% c('*','.','-')
 	newCoords<-cumsum(nonDash)
 	return(newCoords[coords])
 }
 
 noGap2Gap<-function(gapSeq,coords){
 	gapSeqSplit<-strsplit(gapSeq,'')[[1]]
-	nonDash<-which(gapSeqSplit!='-')
+	nonDash<-which(!gapSeqSplit %in% c('.','*','-'))
 	return(nonDash[coords])
 }
 
@@ -101,6 +107,23 @@ revComp<-function(dna){
 	revdna<-c2s(rev(s2c(dna)))
 	revdna<-chartr('TGAC][','ACTG[]',revdna)
 	return(revdna)
+}
+
+read.fastq<-function(fileName,convert=TRUE){
+	#assuming no comments and seq and qual on a single line each
+	#assuming any line starting with @ 2 lines later by + is the block and no extra chars (who designed this format?)
+	#as.integer(charToRaw())
+	x<-readLines(fileName)
+	plusLines<-grep('^\\+',x)
+	atLines<-grep('^@',x)
+	plusLines<-plusLines[plusLines %in% (atLines+2)]
+	atLines<-atLines[atLines %in% (plusLines-2)]
+	if(any(grep('[^ACTGN]',x[atLines+1])))warning('Non ATCGN chars found in sequence')
+	if(length(plusLines)!=length(atLines))stopError('Problem finding @ + lines')
+	output<-data.frame('name'=sub('^@','',x[atLines]), 'seq'=x[atLines+1], 'qual'=x[atLines+3],stringsAsFactors=FALSE)
+	if(any(nchar(output$seq)!=nchar(output$qual)))stopError('Sequence and qual lengths do not match')
+	if(convert)output$qual<-unlist(lapply(x[atLines + 3],function(x)paste(as.integer(charToRaw(x))-33,collapse=' ')))
+	return(output)
 }
 
 #converts ambigous dna to an appropriate regular expression
