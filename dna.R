@@ -71,13 +71,44 @@ findReads<-function(low,starts,lengths,high=low){
 	output[starts+lengths<low]<-FALSE
 	return(output)
 }
-checkCoverage<-function(totalNumBases,starts,lengths){
-	if(length(starts)!=length(lengths))stop(simpleError('Starts and lengths not same length'))
-	if(any(starts+lengths-1>totalNumBases))stop(simpleError('totalNumBases < starts + lengths'))
-	output<-rep(0,totalNumBases)
-	tmp<-apply(cbind(starts,lengths),1,function(x){output[x[1]:(x[1]+x[2]-1)]<<-output[x[1]:(x[1]+x[2]-1)]+1})
-	return(output)
+
+
+#changed argument order may need adjusted
+checkSO<-'~/scripts/R/c/checkCover.so'
+loader<-try(dyn.load(checkSO),TRUE)
+if (any(grep("Error",loader))){
+	checkCoverage<-function(starts,lengths,totalNumBases=max(starts+lengths),range=FALSE,coverMin=0){
+		if(length(starts)!=length(lengths))stop(simpleError('Starts and lengths not same length'))
+		if(any(starts+lengths-1>totalNumBases))stop(simpleError('totalNumBases < starts + lengths'))
+		if(!range){
+			output<-rep(0,totalNumBases)
+			counter<-1
+			tmp<-apply(cbind(starts,lengths),1,function(x){if(counter%%1000==0)message(counter);counter<<-counter+1;output[x[1]:(x[1]+x[2]-1)]<<-output[x[1]:(x[1]+x[2]-1)]+1})
+		}else{
+			holder<-c()
+			counter<-1
+			tmp<-apply(cbind(starts,lengths),1,function(x){
+				if(counter%%1000==0)message(counter)
+				counter<<-counter+1
+				indices<-paste(x[1]:(x[1]+x[2]-1))
+				set<-indices %in% names(holder)
+				holder[indices[set]]<<-holder[indices[set]]+1
+				holder[indices[!set]]<<-1
+			})
+			holder<-as.numeric(names(holder)[holder>coverMin])
+			output<-index2range(holder)
+		}
+		return(output)
+	}
+}else{
+	checkCoverage <- function(starts, lengths, outLength=max(starts+lengths-1)) {
+		if(length(starts)!=length(lengths))stop(simpleError('starts and lengths different lengths'))
+		if(any(starts+lengths-1>outLength))stop(simpleError('starts+length-1 greater than outLength'))
+		ans<-.C('checkCover',as.integer(rep(0,outLength)),as.integer(starts),as.integer(starts+lengths-1),as.integer(length(starts)))	
+		return(ans[[1]])
+	}
 }
+
 gap2NoGap<-function(gapSeq,coords){
 	gapSeqSplit<-strsplit(gapSeq,'')[[1]]
 	nonDash<-!gapSeqSplit %in% c('*','.','-')
@@ -91,6 +122,9 @@ noGap2Gap<-function(gapSeq,coords){
 	return(nonDash[coords])
 }
 
+binary2range<-function(index){
+	return(index2range(which(index)))
+}
 
 index2range<-function(index){
 	index<-sort(unique(index))
@@ -154,6 +188,7 @@ ambigous2regex<-function(dna){
 #returns: dataframe with columns name (name between > and the first ' '), seq (sequence), and longName (the whole > line)
 read.fa<-function(fileName,longNameTrim=TRUE){
 	x<-readLines(fileName)
+	if(length(x)==0)return(NULL)
 	x<-x[!1:length(x) %in% c(grep('^#',x,perl=TRUE),grep('^$',x,perl=TRUE))]
 	y<-paste(x,collapse="\n")
 	splits<-strsplit(y,'>',fixed=TRUE)[[1]][-1]
@@ -347,7 +382,52 @@ parseGff<-function(gffFile,individuals=NULL,contig=individuals[1]){
 	return(gff)
 }
 
+seq2flow<-function(seq,flowOrder=c('T','A','C','G'),outputLength=NULL){
+	seqSplit<-strsplit(seq,'')[[1]]
+	dif<-seqSplit!=c(seqSplit[-1],'DUMMY')
+	strLengths<-diff(c(0,which(dif)))
+	chars<-seqSplit[dif]
+	nextChars<-c(chars[-1],NA)
+	numFlows<-length(flowOrder)
+	distMat<-matrix(NA,nrow=numFlows,ncol=numFlows,dimnames=list(flowOrder,flowOrder))
+	distMat[,1]<-length(flowOrder):1
+	for(i in 2:numFlows)distMat[,i]<-c(distMat[numFlows,i-1],distMat[-numFlows,i-1])
+	dists<-rep(NA,length(chars))
+	for(i in flowOrder){
+		dists[chars==i&is.na(nextChars)]<-NA
+		dists[chars==i&!is.na(nextChars)]<-distMat[i,nextChars[chars==i&!is.na(nextChars)]]
+	}
+	dists<-c(which(flowOrder==chars[1]),dists[-length(dists)])
+	if(is.null(outputLength))outputLength<-sum(dists)
+	output<-rep(0,outputLength)
+	output[cumsum(dists)]<-strLengths
+	names(output)<-rep(flowOrder,length.out=length(output))
+	return(output)
+}
 
+flow2seq<-function(flow,flowOrder=c('T','A','C','G')){
+	chars<-rep(flowOrder,length.out=length(flow))
+	output<-paste(rep(chars,round(flow)),collapse='')
+	return(output)
+}
 
+#reads bed file
+#returns list with a dataframe (columns chr,start,end) for each track
+read.bed<-function(fileName){
+	x<-readLines(fileName)
+	tracks<-grep('track',x)
+	if(length(tracks)==0)tracks<-c(0)
+	message('Found ',length(tracks),' tracks')
+	trackNames<-gsub('.*name=([^ ]+).*','\\1',x[tracks])
+	tracks<-c(tracks,length(x)+1)
+	output<-list()
+	for(i in 1:(length(tracks)-1)){
+		output[[trackNames[i]]]<-data.frame(do.call(rbind,strsplit(x[(tracks[i]+1):(tracks[i+1]-1)],'\t')),stringsAsFactors=FALSE)
+		colnames(output[[trackNames[i]]])<-c('chr','start','end')
+		output[[trackNames[i]]][,'start']<-as.numeric(output[[trackNames[i]]][,'start'])
+		output[[trackNames[i]]][,'end']<-as.numeric(output[[trackNames[i]]][,'end'])
+	}
+	return(output)
+}
 
 
