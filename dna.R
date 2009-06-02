@@ -6,6 +6,14 @@ stopError<-function(...){
 	stop(simpleError(paste(...,sep='')))
 }
 
+#convenience function for selecting elements from a matrix
+indexMatrix<-function(x,y,mat){
+	if(!is.integer(x)){tmp<-1:nrow(mat);names(tmp)<-rownames(mat);x<-tmp[x]}
+	if(!is.integer(y)){tmp<-1:ncol(mat);names(tmp)<-colnames(mat);y<-tmp[y]}
+	if(length(x)!=length(y)|max(x)>nrow(mat)|max(y)>ncol(mat))stop(simpleError("Dimensions don't match up"))
+	index<-(y-1)*nrow(mat)+x
+	return(mat[index])
+}
 
 #pastes characters into string
 #chars: an array of characters
@@ -26,13 +34,13 @@ s2c<-function (string){
 	}
 }
 
-checkOverlap<-function(starts,ends,tStarts,tEnds,tNames,allCover=FALSE,allCoverFuzz=0){
-	overlapNames<-apply(cbind(starts,ends),1,function(x,tStarts,tEnds,tNames){
+checkOverlap<-function(starts,ends,tStarts,tEnds,tNames,allCover=FALSE,allCoverFuzz=0,sep='|'){
+	overlapNames<-apply(cbind(as.numeric(starts),as.numeric(ends)),1,function(x,tStarts,tEnds,tNames){
 		if(!allCover)thisNames<-tNames[x[1]<=tEnds&x[2]>=tStarts]
 		else thisNames<-tNames[tStarts-allCoverFuzz<=x[1]&tEnds+allCoverFuzz>=x[2]]
 		if(length(thisNames)==0)return('')
-		else return(paste(thisNames,collapse='|'))
-	},tStarts,tEnds,tNames)
+		else return(paste(thisNames,collapse=sep))
+	},as.numeric(tStarts),as.numeric(tEnds),tNames)
 	return(overlapNames)
 }
 
@@ -113,12 +121,14 @@ gap2NoGap<-function(gapSeq,coords){
 	gapSeqSplit<-strsplit(gapSeq,'')[[1]]
 	nonDash<-!gapSeqSplit %in% c('*','.','-')
 	newCoords<-cumsum(nonDash)
+	coords[coords<1|coords>length(newCoords)]<-NA
 	return(newCoords[coords])
 }
 
 noGap2Gap<-function(gapSeq,coords){
 	gapSeqSplit<-strsplit(gapSeq,'')[[1]]
 	nonDash<-which(!gapSeqSplit %in% c('.','*','-'))
+	coords[coords<1|coords>length(nonDash)]<-NA
 	return(nonDash[coords])
 }
 
@@ -305,7 +315,7 @@ parseAce<-function(aceFile,dropMosaik=TRUE,checkSnps=TRUE){
 	#reads<-data.frame('name'=readNames,'dir'=readDir,'start'=readStart)
 }
 
-cutReads<-function(seqs,starts,low,high,lengths=nchar(seqs)){
+cutReads<-function(seqs,starts,low=min(starts),high=max(starts+nchar(seqs)),lengths=nchar(seqs)){
 	debug<-TRUE
 	goodReads<-findReads(low,starts,lengths,high)
 	if(!any(goodReads))return(FALSE)
@@ -405,6 +415,15 @@ seq2flow<-function(seq,flowOrder=c('T','A','C','G'),outputLength=NULL){
 	return(output)
 }
 
+#flow: vector of flowgram (e.g. produced by seq2flow)
+#coords: bp of desired flow position
+#return: flow number for each coord
+indexFlow<-function(flow,coords){
+	indices<-cumsum(flow)	
+	output<-unlist(lapply(coords,function(x,y)return(min(which(y>=x))),indices))
+	return(output)
+}
+
 flow2seq<-function(flow,flowOrder=c('T','A','C','G')){
 	chars<-rep(flowOrder,length.out=length(flow))
 	output<-paste(rep(chars,round(flow)),collapse='')
@@ -416,9 +435,11 @@ flow2seq<-function(flow,flowOrder=c('T','A','C','G')){
 read.bed<-function(fileName){
 	x<-readLines(fileName)
 	tracks<-grep('track',x)
-	if(length(tracks)==0)tracks<-c(0)
+	if(length(tracks)==0){
+		tracks<-c(0)
+		trackNames<-'main'
+	} else trackNames<-gsub('.*name=([^ ]+).*','\\1',x[tracks])
 	message('Found ',length(tracks),' tracks')
-	trackNames<-gsub('.*name=([^ ]+).*','\\1',x[tracks])
 	tracks<-c(tracks,length(x)+1)
 	output<-list()
 	for(i in 1:(length(tracks)-1)){
@@ -431,3 +452,6 @@ read.bed<-function(fileName){
 }
 
 
+removeGaps<-function(seqs,extraChars=''){
+	return(gsub(sprintf('[.*%s-]+',extraChars),'',seqs,perl=TRUE))
+}
