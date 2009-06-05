@@ -39,7 +39,7 @@ checkOverlap<-function(starts,ends,tStarts,tEnds,tNames,allCover=FALSE,allCoverF
 		if(!allCover)thisNames<-tNames[x[1]<=tEnds&x[2]>=tStarts]
 		else thisNames<-tNames[tStarts-allCoverFuzz<=x[1]&tEnds+allCoverFuzz>=x[2]]
 		if(length(thisNames)==0)return('')
-		else return(paste(thisNames,collapse=sep))
+		else return(paste(unique(thisNames),collapse=sep))
 	},as.numeric(tStarts),as.numeric(tEnds),tNames)
 	return(overlapNames)
 }
