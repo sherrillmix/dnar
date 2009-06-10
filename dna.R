@@ -34,6 +34,23 @@ s2c<-function (string){
 	}
 }
 
+#calculate shannon diversity of a vector
+shannon<-function(x,base=exp(1)){
+	return(-sum(x/sum(x)*log(x/sum(x),base)))
+}
+
+#calculate heights for a 'weblogo' like plot from a matrix of rows acgt, cols base position
+#http://en.wikipedia.org/wiki/Weblogo
+calcWebLogo<-function(baseMat,num=rep(9999,ncol(baseMat))){
+	baseMat<-apply(baseMat,1,function(x)x/sum(x))
+	shannon<-apply(rbind(baseMat,num),1,function(x){x[1:4]*(2-(shannon(x[1:4],base=2)+3/2/ln(2)/x[5]))})
+
+	
+
+}
+
+
+
 checkOverlap<-function(starts,ends,tStarts,tEnds,tNames,allCover=FALSE,allCoverFuzz=0,sep='|'){
 	overlapNames<-apply(cbind(as.numeric(starts),as.numeric(ends)),1,function(x,tStarts,tEnds,tNames){
 		if(!allCover)thisNames<-tNames[x[1]<=tEnds&x[2]>=tStarts]
