@@ -51,6 +51,15 @@ calcWebLogo<-function(baseMat,num=rep(9999,ncol(baseMat))){
 
 
 
+#check overlap between two sets of coordinates
+#starts: start coordinates
+#ends: end coordinates
+#tStarts: start coordinates of target
+#tEnds: end coordinates of target
+#tNames: target names 
+#allCover: if TRUE entire start and end of base must fall within targets +- allCoverFuzz
+#allCoverFuzz: extra overlap to consider on each end of target when using allCover
+#returns: | seperated vector of tNames with overlap ('' if no overlapping target)
 checkOverlap<-function(starts,ends,tStarts,tEnds,tNames,allCover=FALSE,allCoverFuzz=0,sep='|'){
 	overlapNames<-apply(cbind(as.numeric(starts),as.numeric(ends)),1,function(x,tStarts,tEnds,tNames){
 		if(!allCover)thisNames<-tNames[x[1]<=tEnds&x[2]>=tStarts]
@@ -342,6 +351,13 @@ parseAce<-function(aceFile,dropMosaik=TRUE,checkSnps=TRUE){
 	#reads<-data.frame('name'=readNames,'dir'=readDir,'start'=readStart)
 }
 
+#take the output from an ace file and fill in the starts and ends of sequences with gaps to make a global alignment
+#seqs: sequences from ace file
+#starts: starting location for each sequence 
+#low: start point for global alignment
+#high: end point for global alignment
+#lengths: lengths of seqs (probably can go with default in 99% of cases)
+#returns: list of aligned seqs in [[1]], logical vector of whether read fell within cut region in [[2]]
 cutReads<-function(seqs,starts,low=min(starts),high=max(starts+nchar(seqs)),lengths=nchar(seqs)){
 	debug<-TRUE
 	goodReads<-findReads(low,starts,lengths,high)
@@ -363,6 +379,40 @@ cutReads<-function(seqs,starts,low=min(starts),high=max(starts+nchar(seqs)),leng
 	return(list(cuts,goodReads))
 }
 
+#take coordinates of blat matches and split into a single for each exon
+#chroms: Chromosome or other identifier
+#names: Name of gene of other container of exons
+#starts: Start coordinates of exons
+#ends: End coordinates of exons if lengths is FALSE or length of exon if lengths is TRUE
+#strands: Strand (for numbering exons in reverse on - strand)
+#lengths: logical whether ends are end coordinates or lengths
+#example: with(blat,blat2exons(tName,qName,tStarts,blockSizes,strand))
+blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),lengths=TRUE){
+	if(any(c(length(chroms),length(names),length(strands),length(starts))!=length(ends)))stop(simpleError('Different lengths for chrom, strand, starts, lengths'))
+	startsList<-strsplit(starts,',')
+	exonCounts<-exonCountsStrand<-sapply(startsList,length)
+	endsList<-strsplit(ends,',')
+	if(any(exonCounts!=sapply(endsList,length)))stop(simpleError("Starts and ends not equal"))
+	endsList<-as.numeric(unlist(endsList))
+	startsList<-as.numeric(unlist(startsList))
+	if(lengths)endsList<-endsList+startsList-1
+	exonCountsStrand[strands=='-']<- -exonCountsStrand[strands=='-']
+	exonNums<-unlist(lapply(exonCountsStrand,function(x){if(x<0){-x:1}else{1:x}}))	
+	output<-data.frame('chrom'=rep(chroms,exonCounts),'name'=rep(names,exonCounts),'exonName'=sprintf('%s_ex%s',rep(names,exonCounts),exonNums),'start'=startsList,'end'=endsList,'strand'=rep(strands,exonCounts),stringsAsFactors=FALSE)
+#this is too slow
+#	thisExons<-apply(cbind(names,chroms,strands,starts,ends),1,function(x){
+#		exonStarts<-as.numeric(strsplit(x['starts'],',')[[1]])
+#		exonEnds<-as.numeric(strsplit(x['ends'],',')[[1]])
+#		if(length(exonStarts)!=length(exonEnds))stop(simpleError('Exon starts and ends not equal length'))
+#		if(lengths)exonEnds<-exonStarts+exonEnds-1
+#		exonNum<-1:length(exonStarts)
+#		if(x['strands']=='-')exonNum<-rev(exonNum)
+#		thisNames<-paste(x['names'],'_ex',1:length(exonStarts),sep='')
+#		return(data.frame('chr'=x['chroms'],'name'=thisNames,'start'=exonStarts,'end'=exonEnds,stringsAsFactors=FALSE,row.names=thisNames))
+#	})
+#	output<-do.call(rbind,thisExons)
+	return(output)
+}
 
 
 parseGff<-function(gffFile,individuals=NULL,contig=individuals[1]){
