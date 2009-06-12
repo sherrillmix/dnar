@@ -210,6 +210,7 @@ ambigous2regex<-function(dna){
 	}
 	return(dna)
 }
+
 #read a fasta file
 #fileName:name of file
 #returns: dataframe with columns name (name between > and the first ' '), seq (sequence), and longName (the whole > line)
@@ -242,6 +243,9 @@ write.fa<-function(names,dna,fileName,addBracket=FALSE){
 	writeLines(output,sep="\n",con=fileName)
 }
 
+#read a blat file
+#fileName: name of file
+#returns: dataframe of blat data
 readBlat<-function(fileName){
 	x<-read.table(fileName,skip=5,sep="\t",stringsAsFactors=FALSE,colClasses=c(rep('numeric',8),rep('character',2),rep('numeric',3),'character',rep('numeric',4),rep('character',3)))
 	colnames(x)<-c('match','mismatch','repmatch','ns','qGaps','qGapBases','tGaps','tGapBases','strand','qName','qSize','qStart','qEnd','tName','tSize','tStart','tEnd','blocks','blockSizes','qStarts','tStarts')
@@ -264,6 +268,12 @@ trimEnd<-function(seqs,revCompPrimer,trimmed=rep(FALSE,length(seqs)),minSubstrin
 	return(list(trimSeq,trimmed))
 }
 
+#read an ace file
+#LIMITATION: only reads 1 contig
+#aceFile: string of file name or file handle
+#dropMosaik: Remove extraneous line from Mosaik labelled either .MosaikAnchor.C1 or MosaikReference
+#checkSnps: Find SNPs from pyroBayes
+#returns: list of reference sequence in [[1]], aligned reads in [[2]] (note reads are not globally aligned still need to use start coordinate to place globally), snps in [[3]]
 parseAce<-function(aceFile,dropMosaik=TRUE,checkSnps=TRUE){
 	#debug<-FALSE
 	#if(!exists(x)|!debug)x<-readLines(aceFile)
