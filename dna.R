@@ -142,6 +142,52 @@ if (any(grep("Error",loader))){
 		return(ans[[1]])
 	}
 }
+checkCoverage2<-function(starts,ends){
+	cover<-unlist(apply(cbind(starts,ends),1,function(x)x[1]:x[2]))
+	output<-table(cover)
+	output<-data.frame('pos'=as.numeric(names(output)),'cover'=as.vector(output),stringsAsFactors=FALSE)
+	return(output)
+}
+	
+
+makeBedGraph<-function(fileName,chroms,starts,ends,values=NULL,header='',vocal=FALSE,autoScale=TRUE,proportion=NULL,yMin=0,yMax=NULL){
+#useful header: name="" description="" visibility=full 
+	if(length(chroms)!=length(starts)|length(chroms)!=length(ends))stop(simpleError("chroms, starts, ends not equal length"))
+	if(is.null(values)){
+		if(vocal)message('Calculating counts')
+		uniqueChroms<-unique(chroms)
+		for(chrom in uniqueChroms){
+			if(vocal)message('Calculating cover')
+			cover<-checkCoverage2(starts[chroms==chrom],ends[chroms==chrom])
+			if(vocal)message('Calculating ranges')
+			ranges<-tapply(cover$pos,cover$cover,index2range)
+			rangeNums<-lapply(ranges,nrow)
+			tmp<-do.call(rbind,ranges)
+			colnames(tmp)<-c('starts','ends')
+			tmp$values<-as.numeric(rep(names(ranges),rangeNums))
+			tmp$chroms<-chrom
+			if(chrom==uniqueChroms[1])data<-tmp
+			else data<-rbind(data,tmp)
+		}
+	}else{
+		data<-cbind(chroms,starts,ends,values)
+	}
+	
+	data<-data[,c('chroms','starts','ends','values')]
+	colnames(data)<-c('chrom','start','end','value')
+	if(!is.null(proportion))data$value<-data$value/proportion
+	#make sure we don't get any 6.231e-09
+	if(is.null(yMax))yMax<-max(data$value)
+	data$value<-formatC(data$value,format='fg')
+	if(vocal)message('Outputting to ',fileName)
+	if(!grepl('^track type=',header))header<-sprintf('track type=bedGraph %s',header)
+	if(autoScale)header<-sprintf('%s viewLimits=%s:%s autoScale=off',header,formatC(yMin,format='fg'),formatC(yMax,format='fg'))
+	output<-c(header,paste(data$chrom,data$start,data$end,data$value,sep='\t'))
+	writeLines(output,fileName)
+	return(data)
+}
+
+
 
 gap2NoGap<-function(gapSeq,coords){
 	gapSeqSplit<-strsplit(gapSeq,'')[[1]]
@@ -387,7 +433,7 @@ cutReads<-function(seqs,starts,low=min(starts),high=max(starts+nchar(seqs)),leng
 #strands: Strand (for numbering exons in reverse on - strand)
 #lengths: logical whether ends are end coordinates or lengths
 #example: with(blat,blat2exons(tName,qName,tStarts,blockSizes,strand))
-blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),lengths=TRUE){
+blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),lengths=TRUE,extraCols=NULL){
 	if(any(c(length(chroms),length(names),length(strands),length(starts))!=length(ends)))stop(simpleError('Different lengths for chrom, strand, starts, lengths'))
 	startsList<-strsplit(starts,',')
 	exonCounts<-exonCountsStrand<-sapply(startsList,length)
@@ -399,6 +445,11 @@ blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),len
 	exonCountsStrand[strands=='-']<- -exonCountsStrand[strands=='-']
 	exonNums<-unlist(lapply(exonCountsStrand,function(x){if(x<0){-x:1}else{1:x}}))	
 	output<-data.frame('chrom'=rep(chroms,exonCounts),'name'=rep(names,exonCounts),'exonName'=sprintf('%s_ex%s',rep(names,exonCounts),exonNums),'start'=startsList,'end'=endsList,'strand'=rep(strands,exonCounts),stringsAsFactors=FALSE)
+	if(!is.null(colnames(extraCols))){
+		for(i in colnames(extraCols)){
+			output[,i]<-rep(extraCols[,i],exonCounts)
+		}
+	}
 #this is too slow
 #	thisExons<-apply(cbind(names,chroms,strands,starts,ends),1,function(x){
 #		exonStarts<-as.numeric(strsplit(x['starts'],',')[[1]])
