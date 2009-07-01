@@ -39,16 +39,106 @@ shannon<-function(x,base=exp(1)){
 	return(-sum(x/sum(x)*log(x/sum(x),base)))
 }
 
+
+
+
 #calculate heights for a 'weblogo' like plot from a matrix of rows acgt, cols base position
 #http://en.wikipedia.org/wiki/Weblogo
 calcWebLogo<-function(baseMat,num=rep(9999,ncol(baseMat))){
 	baseMat<-apply(baseMat,1,function(x)x/sum(x))
 	shannon<-apply(rbind(baseMat,num),1,function(x){x[1:4]*(2-(shannon(x[1:4],base=2)+3/2/ln(2)/x[5]))})
 
-	
+########WORK HERE
 
 }
 
+#calculates chao diversity index
+#counts: a vector of counts with one entry per "species"
+#returns: chao index
+chao<-function(counts){
+	return(length(counts)+sum(counts==1)*(sum(counts==1)-1)/2/(sum(counts==2)+1))
+}
+
+degap<-function(seqs){
+	return(gsub('[-.*]+','',seqs))
+}
+
+#calculate bootstrapped rarefactions 
+#species: ids of species
+#counts: corresponding counts of species
+#samples: vector of numbers of draws to sample at
+#reps: how many random samples to take at each step
+#quants: quantiles to return
+#chaoAdjust: calculate chao-predicted species number on each random draw
+#returns: list containing dataframe of calculated quantiles and vector of samples argument
+#chao<-tapply(rep(ace[[2]]$otu2,ace[[2]]$num),rep(ace[[2]]$ampPat2,ace[[2]]$num),function(x){y<-table(x);return(length(y)+sum(y==1)*(sum(y==1)-1)/2/(sum(y==2)+1))})
+rarefy<-function(species,counts=rep(1,length(species)),samples=seq(10,sum(counts),10),reps=10000,quants=c(.5,.025,.975),chaoAdjust=FALSE,debug=FALSE){
+	if(length(species)!=length(counts))stop(simpleError('Length of species and counts not equal'))
+	species<-rep(species,counts)
+	if(debug)message('Number of samples: ',length(samples),' Last sample:',samples[length(samples)])
+	output<-lapply(samples,function(sample,reps,species,debug){
+		if(debug)message('Sample ',sample,' started')
+		numSpecies<-sapply(1:reps,function(rep,species,sample,chaoAdjust){
+			thisSpecies<-sample(species,sample,replace=TRUE)
+			if(chaoAdjust){
+				return(chao(table(thisSpecies)))	
+			} else return(length(unique(thisSpecies)))
+		},species,sample,chaoAdjust)	
+		estimate<-quantile(numSpecies,quants)
+		return(estimate)
+	},reps,species,debug)
+	output<-do.call(rbind,output)
+	return(list(output,samples))
+}
+
+#convert dna string into seperate codons
+#dna: single string of DNA
+#frame: starting frame (0=start on first base, 1=on second, 2=on third)
+dna2codons<-function(dna,frame=0){
+	frame<-frame+1
+	starts<-seq(frame,nchar(dna)-2,3)
+	##############WORK HERE
+	return(substring(dna,starts,starts+2))
+}
+
+#convert codon to amino acid (using aminoAcids table below)
+#codons: vector of 3 base codons
+#type: amino acid info to return; code for single letter, name for full name, or abbr for 3-letter abbreviation
+codon2aa<-function(codons,type='code'){
+	if(!type %in% c('code','name','abbr'))stop(simpleError('Invalid amino acid type'))
+	codons<-gsub('T','U',toupper(codons))
+	return(aminoAcids[,type,drop=FALSE][codons,1])
+}
+
+#convert dna/rna to amino acids
+#dna: a string of DNA/RNA
+#frame: starting frame (0=start on first base, 1=on second, 2=on third)
+#debug: print debug info?
+dna2aa<-function(dna,frame=0,debug=FALSE){
+	codons<-dna2codons(dna,frame)	
+	if(debug)print(codons)
+	output<-paste(codon2aa(codons),collapse='')
+	return(output)
+}
+
+
+#find a single codon at a given position in dna
+#dna: a string of DNA/RNA
+#start: start coordinate of exon
+#frame: starting frame (0=start on first base, 1=on second, 2=on third)
+#strand: strand of dna (i.e. revcomp the dna first if '-')
+dnaPos2aa<-function(dna,pos,start=1,frame=0,strand='+'){
+	if(strand=='-'){
+		dna<-revComp(dna)
+		pos<-nchar(dna)-pos+1
+		start<-nchar(dna)-start+1
+	}
+	shiftStart<-(3-frame)%%3
+	startPos<-floor((pos-1-shiftStart)/3)*3+1+shiftStart
+	message(startPos,' ',startPos+2)
+	return((substr(dna,startPos,startPos+2)))
+		
+}
 
 
 #check overlap between two sets of coordinates
@@ -142,6 +232,9 @@ if (any(grep("Error",loader))){
 		return(ans[[1]])
 	}
 }
+#alternative check coverage (better for sparse coverage in high numbers of bases)
+#starts:starts of coverage ranges
+#ends:ends of coverage ranges
 checkCoverage2<-function(starts,ends){
 	cover<-unlist(apply(cbind(starts,ends),1,function(x)x[1]:x[2]))
 	output<-table(cover)
@@ -150,8 +243,21 @@ checkCoverage2<-function(starts,ends){
 }
 	
 
+#make a .bedgraph file for use on UCSC browser
+#fileName: name of file
+#chroms: chromosomes of coverage
+#starts: start coordinates of coverage
+#ends: end coordinates of coverage
+#values: values for each start-end range (or NULL to calculate counts) (if not NULL should be at most one value per individual base)
+#header: string to add to .bedgraph header e.g. name="" description="" visibility=full 
+#vocal: turn on various progress messages
+#autoScale: add autoscale=off to header and calculate maximum (or Ymax) for entire data
+#proportion: divide all values by this value (e.g. number of reads in sample)
+#yMin: minimum value for y scale if autoScale
+#yMax: maximum value for y scale if autoScale (if NULL find max in data)
+#side effect: writes .bedgraph to fileName
+#returns: Calculated dataframe of chrom, start, end, value
 makeBedGraph<-function(fileName,chroms,starts,ends,values=NULL,header='',vocal=FALSE,autoScale=TRUE,proportion=NULL,yMin=0,yMax=NULL){
-#useful header: name="" description="" visibility=full 
 	if(length(chroms)!=length(starts)|length(chroms)!=length(ends))stop(simpleError("chroms, starts, ends not equal length"))
 	if(is.null(values)){
 		if(vocal)message('Calculating counts')
@@ -188,7 +294,10 @@ makeBedGraph<-function(fileName,chroms,starts,ends,values=NULL,header='',vocal=F
 }
 
 
-
+#convert gapped coordinates to what the coordinates would be without gaps
+#gapSeq: the sequence containing gaps
+#coords: coordinates on the gapped gapSeq to be converted into equivalent nongap coordinatess
+#returns: equivalent gapped coordinates
 gap2NoGap<-function(gapSeq,coords){
 	gapSeqSplit<-strsplit(gapSeq,'')[[1]]
 	nonDash<-!gapSeqSplit %in% c('*','.','-')
@@ -197,6 +306,10 @@ gap2NoGap<-function(gapSeq,coords){
 	return(newCoords[coords])
 }
 
+#convert ungapped coordinates to what the coordinates would be with gaps
+#gapSeq: the sequence containing gaps
+#coords: coordinates on the ungapped gapSeq to be converted into equivalent gap coordinatess
+#returns: equivalent ungapped coordinates
 noGap2Gap<-function(gapSeq,coords){
 	gapSeqSplit<-strsplit(gapSeq,'')[[1]]
 	nonDash<-which(!gapSeqSplit %in% c('.','*','-'))
@@ -204,10 +317,16 @@ noGap2Gap<-function(gapSeq,coords){
 	return(nonDash[coords])
 }
 
+#find covered ranges in binary data
+#index:logical index
+#returns: dataframe with start and end of ranges
 binary2range<-function(index){
 	return(index2range(which(index)))
 }
 
+#find ranges with at least one coverage in numerical index data
+#index: numeric indices
+#returns: dataframe with start and end of ranges
 index2range<-function(index){
 	index<-sort(unique(index))
 	diffs<-c(diff(index),1)
@@ -216,15 +335,32 @@ index2range<-function(index){
 	return(data.frame('start'=index[starts],'end'=index[ends]))
 }
 
-#reverse compliment dna
-#dna: sequence
-#returns: reverse complimented dna
-revComp<-function(dna){
-	revdna<-c2s(rev(s2c(dna)))
-	revdna<-chartr('TGAC][','ACTG[]',revdna)
-	return(revdna)
+#reverse strings
+#strings: vector of strings to be revered
+reverseString<-function(strings){
+	output<-sapply(strsplit(strings,''),function(x)paste(rev(x),collapse=''))	
+	return(output)
+}
+#compliment dna 
+#dnas: vector of sequences
+complimentDna<-function(dnas,brackets=TRUE){
+	finds<-'TGAC'
+	replaces<-'ACTG'
+	if(brackets){finds<-paste(finds,'[]',sep='');replaces<-paste(replaces,'][',sep='')}
+	return(chartr(finds,replaces,dnas))
 }
 
+#reverse compliment dna
+#dnas: vector of sequences
+#returns: reverse complimented dna
+revComp<-function(dnas){
+	return(complimentDna(reverseString(dnas),TRUE))
+}
+
+#read fastq file
+#fileName: name of fastq file
+#convert: convert condensed quals to numeric quals?
+#returns: dataframe with name, seq, qual
 read.fastq<-function(fileName,convert=TRUE){
 	#assuming no comments and seq and qual on a single line each
 	#assuming any line starting with @ 2 lines later by + is the block and no extra chars (who designed this format?)
@@ -432,8 +568,10 @@ cutReads<-function(seqs,starts,low=min(starts),high=max(starts+nchar(seqs)),leng
 #ends: End coordinates of exons if lengths is FALSE or length of exon if lengths is TRUE
 #strands: Strand (for numbering exons in reverse on - strand)
 #lengths: logical whether ends are end coordinates or lengths
+#extraCols: a dataframe of extra columns (1 per batch of starts) to be added to the output
+#extraSplits: a dataframe of extra comma-separated values (1 string of comma separated values per batch of starts, 1 value per start-stop pair) to be added to the output
 #example: with(blat,blat2exons(tName,qName,tStarts,blockSizes,strand))
-blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),lengths=TRUE,extraCols=NULL){
+blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),lengths=TRUE,extraCols=NULL,extraSplits=NULL){
 	if(any(c(length(chroms),length(names),length(strands),length(starts))!=length(ends)))stop(simpleError('Different lengths for chrom, strand, starts, lengths'))
 	startsList<-strsplit(starts,',')
 	exonCounts<-exonCountsStrand<-sapply(startsList,length)
@@ -448,6 +586,13 @@ blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),len
 	if(!is.null(colnames(extraCols))){
 		for(i in colnames(extraCols)){
 			output[,i]<-rep(extraCols[,i],exonCounts)
+		}
+	}
+	if(!is.null(colnames(extraSplits))){
+		for(i in colnames(extraSplits)){
+			thisData<-unlist(strsplit(extraSplits[,i],','))
+			if(length(thisData)!=nrow(output))message('Problem splitting extraSplits ',i)
+			output[,i]<-thisData
 		}
 	}
 #this is too slow
@@ -583,3 +728,6 @@ read.bed<-function(fileName){
 removeGaps<-function(seqs,extraChars=''){
 	return(gsub(sprintf('[.*%s-]+',extraChars),'',seqs,perl=TRUE))
 }
+
+
+aminoAcids<-data.frame('codon'=c('UUU','UUC','UCU','UCC','UAU','UAC','UGU','UGC','UUA','UCA','UAA','UGA','UUG','UCG','UAG','UGG','CUU','CUC','CCU','CCC','CAU','CAC','CGU','CGC','CUA','CUG','CCA','CCG','CAA','CAG','CGA','CGG','AUU','AUC','ACU','ACC','AAU','AAC','AGU','AGC','AUA','ACA','AAA','AGA','AUG','ACG','AAG','AGG','GUU','GUC','GCU','GCC','GAU','GAC','GGU','GGC','GUA','GUG','GCA','GCG','GAA','GAG','GGA','GGG'),'abbr'=c('Phe','Phe','Ser','Ser','Tyr','Tyr','Cys','Cys','Leu','Ser','Ochre','Opal','Leu','Ser','Amber','Trp','Leu','Leu','Pro','Pro','His','His','Arg','Arg','Leu','Leu','Pro','Pro','Gln','Gln','Arg','Arg','Ile','Ile','Thr','Thr','Asn','Asn','Ser','Ser','Ile','Thr','Lys','Arg','Met','Thr','Lys','Arg','Val','Val','Ala','Ala','Asp','Asp','Gly','Gly','Val','Val','Ala','Ala','Glu','Glu','Gly','Gly'),'code'=c('F','F','S','S','Y','Y','C','C','L','S','X','X','L','S','X','W','L','L','P','P','H','H','R','R','L','L','P','P','Q','Q','R','R','I','I','T','T','N','N','S','S','I','T','K','R','M','T','K','R','V','V','A','A','D','D','G','G','V','V','A','A','E','E','G','G'),'name'=c('Phenylalanine','Phenylalanine','Serine','Serine','Tyrosine','Tyrosine','Cysteine','Cysteine','Leucine','Serine','Stop','Stop','Leucine','Serine','Stop','Tryptophan','Leucine','Leucine','Proline','Proline','Histidine','Histidine','Arginine','Arginine','Leucine','Leucine','Proline','Proline','Glutamine','Glutamine','Arginine','Arginine','Isoleucine','Isoleucine','Threonine','Threonine','Asparagine','Asparagine','Serine','Serine','Isoleucine','Threonine','Lysine','Arginine','Methionine','Threonine','Lysine','Arginine','Valine','Valine','Alanine','Alanine','Aspartic acid','Aspartic acid','Glycine','Glycine','Valine','Valine','Alanine','Alanine','Glutamic acid','Glutamic acid','Glycine','Glycine'),row.names=c('UUU','UUC','UCU','UCC','UAU','UAC','UGU','UGC','UUA','UCA','UAA','UGA','UUG','UCG','UAG','UGG','CUU','CUC','CCU','CCC','CAU','CAC','CGU','CGC','CUA','CUG','CCA','CCG','CAA','CAG','CGA','CGG','AUU','AUC','ACU','ACC','AAU','AAC','AGU','AGC','AUA','ACA','AAA','AGA','AUG','ACG','AAG','AGG','GUU','GUC','GCU','GCC','GAU','GAC','GGU','GGC','GUA','GUG','GCA','GCG','GAA','GAG','GGA','GGG'),stringsAsFactors=FALSE)
