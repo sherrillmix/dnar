@@ -72,14 +72,14 @@ degap<-function(seqs){
 #chaoAdjust: calculate chao-predicted species number on each random draw
 #returns: list containing dataframe of calculated quantiles and vector of samples argument
 #chao<-tapply(rep(ace[[2]]$otu2,ace[[2]]$num),rep(ace[[2]]$ampPat2,ace[[2]]$num),function(x){y<-table(x);return(length(y)+sum(y==1)*(sum(y==1)-1)/2/(sum(y==2)+1))})
-rarefy<-function(species,counts=rep(1,length(species)),samples=seq(10,sum(counts),10),reps=10000,quants=c(.5,.025,.975),chaoAdjust=FALSE,debug=FALSE){
+rarefy<-function(species,counts=rep(1,length(species)),samples=seq(10,sum(counts),10),reps=10000,quants=c(.5,.025,.975),chaoAdjust=FALSE,debug=FALSE,replaceSpecies=FALSE){
 	if(length(species)!=length(counts))stop(simpleError('Length of species and counts not equal'))
 	species<-rep(species,counts)
 	if(debug)message('Number of samples: ',length(samples),' Last sample:',samples[length(samples)])
 	output<-lapply(samples,function(sample,reps,species,debug){
 		if(debug)message('Sample ',sample,' started')
 		numSpecies<-sapply(1:reps,function(rep,species,sample,chaoAdjust){
-			thisSpecies<-sample(species,sample,replace=TRUE)
+			thisSpecies<-sample(species,sample,replace=replaceSpecies)
 			if(chaoAdjust){
 				return(chao(table(thisSpecies)))	
 			} else return(length(unique(thisSpecies)))
@@ -127,16 +127,32 @@ dna2aa<-function(dna,frame=0,debug=FALSE){
 #start: start coordinate of exon
 #frame: starting frame (0=start on first base, 1=on second, 2=on third)
 #strand: strand of dna (i.e. revcomp the dna first if '-')
-dnaPos2aa<-function(dna,pos,start=1,frame=0,strand='+'){
-	if(strand=='-'){
-		dna<-revComp(dna)
-		pos<-nchar(dna)-pos+1
-		start<-nchar(dna)-start+1
-	}
-	shiftStart<-(3-frame)%%3
-	startPos<-floor((pos-1-shiftStart)/3)*3+1+shiftStart
-	message(startPos,' ',startPos+2)
-	return((substr(dna,startPos,startPos+2)))
+dnaPos2aa<-function(dna,pos,start=1,end=nchar(dna),frame=0,strand='+',refStart=1,debug=FALSE){
+	if(length(pos)==1&length(start)>1)pos<-rep(pos,length(start))
+	pos[pos>end|pos<start|frame==-1]<--99999999
+	start<-start-refStart+1
+	end<-end-refStart+1
+	pos<-pos-refStart+1
+	#adjust for frame
+	end[strand=='-']<-end[strand=='-']-(3-frame)%%3
+	start[strand!='-']<-start[strand!='-']+(3-frame)%%3
+	#adjust end and start for outisde dna 
+	#print(c(start,end))
+	start[strand=='-'&start<1]<-1
+	end[strand!='-'&end>nchar(dna)]<-nchar(dna[strand!='-'&end>nchar(dna)])
+	start[strand!='-'&start<1]<-1+(3-(1-start[strand!='-'&start<1]))%%3
+	selector<-strand=='-'&end>nchar(dna)
+	end[selector]<-nchar(dna[selector])-(3-(end[selector]-nchar(dna[selector])))%%3
+
+	dna<-substring(dna,start,end)
+	if(any(nchar(dna)!=end-start+1&nchar(dna)!=0))stop(simpleError("Missing DNA"))
+	dna[strand=='-']<-revComp(dna)
+	pos[strand=='-']<-end[strand=='-']-pos[strand=='-']+1
+	pos[strand!='-']<-pos[strand!='-']-start[strand!='-']+1
+	startPos<-floor((pos-1)/3)*3+1
+	if(debug)message(paste('StartPos: ',startPos,' EndPos:',startPos+2,' Cut:',substring(dna,startPos,startPos+2),sep='',collapse='\n'))
+	if(debug)message(paste('DNA: ',dna,' pos: ',pos,' start: ',start,' end: ',end,' strand-:',strand=='-',sep='',collapse='\n'))
+	return(codon2aa(substring(dna,startPos,startPos+2)))
 		
 }
 
