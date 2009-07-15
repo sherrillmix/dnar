@@ -134,8 +134,8 @@ dnaPos2aa<-function(dna,pos,start=1,end=nchar(dna),frame=0,strand='+',refStart=1
 	end<-end-refStart+1
 	pos<-pos-refStart+1
 	#adjust for frame
-	end[strand=='-']<-end[strand=='-']-(3-frame)%%3
-	start[strand!='-']<-start[strand!='-']+(3-frame)%%3
+	end[strand=='-']<-end[strand=='-']-(3-frame[strand=='-'])%%3
+	start[strand!='-']<-start[strand!='-']+(3-frame[strand!='-'])%%3
 	#adjust end and start for outisde dna 
 	#print(c(start,end))
 	start[strand=='-'&start<1]<-1
@@ -146,7 +146,7 @@ dnaPos2aa<-function(dna,pos,start=1,end=nchar(dna),frame=0,strand='+',refStart=1
 
 	dna<-substring(dna,start,end)
 	if(any(nchar(dna)!=end-start+1&nchar(dna)!=0))stop(simpleError("Missing DNA"))
-	dna[strand=='-']<-revComp(dna)
+	dna[strand=='-']<-revComp(dna[strand=='-'])
 	pos[strand=='-']<-end[strand=='-']-pos[strand=='-']+1
 	pos[strand!='-']<-pos[strand!='-']-start[strand!='-']+1
 	startPos<-floor((pos-1)/3)*3+1
@@ -176,6 +176,16 @@ checkOverlap<-function(starts,ends,tStarts,tEnds,tNames,allCover=FALSE,allCoverF
 	return(overlapNames)
 }
 
+checkOverlapMulti<-function(starts,ends,tStarts,tEnds,tNames,qChrom,tChrom,vocal=FALSE,...){
+	results<-rep(NA,length(qChrom))
+	for(i in unique(qChrom)){
+		if(vocal)message('Working on ',i)
+		selector<-qChrom==i
+		tSelector<-tChrom==i
+		if(any(selector)&any(tSelector))results[selector]<-checkOverlap(starts[selector],ends[selector],tStarts[tSelector],tEnds[tSelector],tNames[tSelector],...)
+	}
+	return(results)
+}
 
 matchBlocks<-function(starts,ends,tStarts,tEnds){
 	if(length(starts)!=length(ends))stop(simpleError('starts and ends not same length'))
@@ -733,7 +743,9 @@ read.bed<-function(fileName){
 	output<-list()
 	for(i in 1:(length(tracks)-1)){
 		output[[trackNames[i]]]<-data.frame(do.call(rbind,strsplit(x[(tracks[i]+1):(tracks[i+1]-1)],'\t')),stringsAsFactors=FALSE)
-		colnames(output[[trackNames[i]]])<-c('chr','start','end')
+		thisNames<-c('chr','start','end')
+		if(ncol(output[[trackNames[i]]])>3)thisNames<-c(thisNames,'name')
+		colnames(output[[trackNames[i]]])<-thisNames
 		output[[trackNames[i]]][,'start']<-as.numeric(output[[trackNames[i]]][,'start'])
 		output[[trackNames[i]]][,'end']<-as.numeric(output[[trackNames[i]]][,'end'])
 	}
