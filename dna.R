@@ -59,10 +59,6 @@ chao<-function(counts){
 	return(length(counts)+sum(counts==1)*(sum(counts==1)-1)/2/(sum(counts==2)+1))
 }
 
-degap<-function(seqs){
-	return(gsub('[-.*]+','',seqs))
-}
-
 #calculate bootstrapped rarefactions 
 #species: ids of species
 #counts: corresponding counts of species
@@ -314,7 +310,7 @@ makeBedGraph<-function(fileName,chroms,starts,ends,values=NULL,header='',vocal=F
 	if(vocal)message('Outputting to ',fileName)
 	if(!grepl('^track type=',header))header<-sprintf('track type=bedGraph %s',header)
 	if(autoScale)header<-sprintf('%s viewLimits=%s:%s autoScale=off',header,formatC(yMin,format='fg'),formatC(yMax,format='fg'))
-	output<-c(header,paste(data$chrom,data$start,data$end,data$value,sep='\t'))
+	output<-c(header,paste(data$chrom,format(data$start,scientific=FALSE),format(data$end,scientific=FALSE),data$value,sep='\t'))
 	writeLines(output,fileName)
 	return(data)
 }
@@ -460,14 +456,32 @@ write.fa<-function(names,dna,fileName,addBracket=FALSE){
 	writeLines(output,sep="\n",con=fileName)
 }
 
+#read a tab-delimited blast file
+#fileName: name of file
+#skips: number of lines to skip (0 for a normal blast file)
+#nrows: number of rows to read in (-1 for all)
+#calcScore: calculate score column?
+#returns: dataframe of blat data
+readBlast<-function(fileName,skips=0,nrows=-1,calcScore=TRUE){
+	x<-read.table(fileName,skip=skips,sep="\t",stringsAsFactors=FALSE,colClasses=c(rep('character',2),rep('numeric',10)),nrows=nrows)
+	colnames(x)<-c('qName','tName','percID','alignLength','mismatch','nGap','qStart','qEnd','tStart','tEnd','eValue','hspBit')
+	#Score equation from blat's webpage
+	if(calcScore)x$score<-x$alignLength-x$mismatch-x$nGap
+	return(x)
+}
+
+
 #read a blat file
 #fileName: name of file
+#skips: number of lines to skip (5 for a normal blat file)
+#nrows: number of rows to read in (-1 for all)
+#calcScore: calculate score column?
 #returns: dataframe of blat data
-readBlat<-function(fileName){
-	x<-read.table(fileName,skip=5,sep="\t",stringsAsFactors=FALSE,colClasses=c(rep('numeric',8),rep('character',2),rep('numeric',3),'character',rep('numeric',4),rep('character',3)))
+readBlat<-function(fileName,skips=5,nrows=-1,calcScore=TRUE){
+	x<-read.table(fileName,skip=skips,sep="\t",stringsAsFactors=FALSE,colClasses=c(rep('numeric',8),rep('character',2),rep('numeric',3),'character',rep('numeric',4),rep('character',3)),nrows=nrows)
 	colnames(x)<-c('match','mismatch','repmatch','ns','qGaps','qGapBases','tGaps','tGapBases','strand','qName','qSize','qStart','qEnd','tName','tSize','tStart','tEnd','blocks','blockSizes','qStarts','tStarts')
 	#Score equation from blat's webpage
-	x$score<-x$match-x$mismatch-x$qGaps-x$tGaps
+	if(calcScore)x$score<-x$match-x$mismatch-x$qGaps-x$tGaps
 	return(x)
 }
 
@@ -753,9 +767,46 @@ read.bed<-function(fileName){
 }
 
 
-removeGaps<-function(seqs,extraChars=''){
+degap<-function(seqs,extraChars=''){
 	return(gsub(sprintf('[.*%s-]+',extraChars),'',seqs,perl=TRUE))
 }
+
+
+
+#blat: dataframe from readBlat
+#ambigousThreshold: Throw out reads with no match better than ambigousThreshold
+#matchThreshold: Throw reads with more than ambigousNumThreshold matches above matchThreshold
+#ambigousNumThreshold: Throw reads with more than ambigousNumThreshold matches above matchThreshold
+#debug: Display debug messages
+trimBlat<-function(blat,ambigousThreshold,matchThreshold,ambigousNumThreshold=1,debug=FALSE){
+		goodHits<-tapply(blat$score,blat$qName,function(x,y)sum(x>=max(x)*y),ambigousThreshold)
+		selector<-goodHits>ambigousNumThreshold
+		message(sum(selector),' reads have at least ',ambigousNumThreshold,' matches more than max(match)*',ambigousThreshold,'. Discarding.')
+		selector<-!blat$qName %in% names(goodHits)[selector]
+		if(debug)print(t(t(tapply(blat[!selector,'qName'],blat[!selector,'file'],function(x)length(unique(x))))))
+		blat<-blat[selector,]
+		goodHits<-tapply(blat$score,blat$qName,function(x)max(x))
+		goodHits<-data.frame('qName'=names(goodHits),'maximumScore'=goodHits,stringsAsFactors=FALSE)
+		numCheck<-nrow(blat)
+		blat<-merge(blat,goodHits,all.x=TRUE)
+		if(nrow(blat)!=numCheck|any(is.na(blat$maximumScore)))stop(simpleError('Problem finding max score'))
+		numCheck<-length(unique(blat$qName))
+		blat<-blat[blat$score==blat$maximumScore,]
+		if(ambigousNumThreshold==1&nrow(blat)!=numCheck)stop(simpleError('Problem selecting max score read'))
+		else message('Returning multiple matches')
+		selector<-apply(blat[,c('match','qSize')],1,function(x,y)x['match']<(x['qSize'])*y,matchThreshold)
+		message(sum(selector),' reads have a match less than qSize*',matchThreshold,'. Discarding.')
+		if(debug){print(t(t(tapply(blat[selector,'qName'],blat[selector,'file'],function(x)length(unique(x))))));browser()}
+		blat<-blat[!selector,]
+		return(blat)
+}
+
+
+
+
+
+
+
 
 
 aminoAcids<-data.frame('codon'=c('UUU','UUC','UCU','UCC','UAU','UAC','UGU','UGC','UUA','UCA','UAA','UGA','UUG','UCG','UAG','UGG','CUU','CUC','CCU','CCC','CAU','CAC','CGU','CGC','CUA','CUG','CCA','CCG','CAA','CAG','CGA','CGG','AUU','AUC','ACU','ACC','AAU','AAC','AGU','AGC','AUA','ACA','AAA','AGA','AUG','ACG','AAG','AGG','GUU','GUC','GCU','GCC','GAU','GAC','GGU','GGC','GUA','GUG','GCA','GCG','GAA','GAG','GGA','GGG'),'abbr'=c('Phe','Phe','Ser','Ser','Tyr','Tyr','Cys','Cys','Leu','Ser','Ochre','Opal','Leu','Ser','Amber','Trp','Leu','Leu','Pro','Pro','His','His','Arg','Arg','Leu','Leu','Pro','Pro','Gln','Gln','Arg','Arg','Ile','Ile','Thr','Thr','Asn','Asn','Ser','Ser','Ile','Thr','Lys','Arg','Met','Thr','Lys','Arg','Val','Val','Ala','Ala','Asp','Asp','Gly','Gly','Val','Val','Ala','Ala','Glu','Glu','Gly','Gly'),'code'=c('F','F','S','S','Y','Y','C','C','L','S','X','X','L','S','X','W','L','L','P','P','H','H','R','R','L','L','P','P','Q','Q','R','R','I','I','T','T','N','N','S','S','I','T','K','R','M','T','K','R','V','V','A','A','D','D','G','G','V','V','A','A','E','E','G','G'),'name'=c('Phenylalanine','Phenylalanine','Serine','Serine','Tyrosine','Tyrosine','Cysteine','Cysteine','Leucine','Serine','Stop','Stop','Leucine','Serine','Stop','Tryptophan','Leucine','Leucine','Proline','Proline','Histidine','Histidine','Arginine','Arginine','Leucine','Leucine','Proline','Proline','Glutamine','Glutamine','Arginine','Arginine','Isoleucine','Isoleucine','Threonine','Threonine','Asparagine','Asparagine','Serine','Serine','Isoleucine','Threonine','Lysine','Arginine','Methionine','Threonine','Lysine','Arginine','Valine','Valine','Alanine','Alanine','Aspartic acid','Aspartic acid','Glycine','Glycine','Valine','Valine','Alanine','Alanine','Glutamic acid','Glutamic acid','Glycine','Glycine'),row.names=c('UUU','UUC','UCU','UCC','UAU','UAC','UGU','UGC','UUA','UCA','UAA','UGA','UUG','UCG','UAG','UGG','CUU','CUC','CCU','CCC','CAU','CAC','CGU','CGC','CUA','CUG','CCA','CCG','CAA','CAG','CGA','CGG','AUU','AUC','ACU','ACC','AAU','AAC','AGU','AGC','AUA','ACA','AAA','AGA','AUG','ACG','AAG','AGG','GUU','GUC','GCU','GCC','GAU','GAC','GGU','GGC','GUA','GUG','GCA','GCG','GAA','GAG','GGA','GGG'),stringsAsFactors=FALSE)
