@@ -1,5 +1,6 @@
 nimblegenPrimers<-c('CTCGAGAATTCTGGATCCTC','GAGGATCCAGAATTCTCGAGTT')
 primers454<-c("GCCTCCCTCGCGCCATCAG","GCCTTGCCAGCCCGCTCAG")
+primerTitanium<-c('CCATCTCATCCCTGCGTGTCTCCGACTCAG','CCTATCCCCTGTGTGCCTTGGCAGTCTCAG')
 
 #convenience function for stop(simpleError())
 stopError<-function(...){
@@ -424,6 +425,24 @@ ambigous2regex<-function(dna){
 	return(dna)
 }
 
+#read a sanger phred .phd file
+#fileName:name of file
+#trimEnds:trim off low quality bases and quals at start and end?
+#trimQual:trim bases with quality lower than trimQual from start and end
+#returns: vector of sequence and space seperated qualities
+read.phd<-function(fileName,trimEnds=TRUE,trimQual=30){
+	tmp<-readLines(fileName)
+	skip<-grep('BEGIN_DNA',tmp)[1]
+	lastLine<-grep('END_DNA',tmp)[1]
+	thisData<-do.call(rbind,strsplit(tmp[(skip+1):(lastLine-1)],'[ \t]'))
+	if(trimEnds) lims<-range(which(as.numeric(thisData[,2])>30))
+	else lims<-c(1,nrow(thisData))
+	return(c('seq'=paste(thisData[lims[1]:lims[2],1],collapse=''),'qual'=paste(thisData[lims[1]:lims[2],2],collapse=' ')))
+}
+
+
+
+
 #read a fasta file
 #fileName:name of file
 #returns: dataframe with columns name (name between > and the first ' '), seq (sequence), and longName (the whole > line)
@@ -800,6 +819,45 @@ trimBlat<-function(blat,ambigousThreshold,matchThreshold,ambigousNumThreshold=1,
 		blat<-blat[!selector,]
 		return(blat)
 }
+
+#function to generate a smoothing window
+#sigma: distribution parameter
+#numPoints: number of points for window
+#author:Kyle Bittinger
+#usage:window <- gaussWindow(0.5, 50);smoothData <- convolve(data, window, type="open")
+gaussWindow <- function(sigma, numPoints) {
+	# formula from http://en.wikipedia.org/wiki/Window_function
+	N <- numPoints - 1
+	xs <- 0:N
+
+	# modified form of gaussian equation
+	numer <- xs - N/2
+	denom <- sigma * N/2
+	ys <- exp(- 0.5 * ((numer / denom) ^ 2))
+
+	return(ys)
+}
+
+#function to smooth data
+#data:vector of data to smooth
+#window: smoothiing window froom gaussWindow
+#author:Kyle Bittinger
+#usage:smoothData <- smooth(data, window)
+smooth <- function(data, window) {
+	smoothData <- convolve(data, window, type="open")
+
+	# smoothData contains length(window)-1 extra points
+	N <- length(window)
+	trimSize <- N %/% 2 # integer division
+	extraTrim <- N %% 2 # modulus
+
+	# trim extra point from beginning of data if necessary
+	firstIndex <- trimSize + extraTrim
+	lastIndex  <- length(smoothData) - trimSize
+	return(smoothData[firstIndex:lastIndex]/sum(window))
+}
+
+
 
 
 
