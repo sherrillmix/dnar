@@ -449,7 +449,7 @@ read.phd<-function(fileName,trimEnds=TRUE,trimQual=30){
 read.fa<-function(fileName,longNameTrim=TRUE){
 	x<-readLines(fileName)
 	if(length(x)==0)return(NULL)
-	x<-x[!1:length(x) %in% c(grep('^#',x,perl=TRUE),grep('^$',x,perl=TRUE))]
+	x<-x[!grepl('^#',x,perl=TRUE)&x!='']
 	y<-paste(x,collapse="\n")
 	splits<-strsplit(y,'>',fixed=TRUE)[[1]][-1]
 	splits2<-strsplit(splits,"\n",fixed=TRUE)
@@ -464,6 +464,29 @@ read.fa<-function(fileName,longNameTrim=TRUE){
 	}
 	return(output)
 }
+#alternative version of the above (a bit quicker)
+read.fa2<-function(fileName,longNameTrim=TRUE){
+	x<-readLines(fileName)
+	if(length(x)==0)return(NULL)
+	x<-x[!grepl('^#',x,perl=TRUE)&x!='']
+	nameLines<-grep('^>',x)
+	thisNames<-sub('^>','',x[nameLines])
+	seqs<-apply(cbind(nameLines+1,c(nameLines[-1]-1,length(x))),1,function(coords){
+		if(coords[1]<=coords[2])return(paste(x[coords[1]:coords[2]],collapse=''))
+		else return('')
+	})
+
+	output<-data.frame('longName'=thisNames,'seq'=seqs,stringsAsFactors=FALSE)
+	if(longNameTrim){
+		output$name<-unlist(lapply(strsplit(output$longName,' ',fixed=TRUE),function(x)x[1]))
+		output<-output[,3:1]
+	}else{
+		colnames(output)<-c('name','seq')	
+	}
+	return(output)
+}
+
+
 #writes a fasta file
 #names: the > line
 #dna: the sequences
