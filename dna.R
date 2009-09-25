@@ -69,8 +69,15 @@ chao<-function(counts){
 #chaoAdjust: calculate chao-predicted species number on each random draw
 #returns: list containing dataframe of calculated quantiles and vector of samples argument
 #chao<-tapply(rep(ace[[2]]$otu2,ace[[2]]$num),rep(ace[[2]]$ampPat2,ace[[2]]$num),function(x){y<-table(x);return(length(y)+sum(y==1)*(sum(y==1)-1)/2/(sum(y==2)+1))})
-rarefy<-function(species,counts=rep(1,length(species)),samples=seq(10,sum(counts),10),reps=10000,quants=c(.5,.025,.975),chaoAdjust=FALSE,debug=FALSE,replaceSpecies=FALSE){
+rarefy<-function(species,counts=rep(1,length(species)),samples=seq(10,sum(counts),10),reps=10000,quants=c(.5,.025,.975),chaoAdjust=FALSE,debug=FALSE,replaceSpecies=FALSE,minCount=0){
 	if(length(species)!=length(counts))stop(simpleError('Length of species and counts not equal'))
+	if(minCount>0){
+		speciesCounts<-tapply(counts,species,sum)
+		badSpecies<-names(speciesCounts)[speciesCounts<minCount]
+		message('Bad species:',paste(badSpecies,collapse=','))
+		counts<-counts[!species %in% badSpecies]
+		species<-species[!species %in% badSpecies]
+	}
 	species<-rep(species,counts)
 	if(debug)message('Number of samples: ',length(samples),' Last sample:',samples[length(samples)])
 	output<-lapply(samples,function(sample,reps,species,debug){
@@ -866,7 +873,7 @@ gaussWindow <- function(sigma, numPoints) {
 #window: smoothiing window froom gaussWindow
 #author:Kyle Bittinger
 #usage:smoothData <- smooth(data, window)
-smooth <- function(data, window) {
+smooth <- function(data, window,truncateWindow=TRUE) {
 	smoothData <- convolve(data, window, type="open")
 
 	# smoothData contains length(window)-1 extra points
@@ -877,7 +884,15 @@ smooth <- function(data, window) {
 	# trim extra point from beginning of data if necessary
 	firstIndex <- trimSize + extraTrim
 	lastIndex  <- length(smoothData) - trimSize
-	return(smoothData[firstIndex:lastIndex]/sum(window))
+	numObs<-length(data)
+
+	windowSums<-rep(sum(window),numObs)
+	if(truncateWindow){
+		windowSums[1:trimSize]<-windowSums[1:trimSize]-rev(cumsum(window[1:trimSize]))
+		reverseIndices<-numObs-(0:(trimSize-2+extraTrim))
+		windowSums[reverseIndices]<-windowSums[reverseIndices]-rev(cumsum(rev(window)[1:(trimSize-1+extraTrim)]))
+	}
+	return(smoothData[firstIndex:lastIndex]/windowSums)
 }
 
 
