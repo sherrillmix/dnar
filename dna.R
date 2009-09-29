@@ -554,7 +554,7 @@ trimEnd<-function(seqs,revCompPrimer,trimmed=rep(FALSE,length(seqs)),minSubstrin
 #dropMosaik: Remove extraneous line from Mosaik labelled either .MosaikAnchor.C1 or MosaikReference
 #checkSnps: Find SNPs from pyroBayes
 #returns: list of reference sequence in [[1]], aligned reads in [[2]] (note reads are not globally aligned still need to use start coordinate to place globally), snps in [[3]]
-parseAce<-function(aceFile,dropMosaik=TRUE,checkSnps=TRUE){
+parseAce<-function(aceFile,dropMosaik=TRUE,checkSnps=TRUE,vocal=TRUE){
 	#debug<-FALSE
 	#if(!exists(x)|!debug)x<-readLines(aceFile)
 	x<-readLines(aceFile)
@@ -564,14 +564,14 @@ parseAce<-function(aceFile,dropMosaik=TRUE,checkSnps=TRUE){
 	numContigs<-asLine[2]
 	numReads<-asLine[3]
 	if(numContigs!=1)stopError('Sorry this function only handles 1 contig')
-	message('Expecting ',numReads,' reads')
+	if(vocal)message('Expecting ',numReads,' reads')
 	coLines<-grep('^CO [^ ]+ [0-9]+ [0-9]+ [0-9]+ [UC] *$',x,perl=TRUE)
 	if(length(coLines)!=1)stopError('Incorrect number of CO lines found')
 	coLine<-strsplit(x[coLines],' ')[[1]]
 	contigName<-coLine[2]
 	contigBaseNum<-coLine[3]
 	contigReadNum<-coLine[4]
-	message('Contig ',contigName,' has ',contigBaseNum,' bases and ',contigReadNum,' reads')
+	if(vocal)message('Contig ',contigName,' has ',contigBaseNum,' bases and ',contigReadNum,' reads')
 	bqLines<-grep('^BQ *$',x)
 	if(length(bqLines)!=1)stopError('Incorrect number of BQ lines found')
 	contigSeq<-paste(x[(coLines+1):(bqLines-1)],sep='',collapse='')
@@ -603,18 +603,18 @@ parseAce<-function(aceFile,dropMosaik=TRUE,checkSnps=TRUE){
 		psnpLine<-x[ctLines+2][snpCT]
 		ctLine<-ctLine[snpCT]
 		if(length(snpCT)!=length(ctLine)|length(grep('pSnp=',psnpLine))!=length(psnpLine))stopError('psnp lines not the same length as PB++ CT lines')
-		message('Found ',length(ctLine),' CT lines of which ',length(snpCT),' were from PB++')
+		if(vocal)message('Found ',length(ctLine),' CT lines of which ',length(snpCT),' were from PB++')
 		ct<-strsplit(ctLine,' ')
 		notes<-as.data.frame(do.call(rbind,lapply(ct,function(x)return(x[c(4,5,1)]))),stringsAsFactors=FALSE)
 		colnames(notes)<-c('start','stop','contig')
 		notes$psnp<-sub('pSnp=','',psnpLine)
 	}else{
-		message('Not looking for snp notes')
+		if(vocal)message('Not looking for snp notes')
 		notes<-c()
 	}
 	if(dropMosaik&(reads[1,'name']=='.MosaikAnchor.C1'|reads[1,'name']=='.MosaikReference')){
 		reads<-reads[-1,]
-		message('Removing .MosaikAnchor.C1')
+		if(vocal)message('Removing .MosaikAnchor.C1')
 	}
 	return(list('contig'=contigSeq,'reads'=reads,'notes'=notes))
 	#readDir<-lapply(afLine,function(x)return(x[3]))
