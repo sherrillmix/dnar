@@ -842,7 +842,7 @@ trimBlat<-function(blat,ambigousThreshold,matchThreshold,ambigousNumThreshold=1,
 		numCheck<-length(unique(blat$qName))
 		blat<-blat[blat$score==blat$maximumScore,]
 		if(ambigousNumThreshold==1&nrow(blat)!=numCheck)stop(simpleError('Problem selecting max score read'))
-		else message('Returning multiple matches')
+		if(ambigousNumThreshold!=1)message('Returning multiple matches')
 		selector<-apply(blat[,c('match','qSize')],1,function(x,y)x['match']<(x['qSize'])*y,matchThreshold)
 		message(sum(selector),' reads have a match less than qSize*',matchThreshold,'. Discarding.')
 		if(debug){print(t(t(tapply(blat[selector,'qName'],blat[selector,'file'],function(x)length(unique(x))))));browser()}
