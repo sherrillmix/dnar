@@ -442,7 +442,7 @@ read.phd<-function(fileName,trimEnds=TRUE,trimQual=30){
 	skip<-grep('BEGIN_DNA',tmp)[1]
 	lastLine<-grep('END_DNA',tmp)[1]
 	thisData<-do.call(rbind,strsplit(tmp[(skip+1):(lastLine-1)],'[ \t]'))
-	if(trimEnds) lims<-range(which(as.numeric(thisData[,2])>30))
+	if(trimEnds) lims<-range(which(as.numeric(thisData[,2])>trimQual))
 	else lims<-c(1,nrow(thisData))
 	return(c('seq'=paste(thisData[lims[1]:lims[2],1],collapse=''),'qual'=paste(thisData[lims[1]:lims[2],2],collapse=' ')))
 }
