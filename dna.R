@@ -95,6 +95,31 @@ rarefy<-function(species,counts=rep(1,length(species)),samples=seq(10,sum(counts
 	return(list(output,samples))
 }
 
+#calculate rarefaction using formula
+#sample: vector of numbers of individuals per species
+#step: size of sampling steps for rarefaction
+quickRare<-function(sample,step=10){
+	sampleSize<-20;
+	steps<-unique(c(seq(step,sum(sample),step),sum(sample)))
+	output<-sapply(steps,function(x)rareEquation(sample,x))
+	return(cbind(output,steps))
+
+}
+
+rareEquation<-function(sample,sampleSize){
+	#numbers too big
+	#output2<-length(sample)-choose(sum(sample),sampleSize)^-1*sum(choose(sum(sample)-sample,sampleSize))
+	#message(output2)
+	#no way to log sum 
+	#logSum<-log(sum(choose(sum(sample)-sample,sampleSize)))
+	#output<-length(sample) - exp(- lchoose(sum(sample),sampleSize) + logSum)
+	output<-sum(1-exp(lchoose(sum(sample)-sample,sampleSize)-lchoose(sum(sample),sampleSize)))
+	
+	if(is.na(output)|is.infinite(output))browser()
+	return(output)
+}
+
+
 #convert dna string into seperate codons
 #dna: single string of DNA
 #frame: starting frame (0=start on first base, 1=on second, 2=on third)
@@ -537,6 +562,7 @@ readBlat<-function(fileName,skips=5,nrows=-1,calcScore=TRUE){
 trimEnd<-function(seqs,revCompPrimer,trimmed=rep(FALSE,length(seqs)),minSubstring=8){
 	if(length(seqs)!=length(trimmed)) stop(simpleError('Already trimmed vector and seqs vector not same length'))
 	trimSeq<-seqs
+	trimmedBak<-trimmed
 	for(i in nchar(revCompPrimer):minSubstring){
 			  thisRegex<-paste(substr(revCompPrimer,1,i),'$',sep='')
 			  selector<-!trimmed & 1:length(seqs) %in% grep(thisRegex,seqs)
@@ -544,7 +570,7 @@ trimEnd<-function(seqs,revCompPrimer,trimmed=rep(FALSE,length(seqs)),minSubstrin
 			  trimmed<-trimmed|selector
 			  message('Found ',sum(selector),' seqs matching ',thisRegex)
 	}
-	message('Trimmed ',sum(selector),' reads out of ',length(seqs))
+	message('Trimmed ',sum(trimmed&!trimmedBak),' reads out of ',sum(!trimmedBak))
 	return(list(trimSeq,trimmed))
 }
 
