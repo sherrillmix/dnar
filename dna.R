@@ -480,6 +480,8 @@ read.phd<-function(fileName,trimEnds=TRUE,trimQual=30){
 #returns: dataframe with columns name (name between > and the first ' '), seq (sequence), and longName (the whole > line)
 read.fa<-function(fileName,longNameTrim=TRUE){
 	x<-readLines(fileName)
+	selector<-!grepl('^>',x,perl=TRUE)&grepl(' ',x,fixed=TRUE)&grepl('[^ ]$',x,perl=TRUE)
+	x[selector]<-paste(x[selector],' ',sep='')
 	if(length(x)==0)return(NULL)
 	x<-x[!grepl('^#',x,perl=TRUE)&x!='']
 	y<-paste(x,collapse="\n")
@@ -494,6 +496,7 @@ read.fa<-function(fileName,longNameTrim=TRUE){
 	}else{
 		colnames(output)<-c('name','seq')	
 	}
+	output$seq<-gsub(' +$','',output$seq)
 	return(output)
 }
 #alternative version of the above (a bit quicker)
