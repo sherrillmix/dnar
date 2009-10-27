@@ -658,7 +658,7 @@ parseAce<-function(aceFile,dropMosaik=TRUE,checkSnps=TRUE,vocal=TRUE){
 #high: end point for global alignment
 #lengths: lengths of seqs (probably can go with default in 99% of cases)
 #returns: list of aligned seqs in [[1]], logical vector of whether read fell within cut region in [[2]]
-cutReads<-function(seqs,starts,low=min(starts),high=max(starts+nchar(seqs)),lengths=nchar(seqs)){
+cutReads<-function(seqs,starts,low=min(starts),high=max(starts+nchar(seqs)-1),lengths=nchar(seqs)){
 	debug<-TRUE
 	goodReads<-findReads(low,starts,lengths,high)
 	if(!any(goodReads))return(FALSE)
@@ -678,6 +678,76 @@ cutReads<-function(seqs,starts,low=min(starts),high=max(starts+nchar(seqs)),leng
 	cuts<-paste(predots,cuts,postdots,sep='')
 	return(list(cuts,goodReads))
 }
+
+#take the output from blat and make continous reads out of it
+#seqs: comma seperated target sequences from blat
+#starts: comma seperated starting location for each piece of sequence 0 indexed
+#fillStarts: start base for each output sequence 0 indexed
+#fillEnds: total length for each output sequence
+#gaps: list of matrices with columns tGaps and qGaps
+#returns: dataframe of sequence
+cutBlatReads<-function(seqs,starts,fillStarts=NULL,fillEnds=NULL,gaps=NULL){
+	if(length(seqs)!=length(starts))stop(simpleError('Length of seqs and starts not equal'))
+	if(!is.null(fillEnds)){
+		if(length(seqs)!=length(fillEnds))stop(simpleError('Length of seqs and fillEnds not equal'))
+		if(any(fillEnds<1))stop(simpleError('Total length must be positive'))
+	}
+	if(!is.null(gaps)&&length(gaps)!=length(starts))stop(simpleError('Gaps not the same length as seqs'))
+	if(!is.null(fillStarts)&&length(seqs)!=length(fillStarts))stop(simpleError('Length of seqs and fillStarts not equal'))
+	lengthMax<-1000000
+	dots<-rep('.',lengthMax)
+	seqList<-strsplit(seqs,',')
+	startList<-lapply(strsplit(starts,','),as.numeric)
+	if(any(sapply(seqList,length)!=sapply(startList,length)))stop(simpleError('Number of sequences and starts do not match'))
+	if(is.null(fillEnds)){
+		fillEnds<-mapply(function(x,y)x[length(x)]+nchar(y[length(y)])-1,startList,seqList)
+	}
+	if(is.null(fillStarts)){
+		fillStarts<-sapply(startList,min)
+	}
+	output<-mapply(function(seqs,starts,fillStart,fillEnd){
+		if(any(starts<fillStart))browser()#stop(simpleError('fillStart less than starts'))
+		numChars<-nchar(seqs)
+		starts<-starts-fillStart
+		ends<-starts+numChars-1
+		if(any(ends>fillEnd))stop(simpleError('Sequence goes past fillEnd'))
+		goodPos<-unlist(mapply(function(x,y)x:y,starts,ends))+1
+		if(any(table(goodPos)>1))stop(simpleError('Base covered more than once'))
+		seqLength<-diff(c(fillStart,fillEnd))
+		if(seqLength>lengthMax){
+			warning('Sequence longer than ',lengthMax,' bases. Returning NA')
+			return(NA)
+		}
+		seqSplit<-dots[1:seqLength]
+		seqSplit[goodPos]<-unlist(strsplit(seqs,''))
+		return(paste(seqSplit,collapse=''))
+	},seqList,startList,fillStarts,fillEnds)
+	return(output)
+}
+
+#qStarts: comma seperated starts for query seq
+#tStarts: comma seperated starts for target seq
+#blockSizes: comma seperated block sizes
+blatFindGaps<-function(qStarts,tStarts,blockSizes){
+	if(length(qStarts)!=length(tStarts)||length(blockSizes)!=length(qStarts))stop(simpleError('Lengths of starts and blocksizes not equal'))
+	qStartList<-lapply(strsplit(qStarts,','),as.numeric)
+	tStartList<-lapply(strsplit(tStarts,','),as.numeric)
+	blockSizeList<-lapply(strsplit(blockSizes,','),as.numeric)
+	blockNums<-sapply(qStartList,length)
+	if(any(blockNums!=sapply(tStartList,length))||any(blockNums!=sapply(blockSizeList,length)))stop(simpleError('Comma seperated lists of starts and blocksizes not equal length'))
+	gaps<-mapply(function(qStarts,tStarts,blockSizes){
+		tEnds<-tStarts+blockSizes-1
+		qEnds<-qStarts+blockSizes-1
+
+		tGapLengths<-tStarts[-1]-tEnds[-length(tEnds)]-1
+		qGapLengths<-qStarts[-1]-qEnds[-length(qEnds)]-1
+		return(cbind('qGaps'=qGapLengths,'tGaps'=tGapLengths,'qGapStartAfter'=qEnds[-length(qEnds)],'tGapStartAfter'=tEnds[-length(tEnds)]))
+	},qStartList,tStartList,blockSizeList)
+
+	return(gaps)
+}
+
+
 
 #take coordinates of blat matches and split into a single for each exon
 #chroms: Chromosome or other identifier
