@@ -758,19 +758,23 @@ blatFindGaps<-function(qStarts,tStarts,blockSizes){
 #lengths: logical whether ends are end coordinates or lengths
 #extraCols: a dataframe of extra columns (1 per batch of starts) to be added to the output
 #extraSplits: a dataframe of extra comma-separated values (1 string of comma separated values per batch of starts, 1 value per start-stop pair) to be added to the output
+#introns: also output introns (the spaces between exons)
 #example: with(blat,blat2exons(tName,qName,tStarts,blockSizes,strand))
-blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),lengths=TRUE,extraCols=NULL,extraSplits=NULL){
+blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),lengths=TRUE,extraCols=NULL,extraSplits=NULL,introns=FALSE,prefix='ex'){
 	if(any(c(length(chroms),length(names),length(strands),length(starts))!=length(ends)))stop(simpleError('Different lengths for chrom, strand, starts, lengths'))
 	startsList<-strsplit(starts,',')
 	exonCounts<-exonCountsStrand<-sapply(startsList,length)
 	endsList<-strsplit(ends,',')
+	if(lengths)endsList<-mapply(function(x,y)as.numeric(x)+as.numeric(y)-1,endsList,startsList)
 	if(any(exonCounts!=sapply(endsList,length)))stop(simpleError("Starts and ends not equal"))
-	endsList<-as.numeric(unlist(endsList))
-	startsList<-as.numeric(unlist(startsList))
-	if(lengths)endsList<-endsList+startsList-1
+	#make sure extraCols and extraSplits are dataframes
+	if(is.vector(extraSplits))extraSplits<-data.frame(extraSplits,stringsAsFactors=FALSE)
+	if(is.vector(extraCols))extraCols<-data.frame(extraCols,stringsAsFactors=FALSE)
+	endsUnlist<-as.numeric(unlist(endsList))
+	startsUnlist<-as.numeric(unlist(startsList))
 	exonCountsStrand[strands=='-']<- -exonCountsStrand[strands=='-']
-	exonNums<-unlist(lapply(exonCountsStrand,function(x){if(x<0){-x:1}else{1:x}}))	
-	output<-data.frame('chrom'=rep(chroms,exonCounts),'name'=rep(names,exonCounts),'exonName'=sprintf('%s_ex%s',rep(names,exonCounts),exonNums),'start'=startsList,'end'=endsList,'strand'=rep(strands,exonCounts),stringsAsFactors=FALSE)
+	exonNums<-unlist(lapply(exonCountsStrand,function(x){if(x<0){-x:1}else{1:x}}))
+	output<-data.frame('chrom'=rep(chroms,exonCounts),'name'=rep(names,exonCounts),'exonName'=sprintf('%s_%s%s',rep(names,exonCounts),prefix,exonNums),'start'=startsUnlist,'end'=endsUnlist,'strand'=rep(strands,exonCounts),stringsAsFactors=FALSE)
 	if(!is.null(colnames(extraCols))){
 		for(i in colnames(extraCols)){
 			output[,i]<-rep(extraCols[,i],exonCounts)
@@ -782,6 +786,18 @@ blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),len
 			if(length(thisData)!=nrow(output))message('Problem splitting extraSplits ',i)
 			output[,i]<-thisData
 		}
+	}
+	if(introns){
+		inEnds<-sapply(startsList,function(x)as.numeric(x[-1])-1)	
+		inStarts<-sapply(endsList,function(x)as.numeric(x[-length(x)])+1)	
+		inCount<-sapply(inEnds,length)
+		problems<-
+		if(any(inCount!=sapply(inStarts,length))||any(mapply(function(x,y)any(x<y),inEnds,inStarts)))stop(simpleError('Problem making introns'))
+		selector<-inCount>0
+		introns<-blat2exons(chroms[selector],names[selector],sapply(inStarts[selector],paste,collapse=','),sapply(inEnds[selector],paste,collapse=','),strands[selector],FALSE,extraCols[selector,,drop=FALSE],extraSplits[selector,,drop=FALSE],FALSE,'in')
+		introns$isIntron<-TRUE
+		output$isIntron<-FALSE
+		output<-rbind(output,introns)
 	}
 #this is too slow
 #	thisExons<-apply(cbind(names,chroms,strands,starts,ends),1,function(x){
