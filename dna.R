@@ -521,6 +521,44 @@ read.fa2<-function(fileName,longNameTrim=TRUE){
 	return(output)
 }
 
+#trim leading and trailing space characters
+#x: vector of strings
+trim<-function(x){
+	sub('\\s+$','',sub('^\\s+','',x),perl=TRUE)
+}
+
+#loop through list, get unique names and make sure every element has those names
+#x: list to loop through
+#namesList: names to make sure every element has (and delete extras)
+#fill: value to insert in missing elements
+fillList<-function(x,namesList=unique(unlist(lapply(x,names))),fill=NA){
+	output<-lapply(x,function(x){
+		x<-x[names(x) %in% namesList]
+		x[namesList[!namesList %in% names(x)]]<-fill
+		return(x)
+	})	
+	return(output)
+}
+
+#parse a line of >ASDASD extra args test=1 test2=1 test3=asdasd asdasd 
+#kind of slow
+#assumes anything after = goes with the name= so put any extra arguments first
+#nameLine: vector of lines
+parseEqualLines<-function(nameLine,firstDel=TRUE){
+	nameSplit<-strsplit(nameLine,' ',fixed=TRUE)
+	output<-lapply(nameSplit,function(x){
+		equals<-grep('=',x)	
+		equalNames<-sub('=.*$','',x[equals])
+		ends<-c(equals[-1]-1,length(x))
+		values<-mapply(function(start,end){
+			sub('^[^=]*=','',paste(x[start:end],collapse=' '))
+		},equals,ends)
+		names(values)<-equalNames
+		return(values)
+	})
+	return(output)
+}
+
 
 #writes a fasta file
 #names: the > line
@@ -759,10 +797,12 @@ blatFindGaps<-function(qStarts,tStarts,blockSizes){
 #extraCols: a dataframe of extra columns (1 per batch of starts) to be added to the output
 #extraSplits: a dataframe of extra comma-separated values (1 string of comma separated values per batch of starts, 1 value per start-stop pair) to be added to the output
 #introns: also output introns (the spaces between exons)
+#adjustStart: add adjustStart to starts (good for 0 index start, 1 index ends of UCSC)
 #example: with(blat,blat2exons(tName,qName,tStarts,blockSizes,strand))
-blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),lengths=TRUE,extraCols=NULL,extraSplits=NULL,introns=FALSE,prefix='ex'){
+blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),lengths=TRUE,extraCols=NULL,extraSplits=NULL,introns=FALSE,prefix='ex',adjustStart=0){
 	if(any(c(length(chroms),length(names),length(strands),length(starts))!=length(ends)))stop(simpleError('Different lengths for chrom, strand, starts, lengths'))
 	startsList<-strsplit(starts,',')
+	if(adjustStart!=0)startsList<-lapply(startsList,function(x)as.numeric(x)+1)
 	exonCounts<-exonCountsStrand<-sapply(startsList,length)
 	endsList<-strsplit(ends,',')
 	if(lengths)endsList<-mapply(function(x,y)as.numeric(x)+as.numeric(y)-1,endsList,startsList)
@@ -790,11 +830,25 @@ blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),len
 	if(introns){
 		inEnds<-sapply(startsList,function(x)as.numeric(x[-1])-1)	
 		inStarts<-sapply(endsList,function(x)as.numeric(x[-length(x)])+1)	
+		if(any(sapply(inEnds,length)!=sapply(inStarts,length)))stop(simpleError('Intron ends and starts not equal length'))
+		problemIndex<-mapply(function(x,y)which(x<y),inEnds,inStarts)
+		problems<-which(sapply(problemIndex,length)>0)
+		for(problem in problems){
+			for(thisIndex in problemIndex[[problem]]){
+				#check if these are actually nogap neighbor exons
+				if(inStarts[[problem]][thisIndex]-1!=inEnds[[problem]][thisIndex]){
+					browser()
+					stop(simpleError('Introns have negative length'))
+				}
+			}
+			#if these weren't nogap neighbor exons we would have errored out so we can delete them
+			inStarts[[problem]]<-inStarts[[problem]][-problemIndex[[problem]]]
+			inEnds[[problem]]<-inEnds[[problem]][-problemIndex[[problem]]]
+		}
 		inCount<-sapply(inEnds,length)
-		problems<-
-		if(any(inCount!=sapply(inStarts,length))||any(mapply(function(x,y)any(x<y),inEnds,inStarts)))stop(simpleError('Problem making introns'))
+		if(any(inCount!=sapply(inStarts,length)))stop(simpleError('Intron ends and starts not equal length after removing neighbors'))
 		selector<-inCount>0
-		introns<-blat2exons(chroms[selector],names[selector],sapply(inStarts[selector],paste,collapse=','),sapply(inEnds[selector],paste,collapse=','),strands[selector],FALSE,extraCols[selector,,drop=FALSE],extraSplits[selector,,drop=FALSE],FALSE,'in')
+		introns<-blat2exons(chroms[selector],names[selector],sapply(inStarts[selector],paste,collapse=','),sapply(inEnds[selector],paste,collapse=','),strands[selector],FALSE,extraCols[selector,,drop=FALSE],NULL,FALSE,'in',adjustStart=0)
 		introns$isIntron<-TRUE
 		output$isIntron<-FALSE
 		output<-rbind(output,introns)
