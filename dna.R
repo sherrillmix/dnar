@@ -300,6 +300,14 @@ checkCoverage2<-function(starts,ends){
 	output<-data.frame('pos'=as.numeric(names(output)),'cover'=as.vector(output),stringsAsFactors=FALSE)
 	return(output)
 }
+
+#starts:starts of coverage ranges
+#ends:ends of coverage ranges
+startStop2Range<-function(starts,stops){
+	cover<-unique(unlist(mapply(function(x,y)x:y,starts,stops)))
+	ranges<-index2range(cover)
+	return(ranges)
+}
 	
 
 #make a .bedgraph file for use on UCSC browser
@@ -337,7 +345,6 @@ makeBedGraph<-function(fileName,chroms,starts,ends,values=NULL,header='',vocal=F
 	}else{
 		data<-cbind(chroms,starts,ends,values)
 	}
-	
 	data<-data[,c('chroms','starts','ends','values')]
 	colnames(data)<-c('chrom','start','end','value')
 	if(!is.null(proportion))data$value<-data$value/proportion
@@ -350,6 +357,19 @@ makeBedGraph<-function(fileName,chroms,starts,ends,values=NULL,header='',vocal=F
 	output<-c(header,paste(data$chrom,format(data$start,scientific=FALSE),format(data$end,scientific=FALSE),data$value,sep='\t'))
 	writeLines(output,fileName)
 	return(data)
+}
+
+#write psl file for ucsc genome browser
+#blat: dataframe containing columns 
+#file: file to be writted
+#header: header line for psl
+write.psl<-function(blat,file,header=''){
+	if(!grepl('^track ',header))header<-sprintf('track %s',header)
+	pslCols<-c(	 'match', 'mismatch', 'repmatch', 'ns', 'qGaps', 'qGapBases', 'tGaps', 'tGapBases', 'strand', 'qName', 'qSize', 'qStartBak', 'qEnd', 'tName', 'tSize', 'tStartBak', 'tEnd', 'blocks', 'blockSizes', 'qStarts', 'tStarts')
+	pslSelector<-pslCols %in% colnames(blat)
+	if(any(!pslSelector))stop(simpleError('Missing columns: ',paste(pslCols[!pslSelector],collapse=', ')))
+	writeLines(header,file)
+	write.table(blat[,pslCols],file,append=TRUE,quote=FALSE,sep='\t',col.names=FALSE,row.names=FALSE)
 }
 
 
@@ -588,6 +608,8 @@ write.fa<-function(names,dna,fileName,addBracket=FALSE){
 	output<-paste(names,dna,sep="\n")
 	writeLines(output,sep="\n",con=fileName)
 }
+
+
 
 #read a tab-delimited blast file
 #fileName: name of file
@@ -1036,6 +1058,42 @@ trimBlat<-function(blat,ambigousThreshold,matchThreshold,ambigousNumThreshold=1,
 		blat<-blat[!selector,]
 		return(blat)
 }
+
+#blat: dataframe from readBlat
+#ambigousThreshold: Throw out reads with no match better than ambigousThreshold
+#matchThreshold: Throw reads with more than ambigousNumThreshold matches above matchThreshold
+#ambigousNumThreshold: Throw reads with more than ambigousNumThreshold matches above matchThreshold
+#debug: Display debug messages
+#returnSelector: if TRUE return logical selection matrix
+trimBlat2<-function(blat,ambigousThreshold,matchThreshold,ambigousNumThreshold=1,debug=FALSE,returnSelector=FALSE){
+		selectTable<-data.frame('BADAmbig'=rep(NA,nrow(blat)),'BADNotMax'=rep(NA,nrow(blat)),'BADMatch'=rep(NA,nrow(blat)))
+		goodHits<-tapply(blat$score,blat$qName,function(x,y)sum(x>=max(x)*y),ambigousThreshold)
+		selector<-goodHits>ambigousNumThreshold
+		message(sum(selector),' reads have at least ',ambigousNumThreshold,' matches more than max(match)*',ambigousThreshold,'. Discarding.')
+		selector<-!blat$qName %in% names(goodHits)[selector]
+		if(debug)print(t(t(tapply(blat[!selector,'qName'],blat[!selector,'file'],function(x)length(unique(x))))))
+		blat<-blat[selector,]
+		selectTable$BADAmbig<-!selector
+
+		goodHits<-tapply(blat$score,blat$qName,function(x)max(x))
+		blat$maximumScore<-goodHits[blat$qName]
+		numCheck<-length(unique(blat$qName))
+		selector<-blat$score==blat$maximumScore
+		blat<-blat[selector,]
+		selectTable[!selectTable$BADAmbig,'BADNotMax']<-!selector
+		if(ambigousNumThreshold==1&nrow(blat)!=numCheck)stop(simpleError('Problem selecting max score read'))
+		if(ambigousNumThreshold!=1)message('Returning multiple matches')
+		selector<-blat[,'match']<blat[,'qSize']*matchThreshold
+		message(sum(selector),' reads have a match less than qSize*',matchThreshold,'. Discarding.')
+		if(debug){print(t(t(tapply(blat[selector,'qName'],blat[selector,'file'],function(x)length(unique(x))))));browser()}
+		blat<-blat[!selector,]
+		selectTable[!selectTable$BADAmbig,'BADMatch'][!selectTable$BADNotMax[!selectTable$BADAmbig]]<-selector
+
+		if(returnSelector) return(selectTable)
+		else return(blat)
+}
+
+
 
 #function to generate a smoothing window
 #sigma: distribution parameter
