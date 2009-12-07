@@ -124,6 +124,10 @@ rareEquation<-function(sample,sampleSize){
 #dna: single string of DNA
 #frame: starting frame (0=start on first base, 1=on second, 2=on third)
 dna2codons<-function(dna,frame=0){
+	if(nchar(dna)<3){
+		warning('DNA less than 3 bases long')
+		return(NULL)
+	}
 	frame<-frame+1
 	starts<-seq(frame,nchar(dna)-2,3)
 	##############WORK HERE
@@ -430,6 +434,20 @@ read.fastq<-function(fileName,convert=TRUE){
 	output<-data.frame('name'=sub('^@','',x[atLines]), 'seq'=x[atLines+1], 'qual'=x[atLines+3],stringsAsFactors=FALSE)
 	if(any(nchar(output$seq)!=nchar(output$qual)))stopError('Sequence and qual lengths do not match')
 	if(convert)output$qual<-unlist(lapply(x[atLines + 3],function(x)paste(as.integer(charToRaw(x))-33,collapse=' ')))
+	return(output)
+}
+
+#read solexa fastq file
+#fileName: name of solexa fastq file
+#convert: convert condensed quals to numeric quals?
+#returns: dataframe with solexa info seq and quals
+read.solexa<-function(fileName,convert=TRUE){
+	x<-readLines(fileName)
+	output<-do.call(rbind,strsplit(x,':'))
+	output<-cbind(output,do.call(rbind,strsplit(output[,5],'[#/]')))
+	output<-as.data.frame(output[,-5])
+	colnames(output)<-c('instrument','lane','tile','x','seq','rawQual','y','barcode','pair')
+	if(convert)output$qual<-unlist(lapply(output$rawQual,function(x)paste(as.integer(charToRaw(x))-33,collapse=' ')))
 	return(output)
 }
 
