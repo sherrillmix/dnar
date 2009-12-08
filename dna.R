@@ -539,7 +539,7 @@ read.fa<-function(fileName,longNameTrim=TRUE){
 }
 #alternative version of the above (a bit quicker)
 read.fa2<-function(fileName,longNameTrim=TRUE){
-	x<-readLines(fileName)
+	x<-readLines(fileName,warn=FALSE)
 	if(length(x)==0)return(NULL)
 	x<-x[!grepl('^#',x,perl=TRUE)&x!='']
 	nameLines<-grep('^>',x)
@@ -558,6 +558,25 @@ read.fa2<-function(fileName,longNameTrim=TRUE){
 	}
 	return(output)
 }
+
+#return order of one vector in another
+#query: values to be sorted in target order
+#target: order for query to be sorted into
+#strict: if true error if query not in target, if false append unknown queries to end of target
+#...: arguments for order
+orderIn<-function(query,target,strict=FALSE,...){
+	if(any(!query %in% target)){
+		if(strict){
+			stop(simpleError('Query not in target'))
+		}else{
+			target<-c(target,unique(query[!query %in% target]))
+		}
+	}
+	newOrder<-order(sapply(query,function(x)min(which(x==target))),...)
+	return(newOrder)
+}
+
+
 
 #trim leading and trailing space characters
 #x: vector of strings
