@@ -308,6 +308,20 @@ startStop2Range<-function(starts,stops){
 	ranges<-index2range(cover)
 	return(ranges)
 }
+
+#read in a bunch of fasta files in a target directory
+#dir: target directory
+#suffix: regex to select file names
+readFaDir<-function(dir='.',suffix='\\.fn?a$'){
+	faFiles<-list.files(dir,suffix)
+	for(i in faFiles){
+		tmp<-read.fa(sprintf('%s/%s',dir,i))
+		tmp$file<-i
+		if(exists('allFa'))allFa<-rbind(allFa,tmp)
+		else allFa<-tmp
+	}
+	return(allFa)
+}
 	
 
 #make a .bedgraph file for use on UCSC browser
