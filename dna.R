@@ -659,6 +659,67 @@ readBlast<-function(fileName,skips=0,nrows=-1,calcScore=TRUE){
 }
 
 
+#start a gfServer on an open port and return port
+#nibDir: directory containing nib files to align against
+#options: options to gfServer
+#gfServer: path to gfServer program
+#startPort: begin looking for open (no other R called gfServer using) ports on startPort and add 1 until finding one
+#nibSuffix: nib files end in nibSuffix
+#wait: number of 5 second intervals to wait for gfServer to finish starting before giving up
+startBlat<-function(nibDir,options='',gfServer='gfServer',startPort=37900,nibSuffix='.nib',wait=120){
+	port<-startPort
+	counter<-1
+	while(checkBlat(port)){
+		port<-port+1
+		if(counter>30)stop(simpleError('All 30 checked ports taken'))
+		counter<-counter+1
+	}
+	system(sprintf('%s start localhost %d %s %s/*%s',gfServer,port,options,nibDir,nibSuffix),wait=FALSE)
+	counter<-1
+	while(system(sprintf('%s status localhost %d >/dev/null',gfServer,port),ignore.stderr=TRUE)!=0){
+		Sys.sleep(5)
+		if(counter>wait){
+			killBlat(port)
+			stopError('gfServer took longer than ',wait*5,' seconds to start')
+		}
+		counter<-counter+1
+	}
+	return(port)
+}
+
+#check if blat is running on port port
+#port: port to check if blat is running on
+checkBlat<-function(port){
+	return(system(sprintf('pgrep -f "gfServer *start *localhost *%d">/dev/null',port))==0)
+}
+
+#run blat on port port
+#faFile: path to fasta file for alignment
+#port: port to run blat on
+#gfClient: path to gfClient program
+#gfClientOptions: arguments for gfClient
+#...: arguments for startBlat
+runBlat<-function(faFile,gfClientOptions='',outFile=gsub('\\.fn?a$','.blat',faFile),gfClient='gfClient',...){
+	port<-startBlat(...)
+	
+	system(sprintf('%s localhost %d / %s %s %s',gfClient,port,faFile,gfClientOptions,outFile))
+
+	killBlat(port)
+}
+
+#kill blat running on port port
+#port: pkill blat running on port port
+killBlat<-function(port){
+	if(!checkBlat(port)){
+		stopError('Blat does not appear to be running on port ',port)
+	}
+	code<-system(sprintf('pkill -f "gfServer *start *localhost *%d">/dev/null',port))
+	if(checkBlat(port)){
+		stopError('Could not kill blat on port ',port)
+	}	
+}
+
+
 #read a blat file
 #fileName: name of file
 #skips: number of lines to skip (5 for a normal blat file)
