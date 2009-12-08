@@ -727,8 +727,21 @@ killBlat<-function(port){
 #calcScore: calculate score column?
 #returns: dataframe of blat data
 readBlat<-function(fileName,skips=5,nrows=-1,calcScore=TRUE){
-	x<-read.table(fileName,skip=skips,sep="\t",stringsAsFactors=FALSE,colClasses=c(rep('numeric',8),rep('character',2),rep('numeric',3),'character',rep('numeric',4),rep('character',3)),nrows=nrows)
-	colnames(x)<-c('match','mismatch','repmatch','ns','qGaps','qGapBases','tGaps','tGapBases','strand','qName','qSize','qStart','qEnd','tName','tSize','tStart','tEnd','blocks','blockSizes','qStarts','tStarts')
+	#read in test lines
+	test<-read.table(fileName,skip=skips,sep="\t",stringsAsFactors=FALSE,nrows=10)
+	thisColNum<-ncol(test)
+	if(!thisColNum %in% c(21,23))stop(simpleError('Wrong number of columns in blat output'))
+	if(thisColNum==21){
+		colNames<-c('match','mismatch','repmatch','ns','qGaps','qGapBases','tGaps','tGapBases','strand','qName','qSize','qStart','qEnd','tName','tSize','tStart','tEnd','blocks','blockSizes','qStarts','tStarts')
+		colClasses<-c(rep('numeric',8),rep('character',2),rep('numeric',3),'character',rep('numeric',4),rep('character',3))
+	}
+	if(thisColNum==23){
+		colNames<-c('match','mismatch','repmatch','ns','qGaps','qGapBases','tGaps','tGapBases','strand','qName','qSize','qStart','qEnd','tName','tSize','tStart','tEnd','blocks','blockSizes','qStarts','tStarts','qAlign','tAlign')
+		colClasses<-c(rep('numeric',8),rep('character',2),rep('numeric',3),'character',rep('numeric',4),rep('character',5))
+	}
+	x<-read.table(fileName,skip=skips,sep="\t",stringsAsFactors=FALSE,colClasses=colClasses,nrows=nrows)
+	colnames(x)<-colNames
+
 	#Score equation from blat's webpage
 	if(calcScore)x$score<-x$match-x$mismatch-x$qGaps-x$tGaps
 	return(x)
