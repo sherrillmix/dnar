@@ -450,6 +450,83 @@ revComp<-function(dnas){
 	return(complimentDna(reverseString(dnas),TRUE))
 }
 
+#find a rough maximum independent set
+#mat: logical matrix of connection or not connected
+#vocal: show progress of matrix and output set?
+mis<-function(mat,vocal=FALSE){
+	#very basic error checks
+	if(is.null(colnames(mat)))colnames(mat)<-1:ncol(mat)
+	if(ncol(mat)!=nrow(mat))stop(simpleError('Square matrix only for MIS'))
+	if(any(!mat %in% c(0,1,TRUE,FALSE)))stop(simpleError('Only binary/logical matrices for MIS'))
+
+	output<-c()
+	while(nrow(mat)>0){
+		if(vocal){message('Matrix:');print(mat)}
+		connects<-apply(mat,1,sum)
+		if(any(connects==1)){
+			#anything only connected to itself can go
+			remove<-connects==1
+			output<-c(output,colnames(mat)[remove])
+			mat<-mat[!remove,!remove,drop=FALSE]
+		}else{
+			#find first node with minimum connections
+			remove<-which.min(connects)
+			output<-c(output,colnames(mat)[remove])
+			mat<-mat[!mat[,remove],!mat[,remove],drop=FALSE]
+		}
+		if(vocal){message('Current Set:');print(output)}
+	}
+	return(output)
+}
+
+#brute force graph coloring
+graphColor<-function(mat,reps=3){
+	N<-nrow(mat)
+	if(N==1)return(1)
+	if(ncol(mat)!=N)stop(simpleError('Square matrix only for coloring'))
+	if(all(mat))return(1:N)
+	#mask out diagonal
+	mat<-mat&!diag(N)
+	degree<-apply(mat,1,sum)
+	if(all(degree==0))return(rep(1,N))
+	possibleOut<-list(rep(NA,reps))
+	for(i in 1:reps){
+		colors<-lapply(1:N,function(x)1:c(max(degree)+1))
+		colorLength<-sapply(colors,length)
+		colorSelector<-colorLength>1
+		while(any(colorSelector)){
+			current<-which(colorSelector)[order(colorLength[colorSelector],-degree[colorSelector],runif(sum(colorSelector)),decreasing=TRUE)][1]
+			colors[[current]]<-min(colors[[current]])
+			neighbors<-which(mat[current,]&colorSelector)
+			sapply(neighbors,function(x,y)colors[[x]]<<-colors[[x]][colors[[x]]!=y],colors[[current]])
+			colorLength<-sapply(colors,length)
+			colorSelector<-colorLength>1
+		}
+		possibleOut[[i]]<-unlist(colors)
+	}
+	best<-which.min(sapply(possibleOut,max))
+	return(possibleOut[[best]])
+}
+
+#read DIMACS file
+read.col<-function(file){
+	x<-readLines(file)
+	y<-x[grep('^e',x)]
+	y<-gsub('^e ','',y)
+	z<-do.call(rbind,lapply(strsplit(y,'\\s'),as.numeric))
+	info<-strsplit(x[grep('^p',x)],'\\s')[[1]]
+	nodes<-as.numeric(info[3])
+	edges<-as.numeric(info[4])
+	if(any(z>nodes))stop(simpleError('Nodes not numbered correctly'))
+	if(nrow(z)!=edges)stop(simpleError('Edges not numbered correctly'))
+	output<-matrix(FALSE,ncol=nodes,nrow=nodes)
+	apply(z,1,function(x){
+		output[x[1],x[2]]<<-TRUE
+		output[x[2],x[1]]<<-TRUE
+	})
+	return(output)
+}
+
 #read fastq file
 #fileName: name of fastq file
 #convert: convert condensed quals to numeric quals?
@@ -842,12 +919,17 @@ parseAce<-function(aceFile,dropMosaik=TRUE,checkSnps=TRUE,vocal=TRUE){
 #low: start point for global alignment
 #high: end point for global alignment
 #lengths: lengths of seqs (probably can go with default in 99% of cases)
+#filter: filter out reads falling outside range?
 #returns: list of aligned seqs in [[1]], logical vector of whether read fell within cut region in [[2]]
-cutReads<-function(seqs,starts,low=min(starts),high=max(starts+nchar(seqs)-1),lengths=nchar(seqs)){
+cutReads<-function(seqs,starts,low=min(starts),high=max(starts+nchar(seqs)-1),lengths=nchar(seqs),filter=TRUE){
 	debug<-TRUE
 	goodReads<-findReads(low,starts,lengths,high)
-	if(!any(goodReads))return(FALSE)
-	thisSeqs<-seqs[goodReads];	starts<-starts[goodReads];	lengths<-lengths[goodReads]
+	if(filter){
+		if(!any(goodReads))return(FALSE)
+		thisSeqs<-seqs[goodReads];	starts<-starts[goodReads];	lengths<-lengths[goodReads]
+	}else{
+		thisSeqs<-seqs
+	}
 	cutlow<-low-starts+1
 	startDash<-0-cutlow+1
 	startDash[startDash<0]<-0
@@ -857,7 +939,7 @@ cutReads<-function(seqs,starts,low=min(starts),high=max(starts+nchar(seqs)-1),le
 	endDash[endDash<0]<-0
 	cuts<-substr(thisSeqs,cutlow,cuthigh)
 	#make a string of dots for cutting
-	dots<-paste(rep('.',100000),collapse='')
+	dots<-paste(rep('.',high-low+1000),collapse='')
 	predots<-substring(dots,1,startDash)
 	postdots<-substring(dots,1,endDash)
 	cuts<-paste(predots,cuts,postdots,sep='')
