@@ -922,14 +922,15 @@ parseAce<-function(aceFile,dropMosaik=TRUE,checkSnps=TRUE,vocal=TRUE){
 #filter: filter out reads falling outside range?
 #returns: list of aligned seqs in [[1]], logical vector of whether read fell within cut region in [[2]]
 cutReads<-function(seqs,starts,low=min(starts),high=max(starts+nchar(seqs)-1),lengths=nchar(seqs),filter=TRUE){
+	#make a string of dots for cutting
+	dots<-paste(rep('.',high-low+1),collapse='')
 	debug<-TRUE
 	goodReads<-findReads(low,starts,lengths,high)
-	if(filter){
-		if(!any(goodReads))return(FALSE)
-		thisSeqs<-seqs[goodReads];	starts<-starts[goodReads];	lengths<-lengths[goodReads]
-	}else{
-		thisSeqs<-seqs
+	if(!any(goodReads)){
+		if(filter)return(FALSE)
+		else return(rep(dots,length(seqs)))
 	}
+	thisSeqs<-seqs[goodReads];	starts<-starts[goodReads];	lengths<-lengths[goodReads]
 	cutlow<-low-starts+1
 	startDash<-0-cutlow+1
 	startDash[startDash<0]<-0
@@ -938,12 +939,17 @@ cutReads<-function(seqs,starts,low=min(starts),high=max(starts+nchar(seqs)-1),le
 	endDash<-high-starts-lengths+1
 	endDash[endDash<0]<-0
 	cuts<-substr(thisSeqs,cutlow,cuthigh)
-	#make a string of dots for cutting
-	dots<-paste(rep('.',high-low+1000),collapse='')
 	predots<-substring(dots,1,startDash)
 	postdots<-substring(dots,1,endDash)
 	cuts<-paste(predots,cuts,postdots,sep='')
-	return(list(cuts,goodReads))
+	if(filter){
+		return(list(cuts,goodReads))
+	}else{
+		out<-rep(NA,length(seqs))
+		out[goodReads]<-cuts
+		out[!goodReads]<-dots
+		return(out)
+	}
 }
 
 #take the output from blat and make continous reads out of it
