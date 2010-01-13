@@ -551,14 +551,23 @@ read.fastq<-function(fileName,convert=TRUE){
 #read solexa fastq file
 #fileName: name of solexa fastq file
 #convert: convert condensed quals to numeric quals?
+#limit: Only read in limit lines
+#vocal: Echo progress messages
 #returns: dataframe with solexa info seq and quals
-read.solexa<-function(fileName,convert=TRUE){
-	x<-readLines(fileName)
+read.solexa<-function(fileName,convert=TRUE,limit=-1,vocal=FALSE){
+	x<-readLines(fileName,n=limit)
+	if(vocal)message('Done reading in')
 	output<-do.call(rbind,strsplit(x,':'))
+	rm(x)
+	if(vocal)message('Do.call done')
 	output<-cbind(output,do.call(rbind,strsplit(output[,5],'[#/]')))
-	output<-as.data.frame(output[,-5])
+	if(vocal)message('2nd do.call done')
+	output<-as.data.frame(output[,-5],stringsAsFactors=FALSE)
 	colnames(output)<-c('instrument','lane','tile','x','seq','rawQual','y','barcode','pair')
-	if(convert)output$qual<-unlist(lapply(output$rawQual,function(x)paste(as.integer(charToRaw(x))-33,collapse=' ')))
+	if(vocal)message('Start convert')
+	if(convert)output$qual<-sapply(output$rawQual,function(x)paste(as.integer(charToRaw(x))-64,collapse=' '))
+	if(vocal)message('Convert done')
+	output$name<-paste(output$instrument,output$lane,output$tile,output$x,output$y,output$barcode,output$pair,sep='_')
 	return(output)
 }
 
