@@ -1167,6 +1167,17 @@ parseGff<-function(gffFile,individuals=NULL,contig=individuals[1]){
 	return(gff)
 }
 
+#seq: sequence
+#gaps: gap characters to remove
+#return: string with no gap characters
+removeGaps<-function(seq,gaps=c('*','-','.')){
+	gsub(sprintf('[%s]+',paste(gaps,collapse='')),'',seq)
+}
+
+#seq: DNA sequence
+#flowOrder: order of nucleotide flows
+#outputLength: minimum output length
+#return: vector of flows
 seq2flow<-function(seq,flowOrder=c('T','A','C','G'),outputLength=NULL){
 	seqSplit<-strsplit(seq,'')[[1]]
 	dif<-seqSplit!=c(seqSplit[-1],'DUMMY')
