@@ -40,6 +40,16 @@ shannon<-function(x,base=exp(1)){
 	return(-sum(x/sum(x)*log(x/sum(x),base)))
 }
 
+#calculate rao diversity of a vector
+rao<-function(x,dist){
+	zeros<-x==0
+	x<-x[!zeros]
+	dist<-dist[!zeros,!zeros]
+	props<-x/sum(x)
+	propTable<-outer(props,props)
+	if(any(dim(propTable)!=dim(dist)))stop(simpleError('Distance and proportion vectors do not match'))
+	return(sum(propTable*dist))
+}
 
 
 
@@ -932,7 +942,7 @@ parseAce<-function(aceFile,dropMosaik=TRUE,checkSnps=TRUE,vocal=TRUE){
 #returns: list of aligned seqs in [[1]], logical vector of whether read fell within cut region in [[2]]
 cutReads<-function(seqs,starts,low=min(starts),high=max(starts+nchar(seqs)-1),lengths=nchar(seqs),filter=TRUE){
 	#make a string of dots for cutting
-	dots<-paste(rep('.',high-low+1),collapse='')
+	dots<-paste(rep('.',max(high-low+1)),collapse='')
 	debug<-TRUE
 	goodReads<-findReads(low,starts,lengths,high)
 	if(!any(goodReads)){
