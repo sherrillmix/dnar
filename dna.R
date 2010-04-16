@@ -1,6 +1,20 @@
 nimblegenPrimers<-c('CTCGAGAATTCTGGATCCTC','GAGGATCCAGAATTCTCGAGTT')
 primers454<-c("GCCTCCCTCGCGCCATCAG","GCCTTGCCAGCCCGCTCAG")
 primerTitanium<-c('CCATCTCATCCCTGCGTGTCTCCGACTCAG','CCTATCCCCTGTGTGCCTTGGCAGTCTCAG')
+ambigousBaseCodes<-c(
+	'R'='AG',
+	'Y'='CT',
+	'M'='AC',
+	'K'='GT',
+	'S'='CG',
+	'W'='AT',
+	'H'='ACT',
+	'B'='CGT',
+	'V'='ACG',
+	'D'='AGT',
+	'N'='ACGT'
+)
+
 
 #convenience function for stop(simpleError())
 stopError<-function(...){
@@ -446,9 +460,18 @@ reverseString<-function(strings){
 }
 #compliment dna 
 #dnas: vector of sequences
-complimentDna<-function(dnas,brackets=TRUE){
+complimentDna<-function(dnas,brackets=TRUE,ambigs=TRUE){
 	finds<-'TGAC'
 	replaces<-'ACTG'
+	#deal with ambigous
+	if(ambigs){
+		sortAmbig<-sapply(lapply(strsplit(ambigousBaseCodes,''),sort),paste,collapse='')
+		revAmbig<-sapply(strsplit(complimentDna(sortAmbig,ambigs=FALSE),''),function(x)paste(sort(x),collapse=''))
+		ambigComp<-names(sortAmbig)[sapply(revAmbig,function(x)which(x==sortAmbig))]
+		finds<-sprintf('%s%s',finds,paste(names(sortAmbig),collapse=''))
+		replaces<-sprintf('%s%s',replaces,paste(ambigComp,collapse=''))
+	}
+
 	if(brackets){finds<-paste(finds,'[]',sep='');replaces<-paste(replaces,'][',sep='')}
 	return(chartr(finds,replaces,dnas))
 }
@@ -586,23 +609,30 @@ read.solexa<-function(fileName,convert=TRUE,limit=-1,vocal=FALSE){
 #returns: regular expression
 ambigous2regex<-function(dna){
 	dna<-toupper(dna)
-	ambig<-c(
-		'R'='AG',
-		'Y'='CT',
-		'M'='AC',
-		'K'='GT',
-		'S'='CG',
-		'W'='AT',
-		'H'='ACT',
-		'B'='CGT',
-		'V'='ACG',
-		'D'='AGT',
-		'N'='ACGT'
-	)
-	for (i in names(ambig)){
-		dna<-gsub(i,paste('[',ambig[i],']',sep=''),dna)
+	for (i in names(ambigousBaseCodes)){
+		dna<-gsub(i,paste('[',ambigousBaseCodes[i],']',sep=''),dna)
 	}
 	return(dna)
+}
+#convert ambigous dna to all possible sequences
+#dna: vector dna containing ambigous bases
+#unlist: return a unlisted vector instead of a list
+#returns: list with each entry containing all combinations for that entry of the vector
+expandAmbigous<-function(dna,delist=FALSE){
+	dna<-toupper(dna)
+	ambigRegex<-sprintf('[%s]',paste(names(ambigousBaseCodes),collapse=''))
+	out<-lapply(dna,function(x){
+		pos<-regexpr(ambigRegex,x)	
+		if(pos!=-1){
+			replaces<-strsplit(ambigousBaseCodes[substring(x,pos,pos)],'')[[1]]
+			new<-rep(x,length(replaces))
+			for(i in 1:length(replaces))substring(new[i],pos,pos)<-replaces[i]
+			out<-expandAmbigous(new,TRUE)
+		}else{out<-x}
+		return(out)
+	})
+	if(delist)out<-unlist(out)
+	return(out)
 }
 
 #read a sanger phred .phd file
