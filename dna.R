@@ -873,13 +873,16 @@ readBlat<-function(fileName,skips=5,nrows=-1,calcScore=TRUE){
 	return(x)
 }
 
-trimEnd<-function(seqs,revCompPrimer,trimmed=rep(FALSE,length(seqs)),minSubstring=8){
+trimEnd<-function(seqs,revCompPrimer,trimmed=rep(FALSE,length(seqs)),minSubstring=8,location='end'){
 	if(length(seqs)!=length(trimmed)) stop(simpleError('Already trimmed vector and seqs vector not same length'))
+	if(!location %in% c('start','end'))stop(simpleError('Please specify location as start or end'))
 	trimSeq<-seqs
 	trimmedBak<-trimmed
-	for(i in nchar(revCompPrimer):minSubstring){
-			  thisRegex<-paste(substr(revCompPrimer,1,i),'$',sep='')
-			  selector<-!trimmed & 1:length(seqs) %in% grep(thisRegex,seqs)
+	nCharPrimer<-nchar(revCompPrimer)
+	for(i in nCharPrimer:minSubstring){
+			  if(location=='end')thisRegex<-paste(substr(revCompPrimer,1,i),'$',sep='')
+			  else thisRegex<-paste('^',substr(revCompPrimer,nCharPrimer-i+1,nCharPrimer),sep='')
+			  selector<-!trimmed & grepl(thisRegex,seqs)
 			  trimSeq[selector]<-gsub(thisRegex,'',trimSeq[selector])
 			  trimmed<-trimmed|selector
 			  message('Found ',sum(selector),' seqs matching ',thisRegex)
