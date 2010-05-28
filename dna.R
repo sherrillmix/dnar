@@ -661,7 +661,7 @@ read.fa<-function(fileName,longNameTrim=TRUE){
 	selector<-grep('^[^>].* .*[^ ]$',x,perl=TRUE)
 	x[selector]<-paste(x[selector],' ',sep='')
 	if(length(x)==0)return(NULL)
-	x<-x[!grepl('^#',x,perl=TRUE)&x!='']
+	x<-x[!grepl('^[#;]',x,perl=TRUE)&x!='']
 	y<-paste(x,collapse="\n")
 	splits<-strsplit(y,'>',fixed=TRUE)[[1]][-1]
 	splits2<-strsplit(splits,"\n",fixed=TRUE)
@@ -681,7 +681,7 @@ read.fa<-function(fileName,longNameTrim=TRUE){
 read.fa2<-function(fileName,longNameTrim=TRUE){
 	x<-readLines(fileName,warn=FALSE)
 	if(length(x)==0)return(NULL)
-	x<-x[!grepl('^#',x,perl=TRUE)&x!='']
+	x<-x[!grepl('^[;#]',x,perl=TRUE)&x!='']
 	nameLines<-grep('^>',x)
 	thisNames<-sub('^>','',x[nameLines])
 	seqs<-apply(cbind(nameLines+1,c(nameLines[-1]-1,length(x))),1,function(coords){
@@ -783,6 +783,21 @@ readBlast<-function(fileName,skips=0,nrows=-1,calcScore=TRUE){
 	if(calcScore)x$score<-x$alignLength-x$mismatch-x$nGap
 	return(x)
 }
+
+readBlast2<-function(fileName,excludeUnculture=TRUE){
+	x<-readLines(fileName)
+	queries<-grep('Query=',x)
+	queryData<-gsub('Query= *','',x[queries])
+	datas<-grep('\\|.*[0-9]+  +[0-9]',x)
+	if(excludeUnculture)datas<-datas[!grepl('(Uncultured)|(Unidentified)',x[datas])]
+	queryVec<-queryData[sapply(datas,function(x)max(which(queries<x)))]
+	dataData<-gsub('  +','\t',x[datas])
+	dataMat<-do.call(rbind,strsplit(dataData,'\t'))
+	out<-data.frame(queryVec,dataMat,stringsAsFactors=FALSE)
+	colnames(out)<-c('query','gNum','descr','score','eval')
+	return(out)
+}
+
 
 
 #start a gfServer on an open port and return port
@@ -1399,7 +1414,52 @@ smooth <- function(data, window,truncateWindow=TRUE) {
 }
 
 
+#names: names of reads e.g. >DRDR12A125
+#samples: sample ID for each above read
+#barcodes: list of vectors of barcodes or barcode/primers with each entry indexed by sample
+#outdir: fileBinirectory to put seperate sffs
+#sffDir: directory to look for sffs
+#baseName: prepend to sample names 
+#sffBinDir: location of sfffile binary
+makeSeperateSffs<-function(names,samples,barcodes,outDir,sffDir,baseName='reads',sffBinDir='',vocal=TRUE){
+	if(length(names)!=length(samples))stop(simpleError('Length of names and sample assignments differ'))
+	if(sffBinDir!='')sffBinDir<-sprintf('%s/',sffBinDir)
+	#apparently sfffile can't find sff files in a directory even though it says it can so we'll just feed it every sff
+	sffFiles<-paste(list.files(sffDir,'\\.sff$',full.names=TRUE),collapse=' ')
 
+	#can't let sfffile break this up for us because some people have overlapping barcodes among samples
+	if(!all(unique(samples) %in% names(barcodes)))stop(simpleError('Please give barcodes for every sample'))
+	for(i in unique(samples)){
+		#outFile<-sprintf('%s/%s%s.sff',outDir,baseName,i)
+		#don't need to include sample since sfffile will do it automatically from the barcode file
+		outFile<-sprintf('%s/%s.sff',outDir,baseName)
+		finalOutFile<-sprintf('%s/%s.%s.sff',outDir,baseName,i)
+		capsOutFile<-sprintf('%s/%s.%s.sff',outDir,baseName,toupper(i))
+		nameFile<-tempfile()
+		selector<-samples==i
+		writeLines(names[selector],nameFile)
+		barcodeFile<-tempfile()
+		thisBarcodes<-barcodes[[i]]
+		barLines<-paste(sprintf('mid = "%s", "%s",2;',i,thisBarcodes),collapse='\n')
+		writeLines(c('GSMIDs','{',barLines,'}'),barcodeFile)
+		cmd<-sprintf('%ssfffile -i %s -o %s -mcf %s -s %s',sffBinDir,nameFile,outFile,barcodeFile,sffFiles)
+		if(vocal)message(cmd)
+		returnCode<-system(cmd,intern=TRUE)
+		if(length(grep('reads written into the SFF file',returnCode))==0)stop(simpleError('Some error in sfffile'))
+		if(length(grep('reads written into the SFF file',returnCode))!=1)stop(simpleError('Too many sff files made'))
+		thisRegex<-sprintf(' *%s: *([0-9]+) reads written into the SFF file\\.',toupper(i))
+		numberWritten<-returnCode[grep(thisRegex,returnCode)]
+		numberWritten<-gsub(thisRegex,'\\1',numberWritten)
+		if(sum(selector)!=numberWritten)browser()#stop(simpleError('Reads written do not match selected reads'))
+		cmd<-sprintf('%ssffinfo -a %s',sffBinDir,capsOutFile)
+		if(vocal)message(' ',cmd)
+		if(length(system(cmd,intern=TRUE))!=sum(selector))stop(simpleError('sffinfo gives different number of reads from selected'))
+		file.rename(capsOutFile,finalOutFile)
+		unlink(barcodeFile)
+		unlink(nameFile)
+	}
+	return(TRUE)
+}
 
 
 
