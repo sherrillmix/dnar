@@ -233,6 +233,75 @@ checkOverlap<-function(starts,ends,tStarts,tEnds,tNames,allCover=FALSE,allCoverF
 	return(overlapNames)
 }
 
+checkOverlapIRange<-function(starts,ends,names,tStarts,tEnds,tNames,qChrom,tChrom,vocal=FALSE,...){
+	library(IRanges)
+	queries<-RangedData(IRanges(starts,end=ends),space=qChrom,names=names)
+	targets<-RangedData(IRanges(tStarts,end=tEnds),space=tChrom,names=tNames)
+	out<-rdapply(RDApplyParams(queries,function(x){
+		thisChr<-unique(space(x))
+		message('Working on ',thisChr)
+		if(length(thisChr)>1)stop(simpleError('Problem with rdapply'))
+		tTree<-IntervalTree(ranges(targets)[[thisChr]])
+		tData<-targets[thisChr]
+		overlaps<-as.data.frame(slot(findOverlaps(ranges(x)[[1]],tTree),'matchMatrix'))
+		xRanges<-ranges(x)[[1]]
+		tRanges<-ranges(tData)[[1]]
+#		browser()
+		#zz<-apply(overlaps,1,function(y){cat('.');matchStats(xRanges[y[1],],tRanges[y[2],])})
+		out<-by(overlaps,overlaps$query,function(thisQ){
+			query<-xRanges[thisQ$query[1],]#ranges(x[thisQ$query[1],])[[1]]
+			matches<-tData[thisQ$subject,]
+			mRanges<-tRanges[thisQ$subject]
+			if(nrow(matches)==0)return(NULL)
+			targetNames<-unique(matches$names)
+			stats<-do.call(rbind,lapply(targetNames,function(tName){
+				target<-mRanges[matches$names==tName,]
+				matchStats(query,target)
+			}))
+			stats$name<-targetNames
+			scores<-stats$qUncover+stats$tUncover
+			stats<-stats[scores==min(scores),]
+			return(stats)
+		})
+		return(out)
+	}))
+#		out<-lapply(unique(x$names),function(thisQ){
+#	cat('.')
+#			query<-ranges(x[x$names==thisQ,])[[1]]
+#			overlap<-slot(findOverlaps(query,tTree),'matchMatrix')
+#			matches<-tData[overlap[,'subject'],]
+#			if(nrow(matches)==0)return(NULL)
+#			targetNames<-unique(matches$names)
+#			stats<-do.call(rbind,lapply(targetNames,function(tName){
+#				target<-ranges(matches[matches$names==tName,])[[1]]
+#				print(system.time(out<-matchStats(query,target)))
+#				return(out)
+#			}))
+#			stats$name<-targetNames
+#			scores<-stats$qUncover+stats$tUncover
+#			stats<-stats[scores==min(scores),]
+#			return(stats)
+#		})
+#		browser()
+#		return(out)
+#	}))
+	return(out)
+}
+
+matchStats<-function(qRanges,tRanges){
+	qStart<-min(start(qRanges))
+	qEnd<-max(end(qRanges))
+	tRanges<-restrict(tRanges,qStart,qEnd)
+	tGaps<-gaps(tRanges,start=qStart,end=qEnd)
+	qGaps<-gaps(qRanges,start=qStart,end=qEnd)
+	uncoveredQuery<-sum(width(safeIntersect(tGaps,qRanges)))
+	uncoveredTarget<-sum(width(safeIntersect(qGaps,tRanges)))
+	coveredBases<-sum(width(safeIntersect(qRanges,tRanges)))
+	coveredGaps<-sum(width(safeIntersect(qGaps,tGaps)))
+	output<-data.frame('qUncover'=uncoveredQuery,'tUncover'=uncoveredTarget,'coverMatch'=coveredBases,'gapMatch'=coveredGaps)
+	return(output)
+}
+
 checkOverlapMulti<-function(starts,ends,tStarts,tEnds,tNames,qChrom,tChrom,vocal=FALSE,...){
 	results<-rep(NA,length(qChrom))
 	for(i in unique(qChrom)){
@@ -243,6 +312,29 @@ checkOverlapMulti<-function(starts,ends,tStarts,tEnds,tNames,qChrom,tChrom,vocal
 	}
 	return(results)
 }
+
+safeIntersect<-function(x,y){
+	if(any(width(x)>0)&&any(width(y)>0)) return(intersect(x,y))
+	else return(IRanges(0,width=0))
+}
+
+
+findBestBlockMatch<-function(starts,ends,tStarts,tEnds,tNames,vocal=FALSE,returnMismatch=FALSE,sep='|'){
+	if(length(starts)!=length(ends))stop(simpleError('starts and ends not same length'))
+	if(length(tStarts)!=length(tEnds))stop(simpleError('tStarts and tEnds not same length'))
+	if(length(tStarts)!=length(tNames))stop(simpleError('tStarts and tNames not same length'))
+	targets<-RangedData(ranges = IRanges(tStarts,end=tEnds), space=tNames)
+	query<-IRanges(starts,end=ends)
+	matchData<-do.call(rbind,lapply(ranges(targets),function(x,y)matchStats(y,x),query))
+	matchData$score<-matchData$coverMatch+matchData$gapMatch
+	matchData<-matchData[matchData$score==max(matchData$score),]
+	if(nrow(matchData)!=1&&sum(duplicated(matchData))!=nrow(matchData)-1){message('Multiple equal matches');browser()}
+	output<-paste(rownames(matchData),collapse=sep)
+	if(returnMismatch)output<-list(output,matchData)
+	return(output)
+}
+
+
 
 matchBlocks<-function(starts,ends,tStarts,tEnds){
 	if(length(starts)!=length(ends))stop(simpleError('starts and ends not same length'))
@@ -267,7 +359,11 @@ checkCover<-function(tStart,tEnd,starts,ends){
 	ends<-ends[goodStarts]
 	output<-rep(0,tEnd-tStart+1)
 	names(output)<-tStart:tEnd
-	tmp<-apply(cbind(starts,ends),1,function(x,start,end){selector<-x[1]:x[2];selector<-paste(selector[selector<=end&selector>=start]);output[selector]<<-output[selector]+1},tStart,tEnd)
+	tmp<-apply(cbind(starts,ends),1,function(x,start,end){
+		selector<-x[1]:x[2]
+		selector<-paste(selector[selector<=end&selector>=start])
+		output[selector]<<-output[selector]+1}
+	,tStart,tEnd)
 	return(output)
 }
 
@@ -1104,7 +1200,7 @@ blatFindGaps<-function(qStarts,tStarts,blockSizes){
 blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),lengths=TRUE,extraCols=NULL,extraSplits=NULL,introns=FALSE,prefix='ex',adjustStart=0){
 	if(any(c(length(chroms),length(names),length(strands),length(starts))!=length(ends)))stop(simpleError('Different lengths for chrom, strand, starts, lengths'))
 	startsList<-strsplit(starts,',')
-	if(adjustStart!=0)startsList<-lapply(startsList,function(x)as.numeric(x)+1)
+	if(adjustStart!=0)startsList<-lapply(startsList,function(x)as.numeric(x)+adjustStart)
 	exonCounts<-exonCountsStrand<-sapply(startsList,length)
 	endsList<-strsplit(ends,',')
 	if(lengths)endsList<-mapply(function(x,y)as.numeric(x)+as.numeric(y)-1,endsList,startsList)
