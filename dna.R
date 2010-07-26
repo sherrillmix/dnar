@@ -21,6 +21,19 @@ stopError<-function(...){
 	stop(simpleError(paste(...,sep='')))
 }
 
+#convenience function for binding a bunch of sequences together
+#...: various sequences to split into a matrix
+#fill: fill sequence to pad ends of sequences
+seqSplit<-function(...,fill=NULL){
+	seqs<-c(...)
+	seqN<-nchar(seqs)
+	maxN<-max(seqN)
+	if(is.null(fill)&&any(seqN!=maxN))stop(simpleError('All sequences not same length'))
+	else seqs<-paste(seqs,sapply(maxN-seqN,function(x)paste(rep(fill,x),collapse='')),sep='')
+	return(do.call(rbind,strsplit(seqs,'')))
+}
+
+
 #convenience function for selecting elements from a matrix
 indexMatrix<-function(x,y,mat){
 	if(!is.integer(x)){tmp<-1:nrow(mat);names(tmp)<-rownames(mat);x<-tmp[x]}
@@ -28,6 +41,14 @@ indexMatrix<-function(x,y,mat){
 	if(length(x)!=length(y)|max(x)>nrow(mat)|max(y)>ncol(mat))stop(simpleError("Dimensions don't match up"))
 	index<-(y-1)*nrow(mat)+x
 	return(mat[index])
+}
+
+#convenience function for picking first most abundant of a set of values
+#values: a vector of values
+#returns: first most abundant value as a string
+mostAbundant<-function(values){
+	tmp<-table(values)
+	return(names(tmp)[tmp==max(tmp)][1])
 }
 
 #pastes characters into string
@@ -130,16 +151,18 @@ quickRare<-function(sample,step=10){
 
 }
 
-rareEquation<-function(sample,sampleSize){
+#speciesCounts: vector of counts for each "species" e.g. c(10,100,5)
+#sampleSize: single value of number of draws from sample 
+rareEquation<-function(speciesCounts,sampleSize){
 	#numbers too big
 	#output2<-length(sample)-choose(sum(sample),sampleSize)^-1*sum(choose(sum(sample)-sample,sampleSize))
 	#message(output2)
 	#no way to log sum 
 	#logSum<-log(sum(choose(sum(sample)-sample,sampleSize)))
 	#output<-length(sample) - exp(- lchoose(sum(sample),sampleSize) + logSum)
-	output<-sum(1-exp(lchoose(sum(sample)-sample,sampleSize)-lchoose(sum(sample),sampleSize)))
+	output<-sum(1-exp(lchoose(sum(speciesCounts)-speciesCounts,sampleSize)-lchoose(sum(speciesCounts),sampleSize)))
 	
-	if(is.na(output)|is.infinite(output))browser()
+	if(is.na(output)||is.infinite(output))browser()
 	return(output)
 }
 
@@ -710,6 +733,11 @@ ambigous2regex<-function(dna){
 	}
 	return(dna)
 }
+bases2ambigous<-function(bases){
+	if(length(bases)==1)return(bases)
+	names(ambigousBaseCodes)[paste(sort(bases),collapse='')==ambigousBaseCodes]
+}
+
 #convert ambigous dna to all possible sequences
 #dna: vector dna containing ambigous bases
 #unlist: return a unlisted vector instead of a list
@@ -1366,7 +1394,7 @@ indexFlow<-function(flow,coords){
 
 flow2seq<-function(flow,flowOrder=c('T','A','C','G')){
 	chars<-rep(flowOrder,length.out=length(flow))
-	output<-paste(rep(chars,round(flow)),collapse='')
+	output<-paste(rep(chars,round(as.numeric(flow))),collapse='')
 	return(output)
 }
 
@@ -1558,8 +1586,100 @@ makeSeperateSffs<-function(names,samples,barcodes,outDir,sffDir,baseName='reads'
 }
 
 
+#find and remove columns that are entirely gaps
+removeGapColumns<-function(seqs,gapChars=c('-','.')){
+	if(any(nchar(seqs)!=nchar(seqs[1])))stop(simpleError('All seqs not same length'))
+	regex<-sprintf('[%s]',paste(gapChars,collapse=''))
+	invRegex<-sprintf('[^%s]',paste(gapChars,collapse=''))
+	#nonGap<-#unique(unlist(gregexpr(invRegex,seqs[1:min(1000,length(seqs))])))
+	nonGap<-c()
+	nSeq<-length(seqs)
+	for(i in seq(1,length(seqs),500)){
+		#if(i %% 1000==1)message(i)
+		nonGap<-unique(c(nonGap,unlist(gregexpr(invRegex,seqs[i:min(i+499,nSeq)]))))
+	}
+	baseRanges<-index2range(nonGap)
+	out<-apply(apply(baseRanges,1,function(x)substring(seqs,x[1],x[2])),1,paste,collapse='')
+	if(any(nchar(out)!=nchar(out[1])))stop(simpleError('Output seqs not same length'))
+	return(out)
+}
+
+#isGap<-apply(do.call(rbind,strsplit(scer$alignCut,'')),2,function(x)mean(x=='-'))>.5
+
+#noGapSeq: sequence to expand
+#seqLength: output sequence length
+#isNotGap: indexes of non gap positions (should be >= nchar(noGapSeq))
+addGaps<-function(noGapSeq,isNotGap,seqLength=max(isNotGap)){
+	if(is.logical(isNotGap))isNotGap<-which(isNotGap)
+	isNotGap<-isNotGap[isNotGap<=seqLength]
+	if(length(isNotGap)<nchar(noGapSeq))noGapSeq<-substring(noGapSeq,1,length(isNotGap))
+	outSeq<-paste(rep('-',seqLength),collapse='')
+	for(i in 1:length(isNotGap))substring(outSeq,isNotGap[i],isNotGap[i])<-substring(noGapSeq,i,i)
+	return(outSeq)
+}
+
+#forward:sequence for forward primer (ambigous bases ok)
+#reverse:sequence for reverse primer (ambigous bases ok)
+#seqs: gapped sequences to look for primer in
+#refSeq: reference sequence for base counting
+#groups: groupings for display next to sequence plots
+#fName: forward primer name
+#rName: reverse primer name
+#outDir: directory to put output files in
+#baseName: string to prepend on file names
+plotPrimers<-function(forward,reverse,seqs,refSeq,groups,fName='Forward',rName='Reverse',outDir='.',baseName='',...){
+	outDir<-sprintf('%s/%s',outDir,baseName)
+	revPos<-findPrimer(seqs,reverse=reverse)
+	forPos<-findPrimer(seqs,forward)
+	cuts<-substring(seqs,forPos[1],revPos[2])
+	primerCut1<-substring(seqs,forPos[1],forPos[2])
+	primerCut2<-substring(seqs,revPos[1],revPos[2])
+	notGap<-which(strsplit(refSeq,'')[[1]]!='-')
+
+	gapFor<-addGaps(forward,which(apply(do.call(rbind,strsplit(primerCut1,'')),2,function(x)mean(x=='-'))<.5))
+	gapRev<-addGaps(revComp(reverse),which(apply(do.call(rbind,strsplit(primerCut2,'')),2,function(x)mean(x=='-'))<.5))
+
+	repNum<-ceiling(length(seqs)/20)
+	gapRevRep<-expandAmbigous(gapRev)[[1]]
+	gapRevRep<-rep(gapRevRep,length.out=max(repNum,length(gapRevRep)))
+	gapForRep<-expandAmbigous(gapFor)[[1]]
+	gapForRep<-rep(gapForRep,length.out=max(repNum,length(gapForRep)))
+
+	gapCombo<-addGaps(sprintf('%s%s',forward,revComp(reverse)),notGap[(notGap>=forPos[1]&notGap<=forPos[2])|(notGap>=revPos[1]&notGap<=revPos[2])]-forPos[1]+1)
+	gapComboRep<-gsub('-','.',expandAmbigous(gapCombo)[[1]])
+	gapComboRep<-rep(gapComboRep,length.out=max(repNum,length(gapComboRep)))
 
 
+	plotSeq(c(primerCut2,gapRevRep),sprintf('%s%s.png',outDir,rName),groups=c(groups,rep(sprintf('$%s',rName),length(gapRevRep))),refSeq=refSeq,xstart=gap2NoGap(refSeq,revPos[1]),...)
+	plotSeq(c(primerCut1,gapForRep),sprintf('%s%s.png',outDir,fName),groups=c(groups,rep(sprintf('$%s',fName),length(gapForRep))),refSeq=refSeq,xstart=gap2NoGap(refSeq,forPos[1]),...)
+	plotSeq(c(cuts,gapComboRep),sprintf('%s%s--%s.png',outDir,fName,rName),groups=c(groups,rep(sprintf('$%s--%s',fName,rName),length(gapComboRep))),refSeq=refSeq,xstart=gap2NoGap(refSeq,forPos[1]),...)
+}
+
+#forward:sequence for forward primer (ambigous bases ok)
+#reverse:sequence for reverse primer (ambigous bases ok)
+#seqs: gapped sequences to look for primer in
+#padding: extra bases to include to each side
+findPrimer<-function(seqs,forward=NULL,reverse=NULL,padding=0){
+	if(is.null(forward)&&is.null(reverse))stop(simpleError('Please provide forward or reverse primer'))
+	trims<-degap(seqs)
+
+	if(!is.null(reverse)){
+		revExpand<-expandAmbigous(revComp(reverse))[[1]]
+		reverseStart<-sapply(trims,function(x)multiMismatch(revExpand,x)[2],USE.NAMES=FALSE)
+		revEnd<-mostAbundant(mapply(noGap2Gap,seqs,reverseStart+nchar(reverse)-1+padding,USE.NAMES=FALSE))
+		revStart<-mostAbundant(mapply(noGap2Gap,seqs,reverseStart-padding,USE.NAMES=FALSE))
+		if(is.null(forward))return(as.numeric(c(revStart,revEnd)))
+	}
+	if(!is.null(forward)){
+		forExpand<-expandAmbigous(forward)[[1]]
+		forwardStart<-sapply(trims,function(x)multiMismatch(forExpand,x)[2],USE.NAMES=FALSE)
+		forStart<-mostAbundant(mapply(noGap2Gap,seqs,forwardStart-padding,USE.NAMES=FALSE))
+		forEnd<-mostAbundant(mapply(noGap2Gap,seqs,forwardStart+nchar(forward)-1+padding,USE.NAMES=FALSE))
+		if(is.null(reverse))return(as.numeric(c(forStart,forEnd)))
+	}
+
+	return(as.numeric(c(forStart,revEnd)))
+}
 
 
 
