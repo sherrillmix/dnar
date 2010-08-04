@@ -828,7 +828,7 @@ read.fa2<-function(fileName,longNameTrim=TRUE){
 #target: order for query to be sorted into
 #strict: if true error if query not in target, if false append unknown queries to end of target
 #...: arguments for order
-orderIn<-function(query,target,strict=FALSE,...){
+orderIn<-function(query,target,strict=FALSE,orderFunc=order,...){
 	if(any(!query %in% target)){
 		if(strict){
 			stop(simpleError('Query not in target'))
@@ -836,7 +836,7 @@ orderIn<-function(query,target,strict=FALSE,...){
 			target<-c(target,unique(query[!query %in% target]))
 		}
 	}
-	newOrder<-order(sapply(query,function(x)min(which(x==target))),...)
+	newOrder<-orderFunc(sapply(query,function(x)min(which(x==target))),...)
 	return(newOrder)
 }
 
@@ -1393,6 +1393,9 @@ indexFlow<-function(flow,coords){
 }
 
 flow2seq<-function(flow,flowOrder=c('T','A','C','G')){
+	if(is.character(flow)&length(flow)==1)flow<-strsplit(flow,'\t')[[1]]
+	flow<-as.numeric(flow)
+	flow[flow<0]<-0
 	chars<-rep(flowOrder,length.out=length(flow))
 	output<-paste(rep(chars,round(as.numeric(flow))),collapse='')
 	return(output)
