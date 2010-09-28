@@ -71,9 +71,14 @@ s2c<-function (string){
 }
 
 #calculate shannon diversity of a vector
-shannon<-function(x,base=exp(1)){
-	return(-sum(x/sum(x)*log(x/sum(x),base)))
+shannon<-function(x,base=exp(1),standardize=TRUE){
+   if(any(x<0))stop(simpleError('Please give positive values of x'))
+   x<-x[x>0]
+   if(standardize)prop<-x/sum(x)
+   else prop<-x
+   return(-sum(prop*log(prop,base)))
 }
+
 
 #calculate rao diversity of a vector
 rao<-function(x,dist){
@@ -86,13 +91,36 @@ rao<-function(x,dist){
 	return(sum(propTable*dist))
 }
 
+#jensen shannon divergence between two probability distributions
+jensenShannon<-function(x,y,base=2){
+	propX<-x/sum(x)
+	propY<-y/sum(y)
+	shannonCalc<-shannon((propX+propY)/2,base,FALSE)-shannon(propX,base,FALSE)/2-shannon(propY,base,FALSE)/2
+	kullbackCalc<-.5*kullback(propX,(propY+propX)/2,base,FALSE)+.5*kullback(propY,(propY+propX)/2,base,FALSE)
+	if(round(shannonCalc,5)!=round(kullbackCalc,5))stop(simpleError('Problem calculating shannon jensen'))
+	return(kullbackCalc)
+}
+
+#Kullback–Leibler divergence between two probability distributions
+kullback<-function(x,y,base=2,standardize=TRUE){
+	selector<-y>0&x>0
+	x<-x[selector];y<-y[selector]
+	if(standardize){
+		propX<-x/sum(x)
+		propY<-y/sum(y)
+	}else{
+		propX<-x
+		propY<-y
+	}
+	sum(propX*log(propX/propY,base))
+}
 
 
 #calculate heights for a 'weblogo' like plot from a matrix of rows acgt, cols base position
 #http://en.wikipedia.org/wiki/Weblogo
 calcWebLogo<-function(baseMat,num=rep(9999,ncol(baseMat))){
-	baseMat<-apply(baseMat,1,function(x)x/sum(x))
-	shannon<-apply(rbind(baseMat,num),1,function(x){x[1:4]*(2-(shannon(x[1:4],base=2)+3/2/ln(2)/x[5]))})
+baseMat<-apply(baseMat,1,function(x)x/sum(x))
+shannon<-apply(rbind(baseMat,num),1,function(x){x[1:4]*(2-(shannon(x[1:4],base=2)+3/2/ln(2)/x[5]))})
 
 ########WORK HERE
 
