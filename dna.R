@@ -21,6 +21,31 @@ stopError<-function(...){
 	stop(simpleError(paste(...,sep='')))
 }
 
+
+#string: string to be hashed
+#hashSize: size of hashed strings
+#everyBase: generate a hash every X strings
+#start: output labels start from e.g. label starting from 1000
+hashString<-function(string,hashSize,everyBase=1,start=1){
+	cuts<-seq(1,nchar(string)-hashSize+1,everyBase)
+	hashes<-substring(string,cuts,cuts+hashSize-1)
+	return(data.frame('forw'=hashes,'revComp'=revComp(hashes),'start'=cuts,'end'=cuts+hashSize-1,stringsAsFactors=FALSE))
+}
+
+#string: string to have case toggled
+toggleCase<-function(string){
+	chartr(paste(letters,LETTERS,collapse='',sep=''),paste(LETTERS,letters,collapse='',sep=''),string)
+}
+
+#pattern: look for pattern in string
+#strings: look for pattern in strings
+highlightString<-function(pattern,strings){
+	locs<-gregexpr(pattern,strings)
+	nLetter<-nchar(pattern)
+	strings<-mapply(function(x,y){y<-y[y!=-1];for(i in y)substring(x,i,i+nLetter-1)<-toggleCase(substring(x,i,i+nLetter-1));return(x)},strings,locs,USE.NAMES=FALSE)
+	return(strings)
+}
+
 #convenience function for binding a bunch of sequences together
 #...: various sequences to split into a matrix
 #fill: fill sequence to pad ends of sequences
@@ -485,6 +510,7 @@ startStop2Range<-function(starts,stops){
 #suffix: regex to select file names
 readFaDir<-function(dir='.',suffix='\\.fn?a$'){
 	faFiles<-list.files(dir,suffix)
+	if(length(faFiles)<1)stop(simpleError('No fa files found'))
 	for(i in faFiles){
 		tmp<-read.fa(sprintf('%s/%s',dir,i))
 		tmp$file<-i
@@ -830,16 +856,19 @@ read.fa<-function(fileName,longNameTrim=TRUE){
 	return(output)
 }
 #alternative version of the above (a bit quicker)
-read.fa2<-function(fileName,longNameTrim=TRUE){
-	x<-readLines(fileName,warn=FALSE)
+read.fa2<-function(fileName,longNameTrim=TRUE,...){
+	x<-readLines(fileName,warn=FALSE,...)
 	if(length(x)==0)return(NULL)
 	x<-x[!grepl('^[;#]',x,perl=TRUE)&x!='']
 	nameLines<-grep('^>',x)
 	thisNames<-sub('^>','',x[nameLines])
+	if(any(grep(' [^ ]',x[-nameLines][3],perl=TRUE)))hasSpaces<-TRUE
+	else hasSpaces<-FALSE
 	seqs<-apply(cbind(nameLines+1,c(nameLines[-1]-1,length(x))),1,function(coords){
-		if(coords[1]<=coords[2])return(paste(x[coords[1]:coords[2]],collapse=''))
+		if(coords[1]<=coords[2])return(paste(x[coords[1]:coords[2]],collapse=ifelse(hasSpaces,' ','')))
 		else return('')
 	})
+	seqs<-gsub('  +',' ',seqs,perl=TRUE)
 
 	output<-data.frame('longName'=thisNames,'seq'=seqs,stringsAsFactors=FALSE)
 	if(longNameTrim){
