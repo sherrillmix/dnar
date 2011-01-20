@@ -946,6 +946,7 @@ parseEqualLines<-function(nameLine,firstDel=TRUE){
 #addBracket: add > to start of names?
 write.fa<-function(names,dna,fileName,addBracket=FALSE){
 	if(addBracket|any(grep('^[^>]',names)))names<-paste('>',names,sep='')
+	dna<-sub(' +$','',dna,perl=TRUE)
 	output<-paste(names,dna,sep="\n")
 	writeLines(output,sep="\n",con=fileName)
 }
