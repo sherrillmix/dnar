@@ -869,6 +869,7 @@ read.fa2<-function(fileName,longNameTrim=TRUE,...){
 		else return('')
 	})
 	seqs<-gsub('  +',' ',seqs,perl=TRUE)
+	seqs<-sub(' $','',seqs,perl=TRUE)
 
 	output<-data.frame('longName'=thisNames,'seq'=seqs,stringsAsFactors=FALSE)
 	if(longNameTrim){
