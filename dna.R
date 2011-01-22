@@ -1836,7 +1836,7 @@ connectGenomes<-function(tStarts,qStarts,blockSizes,tRange,qRange,yPos=c(1,2),co
 #qRange: 2 element vector of range for second set
 #names: 2 element vector of names to display on left axis
 #main: title for plot
-drawTwoCoords<-function(blat,tRange=c(1,blat$tSize[1]),qRange=c(1,blat$qSize[1],names=blat[1,c('tName','qName')],main=''){
+drawTwoCoords<-function(blat,tRange=c(1,blat$tSize[1]),qRange=c(1,blat$qSize[1]),names=blat[1,c('tName','qName')],main=''){
 	plot(1,1,type='n',xlim=c(0,1),ylim=c(1,2),xaxt='n',yaxt='n',ylab='',xlab='',xaxs='i',yaxs='i',las=1,main=main)
 	axis(2,1:2,names,las=1)
 	prettyT<-pretty(tRange)
