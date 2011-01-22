@@ -1050,7 +1050,7 @@ killBlat<-function(port){
 #nrows: number of rows to read in (-1 for all)
 #calcScore: calculate score column?
 #returns: dataframe of blat data
-readBlat<-function(fileName,skips=5,nrows=-1,calcScore=TRUE){
+readBlat<-function(fileName,skips=5,nrows=-1,calcScore=TRUE,fixStarts=TRUE){
 	#read in test lines
 	test<-read.table(fileName,skip=skips,sep="\t",stringsAsFactors=FALSE,nrows=10)
 	thisColNum<-ncol(test)
@@ -1068,6 +1068,14 @@ readBlat<-function(fileName,skips=5,nrows=-1,calcScore=TRUE){
 
 	#Score equation from blat's webpage
 	if(calcScore)x$score<-x$match-x$mismatch-x$qGaps-x$tGaps
+	if(fixStarts){
+		x$qStartsBak<-x$qStarts
+		###############WORK HERE
+		negSelect<-x$strand=='-'
+		x$qStarts[negSelect]<-mapply(function(x,y,z){paste(sort(as.numeric(z)-as.numeric(x)-as.numeric(y)),collapse=',')},strsplit(x$qStarts[negSelect],','),strsplit(x$blockSizes[negSelect],','),x$qSize[negSelect])
+		x$blockSizesBak<-x$blockSizes
+		x$blockSizes[negSelect]<-sapply(strsplit(x$blockSizesBak[negSelect],','),function(x)paste(rev(x),collapse=','))
+	}
 	return(x)
 }
 
@@ -1743,7 +1751,104 @@ findPrimer<-function(seqs,forward=NULL,reverse=NULL,padding=0){
 	return(as.numeric(c(forStart,revEnd)))
 }
 
+#condense any blocks of matches that aren't separated by condenseLimit bases
+#start: comma separated string of start locations
+#block: comma separated string of match lengts
+#condenseLimit: condense two neighboring matches together if separated by <=condenseLimit
+#start2: a second comma separeted string of start locations. do not condense unless both starts are <=condenseLimit
+condenseCoords<-function(start,block,condenseLimit=5,start2=NULL){
+  	ends<-start+block-1
+	isDual<-!is.null(start2)
+	if(isDual)ends2<-start2+block-1
+	if(length(start)>1){
+		gaps<-start[-1]-ends[-length(ends)]-1
+		if(isDual){
+			gaps2<-start2[-1]-ends2[-length(ends2)]-1
+			condenseSelect<-which(gaps<=condenseLimit&gaps2<=condenseLimit)
+		}else{
+			condenseSelect<-which(gaps<=condenseLimit)
+		}
+		if(any(condenseSelect)){
+			start<-start[-(condenseSelect+1)]
+			ends<-ends[-condenseSelect]
+			if(isDual){
+				start2<-start2[-(condenseSelect+1)]
+				ends2<-ends2[-condenseSelect]
+			}
+		}
+	}
+	if(isDual)return(data.frame('start'=start,'end'=ends,'start2'=start2,'end2'=ends2))
+	else return(data.frame('start'=start,'end'=ends))
+}
+
+#convert starts and ends of matches to gaps between those matches
+#x: a 2xX matrix/dataframe of start and end coords with columns $start and $end
+findCoordGaps<-function(x){
+	if(nrow(x)>1)return(data.frame('start'=x$end[-nrow(x)]+1,'end'=x$start[-1]-1))
+	else return(data.frame('start'=-99999,'end'=-999999)[0,])
+}
+
+#condense several starts and ends to unique ranges
+#x: a 2xX matrix/dataframe of start and end coords
+#nullReturn: return NULL if NULL or 0 rows? else error
+reduceCoords<-function(x,nullReturn=FALSE){
+	if(nullReturn&is.null(x))return(NULL)
+	allX<-do.call(rbind,x)
+	if(nullReturn&nrow(allX)==0)return(NULL)
+	if(nrow(allX)==1)return(allX)
+	indices<-unique(unlist(apply(allX,1,function(x)x[1]:x[2])))
+	return(index2range(indices))
+}
 
 
+#convenience function 
+#x: coords to standardize to 0-1
+#range: range to standardize to
+standardizeCoords<-function(x,range)(x-range[1])/diff(range)
 
+#add polygons connecting two horizontal lines showing matches between two sequences
+#tStarts: comma separated string of start coords for first set
+#qStarts: comma separated string of start coords for second set
+#blockSizes: comma separated string of length of matches
+#tRange: 2 element vector of range for first set
+#qRange: 2 element vector of range for second set
+#yPos: 2 element vector y positions to connect
+#condenseLimit: connect matches not separated by more than condenseLimit
+#...: extra arguments for polygon e.g. col
+connectGenomes<-function(tStarts,qStarts,blockSizes,tRange,qRange,yPos=c(1,2),condenseLimit=5,...){
+	tStart<-as.numeric(strsplit(tStarts,',')[[1]])
+	qStart<-as.numeric(strsplit(qStarts,',')[[1]])
+	blocks<-as.numeric(strsplit(blockSizes,',')[[1]])
+	nBlocks<-length(tStart)
+	if(nBlocks!=length(qStart)|nBlocks!=length(blocks))stop(simpleError('Start and block size numbers do not match up'))
+	pieces<-condenseCoords(tStart,blocks,condenseLimit,start2=qStart)
+	pieces$tStart<-standardizeCoords(pieces$start,tRange)
+	pieces$tEnd<-standardizeCoords(pieces$end,tRange)
+	pieces$qStart<-standardizeCoords(pieces$start2,qRange)
+	pieces$qEnd<-standardizeCoords(pieces$end2,qRange)
+	mapply(function(tS,qS,tE,qE,yPos)polygon(c(tS,qS,qE,tE),c(yPos[1:2],yPos[2:1]),...),pieces$tStart,pieces$qStart,pieces$tEnd,pieces$qEnd,MoreArgs=list(yPos))
+	return(NULL)
+}
+
+
+#blat: a blat data.frame e.g. from readBlat
+#tRange: 2 element vector of range for first set
+#qRange: 2 element vector of range for second set
+#names: 2 element vector of names to display on left axis
+#main: title for plot
+drawTwoCoords<-function(blat,tRange=c(1,blat$tSize[1]),qRange=c(1,blat$qSize[1],names=blat[1,c('tName','qName')],main=''){
+	plot(1,1,type='n',xlim=c(0,1),ylim=c(1,2),xaxt='n',yaxt='n',ylab='',xlab='',xaxs='i',yaxs='i',las=1,main=main)
+	axis(2,1:2,names,las=1)
+	prettyT<-pretty(tRange)
+	axis(1,standardizeCoords(prettyT,tRange),prettyT)
+	#segments(c(0,0),1:2,c(1,1),1:2)
+	#prettyRead<-seq(readRange[1],readRange[2],100)
+	prettyQ<-pretty(qRange)
+	axis(3,standardizeCoords(prettyQ,qRange),prettyQ)
+	#segments(prettyStandardRead,rep(1.98,length(prettyRead)),prettyStandardRead,rep(2.02,length(prettyRead)))
+	apply(blat,1,function(x)connectGenomes(x['tStarts'],x['qStarts'],x['blockSizes'],tRange,qRange,col=ifelse(x['strand']=='+','#FF000044','#0000FF44'),border=NA,yPos=c(1,2)))
+}
+
+
+#data.frame of amino acids
 aminoAcids<-data.frame('codon'=c('UUU','UUC','UCU','UCC','UAU','UAC','UGU','UGC','UUA','UCA','UAA','UGA','UUG','UCG','UAG','UGG','CUU','CUC','CCU','CCC','CAU','CAC','CGU','CGC','CUA','CUG','CCA','CCG','CAA','CAG','CGA','CGG','AUU','AUC','ACU','ACC','AAU','AAC','AGU','AGC','AUA','ACA','AAA','AGA','AUG','ACG','AAG','AGG','GUU','GUC','GCU','GCC','GAU','GAC','GGU','GGC','GUA','GUG','GCA','GCG','GAA','GAG','GGA','GGG'),'abbr'=c('Phe','Phe','Ser','Ser','Tyr','Tyr','Cys','Cys','Leu','Ser','Ochre','Opal','Leu','Ser','Amber','Trp','Leu','Leu','Pro','Pro','His','His','Arg','Arg','Leu','Leu','Pro','Pro','Gln','Gln','Arg','Arg','Ile','Ile','Thr','Thr','Asn','Asn','Ser','Ser','Ile','Thr','Lys','Arg','Met','Thr','Lys','Arg','Val','Val','Ala','Ala','Asp','Asp','Gly','Gly','Val','Val','Ala','Ala','Glu','Glu','Gly','Gly'),'code'=c('F','F','S','S','Y','Y','C','C','L','S','X','X','L','S','X','W','L','L','P','P','H','H','R','R','L','L','P','P','Q','Q','R','R','I','I','T','T','N','N','S','S','I','T','K','R','M','T','K','R','V','V','A','A','D','D','G','G','V','V','A','A','E','E','G','G'),'name'=c('Phenylalanine','Phenylalanine','Serine','Serine','Tyrosine','Tyrosine','Cysteine','Cysteine','Leucine','Serine','Stop','Stop','Leucine','Serine','Stop','Tryptophan','Leucine','Leucine','Proline','Proline','Histidine','Histidine','Arginine','Arginine','Leucine','Leucine','Proline','Proline','Glutamine','Glutamine','Arginine','Arginine','Isoleucine','Isoleucine','Threonine','Threonine','Asparagine','Asparagine','Serine','Serine','Isoleucine','Threonine','Lysine','Arginine','Methionine','Threonine','Lysine','Arginine','Valine','Valine','Alanine','Alanine','Aspartic acid','Aspartic acid','Glycine','Glycine','Valine','Valine','Alanine','Alanine','Glutamic acid','Glutamic acid','Glycine','Glycine'),row.names=c('UUU','UUC','UCU','UCC','UAU','UAC','UGU','UGC','UUA','UCA','UAA','UGA','UUG','UCG','UAG','UGG','CUU','CUC','CCU','CCC','CAU','CAC','CGU','CGC','CUA','CUG','CCA','CCG','CAA','CAG','CGA','CGG','AUU','AUC','ACU','ACC','AAU','AAC','AGU','AGC','AUA','ACA','AAA','AGA','AUG','ACG','AAG','AGG','GUU','GUC','GCU','GCC','GAU','GAC','GGU','GGC','GUA','GUG','GCA','GCG','GAA','GAG','GGA','GGG'),stringsAsFactors=FALSE)
