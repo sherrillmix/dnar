@@ -481,6 +481,7 @@ if (any(grep("Error",loader))){
 	}
 }else{
 	checkCoverage <- function(starts, lengths, outLength=max(starts+lengths-1)) {
+		if(is.null(starts))return(NULL)
 		if(length(starts)!=length(lengths))stop(simpleError('starts and lengths different lengths'))
 		if(any(starts+lengths-1>outLength))stop(simpleError('starts+length-1 greater than outLength'))
 		ans<-.C('checkCover',as.integer(rep(0,outLength)),as.integer(starts),as.integer(starts+lengths-1),as.integer(length(starts)))	
@@ -508,11 +509,11 @@ startStop2Range<-function(starts,stops){
 #read in a bunch of fasta files in a target directory
 #dir: target directory
 #suffix: regex to select file names
-readFaDir<-function(dir='.',suffix='\\.fn?a$'){
+readFaDir<-function(dir='.',suffix='\\.fn?a$',...){
 	faFiles<-list.files(dir,suffix)
 	if(length(faFiles)<1)stop(simpleError('No fa files found'))
 	for(i in faFiles){
-		tmp<-read.fa(sprintf('%s/%s',dir,i))
+		tmp<-read.fa(sprintf('%s/%s',dir,i),...)
 		tmp$file<-i
 		if(exists('allFa'))allFa<-rbind(allFa,tmp)
 		else allFa<-tmp
@@ -880,6 +881,58 @@ read.fa2<-function(fileName,longNameTrim=TRUE,...){
 	}
 	return(output)
 }
+#read a sam file
+#fileName:name of file
+#returns: dataframe with columns 
+read.sam<-function(fileName,nrows=-1,skips=0,smaller=TRUE){
+	colNames<-c('qName','flag','tName','pos','mapq','cigar','mrnm','mpos','isize','seq','qual','tags')
+	if(smaller)colClasses<-c('character','numeric','character','numeric','null','character','null','null','null','character','null')
+	else colClasses<-c('character','numeric','character',rep('numeric',2),rep('character',2),rep('numeric',2),rep('character',2))
+	
+
+	#-15 to exclude tags that can be variable length and tab seperated
+	#will need to modify if we want tags
+	x<-scan(fileName, what = list('character'='','numeric'=1,'null'=NULL)[colClasses[-12]], fill=TRUE,skip=skips,nmax=nrows,flush=TRUE)
+	#x<-read.table(fileName,skip=skips,sep="\t",stringsAsFactors=FALSE,colClasses=colClasses,nrows=nrows,col.names=colNames)
+	isNull<-sapply(x,is.null)
+	x<-do.call(data.frame,c(x[!isNull],stringsAsFactors=FALSE))
+	colnames(x)<-colNames[-12][!isNull]
+	return(x)
+}
+
+cigarToBlock<-function(cigars,starts){
+	if(any(grep('[^0-9MIDN]',cigars)))stop(simpleError('Only MIDN cigar operations supported'))
+	tPos<-starts
+	qPos<-rep(1,length(starts))
+	stillWorking<-rep(TRUE,length(cigars))
+	qStarts<-tStarts<-rep('',length(starts))
+	blockSizes<-tStarts<-rep('',length(starts))
+	while(any(stillWorking)){
+		for(i in c('M','I','D','N')){
+			regex<-sprintf('^([0-9]+)%s',i)
+			matches<-grep(regex,cigars[stillWorking])
+			if(!any(matches))next()
+			num<-as.numeric(sub(sprintf('%s.*',regex),'\\1',cigars[stillWorking][matches]))
+			cigars[stillWorking][matches]<-sub(regex,'',cigars[stillWorking][matches])
+			if(i %in% c('M')){
+				tStarts[stillWorking][matches]<-sprintf('%s,%d',tStarts[stillWorking][matches],tPos[stillWorking][matches])
+				qStarts[stillWorking][matches]<-sprintf('%s,%d',qStarts[stillWorking][matches],qPos[stillWorking][matches])
+				blockSizes[stillWorking][matches]<-sprintf('%s,%d',blockSizes[stillWorking][matches],num)
+			}
+			if(i %in% c('M','D','N')){
+				tPos[stillWorking][matches]<-num+tPos[stillWorking][matches]	
+			}
+			if(i %in% c('M','I')){
+				qPos[stillWorking][matches]<-num+qPos[stillWorking][matches]	
+			}
+			stillWorking[stillWorking]<-nchar(cigars[stillWorking])>0
+		}
+	}
+	qStarts<-sub('^,','',qStarts)
+	tStarts<-sub('^,','',tStarts)
+	blockSizes<-sub('^,','',blockSizes)
+	return(data.frame('qStarts'=qStarts,'tStarts'=tStarts,'sizes'=blockSizes))
+}
 
 #return order of one vector in another
 #query: values to be sorted in target order
@@ -1069,12 +1122,14 @@ readBlat<-function(fileName,skips=5,nrows=-1,calcScore=TRUE,fixStarts=TRUE){
 	#Score equation from blat's webpage
 	if(calcScore)x$score<-x$match-x$mismatch-x$qGaps-x$tGaps
 	if(fixStarts){
+		#blat uses 0-index starts and 1-index ends
+		#put starts in 1-index
+		x$tStart<-x$tStart+1
+		x$qStart<-x$qStart+1
+		x$tStarts<-sapply(strsplit(x$tStarts,','),function(x)paste(as.numeric(x)+1,collapse=','))
 		x$qStartsBak<-x$qStarts
-		###############WORK HERE
 		negSelect<-x$strand=='-'
-		x$qStarts[negSelect]<-mapply(function(x,y,z){paste(sort(as.numeric(z)-as.numeric(x)-as.numeric(y)),collapse=',')},strsplit(x$qStarts[negSelect],','),strsplit(x$blockSizes[negSelect],','),x$qSize[negSelect])
-		x$blockSizesBak<-x$blockSizes
-		x$blockSizes[negSelect]<-sapply(strsplit(x$blockSizesBak[negSelect],','),function(x)paste(rev(x),collapse=','))
+		x$qStarts[negSelect]<-mapply(function(x,y,z){paste(as.numeric(z)-as.numeric(x)-as.numeric(y)+1,collapse=',')},strsplit(x$qStarts[negSelect],','),strsplit(x$blockSizes[negSelect],','),x$qSize[negSelect])
 	}
 	return(x)
 }
@@ -1483,7 +1538,8 @@ read.bed<-function(fileName){
 	for(i in 1:(length(tracks)-1)){
 		output[[trackNames[i]]]<-data.frame(do.call(rbind,strsplit(x[(tracks[i]+1):(tracks[i+1]-1)],'\t')),stringsAsFactors=FALSE)
 		thisNames<-c('chr','start','end')
-		if(ncol(output[[trackNames[i]]])>3)thisNames<-c(thisNames,'name')
+		if(ncol(output[[trackNames[i]]])==4)thisNames<-c(thisNames,'name')
+		if(ncol(output[[trackNames[i]]])==12)thisNames<-c(thisNames,'name','score','strand','thickStart','thickEnd','rgb','blockCount','blockSizes','blockStarts')
 		colnames(output[[trackNames[i]]])<-thisNames
 		output[[trackNames[i]]][,'start']<-as.numeric(output[[trackNames[i]]][,'start'])
 		output[[trackNames[i]]][,'end']<-as.numeric(output[[trackNames[i]]][,'end'])
@@ -1752,28 +1808,40 @@ findPrimer<-function(seqs,forward=NULL,reverse=NULL,padding=0){
 }
 
 #condense any blocks of matches that aren't separated by condenseLimit bases
-#start: comma separated string of start locations
-#block: comma separated string of match lengts
+#start: vector of start locations
+#block: vector of match lengths
 #condenseLimit: condense two neighboring matches together if separated by <=condenseLimit
-#start2: a second comma separeted string of start locations. do not condense unless both starts are <=condenseLimit
+#start2: a vector of start locations. do not condense unless both starts are <=condenseLimit
 condenseCoords<-function(start,block,condenseLimit=5,start2=NULL){
   	ends<-start+block-1
+	startOrder<-order(start)
+	startRank<-rank(start)
+	start<-start[startOrder]
+	ends<-ends[startOrder]
+
 	isDual<-!is.null(start2)
-	if(isDual)ends2<-start2+block-1
+	if(isDual){
+		ends2<-start2+block-1
+		startOrder2<-order(start2)
+		startRank2<-rank(start2)
+		start2<-start2[startOrder2]
+		ends2<-ends2[startOrder2]
+	}
+
 	if(length(start)>1){
-		gaps<-start[-1]-ends[-length(ends)]-1
+		gaps<-c(start[-1]-ends[-length(ends)]-1,Inf)
 		if(isDual){
-			gaps2<-start2[-1]-ends2[-length(ends2)]-1
-			condenseSelect<-which(gaps<=condenseLimit&gaps2<=condenseLimit)
+			gaps2<-c(start2[-1]-ends2[-length(ends2)]-1,Inf)[startRank2]
+			condenseSelect<-which((gaps[startRank]<=condenseLimit&gaps2[startRank2]<=condenseLimit)[startOrder])
 		}else{
-			condenseSelect<-which(gaps<=condenseLimit)
+			condenseSelect<-which((gaps[startRank]<=condenseLimit)[startOrder])
 		}
 		if(any(condenseSelect)){
 			start<-start[-(condenseSelect+1)]
 			ends<-ends[-condenseSelect]
 			if(isDual){
-				start2<-start2[-(condenseSelect+1)]
-				ends2<-ends2[-condenseSelect]
+				start2<-start2[startRank2][-(condenseSelect+1)]
+				ends2<-ends2[startRank2][-condenseSelect]
 			}
 		}
 	}
