@@ -931,7 +931,7 @@ cigarToBlock<-function(cigars,starts){
 	qStarts<-sub('^,','',qStarts)
 	tStarts<-sub('^,','',tStarts)
 	blockSizes<-sub('^,','',blockSizes)
-	return(data.frame('qStarts'=qStarts,'tStarts'=tStarts,'sizes'=blockSizes))
+	return(data.frame('qStarts'=qStarts,'tStarts'=tStarts,'sizes'=blockSizes,stringsAsFactors=FALSE))
 }
 
 #return order of one vector in another
