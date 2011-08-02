@@ -1917,6 +1917,78 @@ drawTwoCoords<-function(blat,tRange=c(1,blat$tSize[1]),qRange=c(1,blat$qSize[1])
 	apply(blat,1,function(x)connectGenomes(x['tStarts'],x['qStarts'],x['blockSizes'],tRange,qRange,col=ifelse(x['strand']=='+','#FF000044','#0000FF44'),border=NA,yPos=c(1,2)))
 }
 
+#look for primers in sequences
+#seqs: dna sequences
+#barcode: barcodes to look for
+#primer: primers to look for 
+#id: id to assign for barcode-primer matches (can be a dataframe with same # of rows as barcodes to return multiple columns)
+#returns: vector of ids (or NA if no match) or data.frame of same columns as id (if id is a dataframe)
+#example: fa<-cbind(fa,findPrimers(fa$seq,primers$barcode,primers$primerHybrid,primers[,c('primer','base','remove','tissue','sample','dir')]))
+#example: fa$primer<-findPrimers(fa$seq,primers$barcode,primers$primerHybrid,primers$name) 
+findPrimers<-function(seqs,barcode,primer=rep('',length(barcode)),id,vocal=FALSE){
+	if(length(seqs)<1) stop(simpleError("No sequences given"))
+	numPrimers<-length(primer)
+	#is ids a data frame or a vector?
+	#dfIds<-is.data.frame(id)
+	if(!is.data.frame(id))id<-data.frame('id'=id,stringsAsFactors=FALSE)
+	if(length(barcode)!=numPrimers|nrow(id)!=numPrimers) stop(simpleError("Length of barcode, primer and id not equal"))
+	primerA454=toupper("gcctccctcgcgccatcag");
+	primerB454=toupper("gccttgccagcccgctcag");
+	seqs<-toupper(seqs)
+	#Not sure this is actually going to find anything or not
+	if(any(grep(paste('^',primerA454,sep=""),seqs))|any(grep(paste('^',primerB454,sep=""),seqs))) stop(simpleError("454 primers still attached to start of sequence"))
+	regexprs<-paste('^',barcode,ambigous2regex(primer),sep="")
+	print(regexprs)
+	if(any(table(regexprs)>1)){
+		print(table(regexprs)[table(regexprs)>1])
+		browser()
+		stop(simpleError('Found duplicate barcode-primers'))
+	}
+	fakeRow<-id[1,,drop=FALSE]
+	fakeRow[1,]<-NA
+	output<-fakeRow[rep(1,length(seqs)),,drop=FALSE]
+	for (i in 1:numPrimers){
+		#check for primer
+		selector<-grep(regexprs[i],seqs)
+		if(vocal)message('Primer ',id[i,1],' found ',length(selector),' sequences (',regexprs[i],')')
+		if(any(selector)){
+			output[selector,]<-id[rep(i,length(selector)),,drop=FALSE]
+		}
+	}
+	#need to check for reaching the opposite primer?
+	if(vocal)message('Found ',sum(!is.na(output[,1])),' sequences out of ',length(seqs),' possible')
+	#reduce dimensions if a single column output
+	if(ncol(output)==1)output<-output[,1]
+	return(output)
+}
+
+#calculate the number of combinations possible from nGroups groups with groupsize members and n observations
+#nGroups: number of equally sized groups
+#groupSize: size of the equally sized groups
+#n: number of observations pulled from the individuals
+#returns: number of combinations containing at least one individual from each group
+chooseAtLeastOneFromEach<-function(nGroups,groupSize,n){
+	if(nGroups<=0)return(0)
+	if(nGroups>1){
+		children<-sapply(1:(nGroups-1),function(x)chooseAtLeastOneFromEach(nGroups-x,groupSize,n))
+		nChildren<-sapply(1:(nGroups-1),function(x)choose(nGroups,x))
+	}else{
+		nChildren<-0
+		children<-0
+	}
+	answer<-choose(nGroups*groupSize,n)-sum(children*nChildren)
+	return(answer)
+}
+
+#calculate the probability of observing observedX species from nGroups groups with groupsize members with n observations
+#nGroups: number of equally sized groups
+#groupSize: size of the equally sized groups
+#n: number of observations pulled from the individuals
+#observedX: number of species observed
+#returns: probability of observing observedX species from nGroups groups with groupsize members with n observations
+pRare<-function(nGroups,groupSize,n,observedX){
+	choose(nGroups,observedX)*chooseAtLeastOneFromEach(observedX,groupSize,n)/choose(nGroups*groupSize,n)
+}
 
 #data.frame of amino acids
 aminoAcids<-data.frame('codon'=c('UUU','UUC','UCU','UCC','UAU','UAC','UGU','UGC','UUA','UCA','UAA','UGA','UUG','UCG','UAG','UGG','CUU','CUC','CCU','CCC','CAU','CAC','CGU','CGC','CUA','CUG','CCA','CCG','CAA','CAG','CGA','CGG','AUU','AUC','ACU','ACC','AAU','AAC','AGU','AGC','AUA','ACA','AAA','AGA','AUG','ACG','AAG','AGG','GUU','GUC','GCU','GCC','GAU','GAC','GGU','GGC','GUA','GUG','GCA','GCG','GAA','GAG','GGA','GGG'),'abbr'=c('Phe','Phe','Ser','Ser','Tyr','Tyr','Cys','Cys','Leu','Ser','Ochre','Opal','Leu','Ser','Amber','Trp','Leu','Leu','Pro','Pro','His','His','Arg','Arg','Leu','Leu','Pro','Pro','Gln','Gln','Arg','Arg','Ile','Ile','Thr','Thr','Asn','Asn','Ser','Ser','Ile','Thr','Lys','Arg','Met','Thr','Lys','Arg','Val','Val','Ala','Ala','Asp','Asp','Gly','Gly','Val','Val','Ala','Ala','Glu','Glu','Gly','Gly'),'code'=c('F','F','S','S','Y','Y','C','C','L','S','X','X','L','S','X','W','L','L','P','P','H','H','R','R','L','L','P','P','Q','Q','R','R','I','I','T','T','N','N','S','S','I','T','K','R','M','T','K','R','V','V','A','A','D','D','G','G','V','V','A','A','E','E','G','G'),'name'=c('Phenylalanine','Phenylalanine','Serine','Serine','Tyrosine','Tyrosine','Cysteine','Cysteine','Leucine','Serine','Stop','Stop','Leucine','Serine','Stop','Tryptophan','Leucine','Leucine','Proline','Proline','Histidine','Histidine','Arginine','Arginine','Leucine','Leucine','Proline','Proline','Glutamine','Glutamine','Arginine','Arginine','Isoleucine','Isoleucine','Threonine','Threonine','Asparagine','Asparagine','Serine','Serine','Isoleucine','Threonine','Lysine','Arginine','Methionine','Threonine','Lysine','Arginine','Valine','Valine','Alanine','Alanine','Aspartic acid','Aspartic acid','Glycine','Glycine','Valine','Valine','Alanine','Alanine','Glutamic acid','Glutamic acid','Glycine','Glycine'),row.names=c('UUU','UUC','UCU','UCC','UAU','UAC','UGU','UGC','UUA','UCA','UAA','UGA','UUG','UCG','UAG','UGG','CUU','CUC','CCU','CCC','CAU','CAC','CGU','CGC','CUA','CUG','CCA','CCG','CAA','CAG','CGA','CGG','AUU','AUC','ACU','ACC','AAU','AAC','AGU','AGC','AUA','ACA','AAA','AGA','AUG','ACG','AAG','AGG','GUU','GUC','GCU','GCC','GAU','GAC','GGU','GGC','GUA','GUG','GCA','GCG','GAA','GAG','GGA','GGG'),stringsAsFactors=FALSE)
