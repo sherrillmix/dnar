@@ -788,10 +788,18 @@ ambigous2regex<-function(dna){
 	}
 	return(dna)
 }
+#convert set of single bases to ambigous code
+#bases: vector of single character base strings
 bases2ambigous<-function(bases){
+	bases<-sort(unique(bases))
+	nBases<-nchar(bases[1])
+	if(any(nchar(bases)!=nBases))stop(simpleError('Convert bases to ambigous requires same length sequences'))
 	if(length(bases)==1)return(bases)
-	names(ambigousBaseCodes)[paste(sort(bases),collapse='')==ambigousBaseCodes]
+	if(nBases>1)return(paste(sapply(1:nBases,function(x)bases2ambigous(substring(bases,x,x))),collapse=''))
+	else return(names(ambigousBaseCodes)[paste(bases,collapse='')==ambigousBaseCodes])
 }
+
+
 
 #convert ambigous dna to all possible sequences
 #dna: vector dna containing ambigous bases
@@ -900,13 +908,21 @@ read.sam<-function(fileName,nrows=-1,skips=0,smaller=TRUE){
 	return(x)
 }
 
-cigarToBlock<-function(cigars,starts){
+#convert cigar and starts to qStarts, tStarts, blockSizes as in blat
+#cigars: vector of SAM cigar strings
+#starts: vector of starting positions in target
+#returns: dataframe with qStarts,tStarts,sizes or dataframe with starts, ends and ids
+cigarToBlock<-function(cigars,starts,startEnds=FALSE){
 	if(any(grep('[^0-9MIDN]',cigars)))stop(simpleError('Only MIDN cigar operations supported'))
 	tPos<-starts
 	qPos<-rep(1,length(starts))
 	stillWorking<-rep(TRUE,length(cigars))
 	qStarts<-tStarts<-rep('',length(starts))
 	blockSizes<-tStarts<-rep('',length(starts))
+	if(startEnds){
+		startEndsOut<-data.frame('start'=-1,'end'=-1,'id'=-1)[0,]
+		ids<-1:length(starts)
+	}
 	while(any(stillWorking)){
 		for(i in c('M','I','D','N')){
 			regex<-sprintf('^([0-9]+)%s',i)
@@ -915,9 +931,13 @@ cigarToBlock<-function(cigars,starts){
 			num<-as.numeric(sub(sprintf('%s.*',regex),'\\1',cigars[stillWorking][matches]))
 			cigars[stillWorking][matches]<-sub(regex,'',cigars[stillWorking][matches])
 			if(i %in% c('M')){
+			if(any(is.na(num)))browser()
 				tStarts[stillWorking][matches]<-sprintf('%s,%d',tStarts[stillWorking][matches],tPos[stillWorking][matches])
 				qStarts[stillWorking][matches]<-sprintf('%s,%d',qStarts[stillWorking][matches],qPos[stillWorking][matches])
 				blockSizes[stillWorking][matches]<-sprintf('%s,%d',blockSizes[stillWorking][matches],num)
+				if(startEnds){
+					startEndsOut<-rbind(startEndsOut,data.frame('start'=tPos[stillWorking][matches],'end'=tPos[stillWorking][matches]+num-1,'id'=ids[stillWorking][matches]))
+				}
 			}
 			if(i %in% c('M','D','N')){
 				tPos[stillWorking][matches]<-num+tPos[stillWorking][matches]	
@@ -931,7 +951,8 @@ cigarToBlock<-function(cigars,starts){
 	qStarts<-sub('^,','',qStarts)
 	tStarts<-sub('^,','',tStarts)
 	blockSizes<-sub('^,','',blockSizes)
-	return(data.frame('qStarts'=qStarts,'tStarts'=tStarts,'sizes'=blockSizes,stringsAsFactors=FALSE))
+	if(startEnds)return(startEndsOut)
+	else return(data.frame('qStarts'=qStarts,'tStarts'=tStarts,'sizes'=blockSizes,stringsAsFactors=FALSE))
 }
 
 #return order of one vector in another
@@ -1043,7 +1064,7 @@ readBlast2<-function(fileName,excludeUnculture=TRUE){
 #startPort: begin looking for open (no other R called gfServer using) ports on startPort and add 1 until finding one
 #nibSuffix: nib files end in nibSuffix
 #wait: number of 5 second intervals to wait for gfServer to finish starting before giving up
-startBlat<-function(nibDir,options='',gfServer='gfServer',startPort=37900,nibSuffix='.nib',wait=120){
+startBlat<-function(nibDir,options='',gfServer='gfServer',bit2=NULL,startPort=37900,nibSuffix='.nib',wait=120){
 	port<-startPort
 	counter<-1
 	while(checkBlat(port)){
@@ -1051,11 +1072,15 @@ startBlat<-function(nibDir,options='',gfServer='gfServer',startPort=37900,nibSuf
 		if(counter>30)stop(simpleError('All 30 checked ports taken'))
 		counter<-counter+1
 	}
-	system(sprintf('%s start localhost %d %s %s/*%s',gfServer,port,options,nibDir,nibSuffix),wait=FALSE)
+	if(!is.null(bit2))cmd<-sprintf('%s start localhost %d %s %s',gfServer,port,options,bit2)
+	else cmd<-sprintf('%s start localhost %d %s %s/*%s',gfServer,port,options,nibDir,nibSuffix)
+	message(cmd)
+	system(cmd,wait=FALSE)
 	counter<-1
 	while(system(sprintf('%s status localhost %d >/dev/null',gfServer,port),ignore.stderr=TRUE)!=0){
 		Sys.sleep(5)
 		if(counter>wait){
+			message("Blat took too long")
 			killBlat(port)
 			stopError('gfServer took longer than ',wait*5,' seconds to start')
 		}
@@ -1079,7 +1104,9 @@ checkBlat<-function(port){
 runBlat<-function(faFile,gfClientOptions='',outFile=gsub('\\.fn?a$','.blat',faFile),gfClient='gfClient',...){
 	port<-startBlat(...)
 	
-	system(sprintf('%s localhost %d / %s %s %s',gfClient,port,faFile,gfClientOptions,outFile))
+	cmd<-sprintf('%s localhost %d / %s %s %s',gfClient,port,faFile,gfClientOptions,outFile)
+	message(cmd)
+	system(cmd)
 
 	killBlat(port)
 }
@@ -1103,9 +1130,9 @@ killBlat<-function(port){
 #nrows: number of rows to read in (-1 for all)
 #calcScore: calculate score column?
 #returns: dataframe of blat data
-readBlat<-function(fileName,skips=5,nrows=-1,calcScore=TRUE,fixStarts=TRUE){
+readBlat<-function(fileName,skips=5,nrows=-1,calcScore=TRUE,fixStarts=TRUE,...){
 	#read in test lines
-	test<-read.table(fileName,skip=skips,sep="\t",stringsAsFactors=FALSE,nrows=10)
+	test<-read.table(fileName,skip=skips,sep="\t",stringsAsFactors=FALSE,nrows=10,...)
 	thisColNum<-ncol(test)
 	if(!thisColNum %in% c(21,23))stop(simpleError('Wrong number of columns in blat output'))
 	if(thisColNum==21){
@@ -1116,7 +1143,7 @@ readBlat<-function(fileName,skips=5,nrows=-1,calcScore=TRUE,fixStarts=TRUE){
 		colNames<-c('match','mismatch','repmatch','ns','qGaps','qGapBases','tGaps','tGapBases','strand','qName','qSize','qStart','qEnd','tName','tSize','tStart','tEnd','blocks','blockSizes','qStarts','tStarts','qAlign','tAlign')
 		colClasses<-c(rep('numeric',8),rep('character',2),rep('numeric',3),'character',rep('numeric',4),rep('character',5))
 	}
-	x<-read.table(fileName,skip=skips,sep="\t",stringsAsFactors=FALSE,colClasses=colClasses,nrows=nrows)
+	x<-read.table(fileName,skip=skips,sep="\t",stringsAsFactors=FALSE,colClasses=colClasses,nrows=nrows,...)
 	colnames(x)<-colNames
 
 	#Score equation from blat's webpage
@@ -1127,9 +1154,11 @@ readBlat<-function(fileName,skips=5,nrows=-1,calcScore=TRUE,fixStarts=TRUE){
 		x$tStart<-x$tStart+1
 		x$qStart<-x$qStart+1
 		x$tStarts<-sapply(strsplit(x$tStarts,','),function(x)paste(as.numeric(x)+1,collapse=','))
+		x$qStarts<-sapply(strsplit(x$qStarts,','),function(x)paste(as.numeric(x)+1,collapse=','))
 		x$qStartsBak<-x$qStarts
 		negSelect<-x$strand=='-'
-		x$qStarts[negSelect]<-mapply(function(x,y,z){paste(as.numeric(z)-as.numeric(x)-as.numeric(y)+1,collapse=',')},strsplit(x$qStarts[negSelect],','),strsplit(x$blockSizes[negSelect],','),x$qSize[negSelect])
+		#qSize-(blockSizes-1)-(qStarts-1)
+		x$qStarts[negSelect]<-mapply(function(x,y,z){paste(as.numeric(z)-as.numeric(x)-as.numeric(y)+2,collapse=',')},strsplit(x$qStarts[negSelect],','),strsplit(x$blockSizes[negSelect],','),x$qSize[negSelect])
 	}
 	return(x)
 }
@@ -1560,26 +1589,26 @@ degap<-function(seqs,extraChars=''){
 #ambigousNumThreshold: Throw reads with more than ambigousNumThreshold matches above matchThreshold
 #debug: Display debug messages
 trimBlat<-function(blat,ambigousThreshold,matchThreshold,ambigousNumThreshold=1,debug=FALSE){
-		goodHits<-tapply(blat$score,blat$qName,function(x,y)sum(x>=max(x)*y),ambigousThreshold)
-		selector<-goodHits>ambigousNumThreshold
-		message(sum(selector),' reads have at least ',ambigousNumThreshold,' matches more than max(match)*',ambigousThreshold,'. Discarding.')
-		selector<-!blat$qName %in% names(goodHits)[selector]
-		if(debug)print(t(t(tapply(blat[!selector,'qName'],blat[!selector,'file'],function(x)length(unique(x))))))
-		blat<-blat[selector,]
-		goodHits<-tapply(blat$score,blat$qName,function(x)max(x))
-		goodHits<-data.frame('qName'=names(goodHits),'maximumScore'=goodHits,stringsAsFactors=FALSE)
-		numCheck<-nrow(blat)
-		blat<-merge(blat,goodHits,all.x=TRUE)
-		if(nrow(blat)!=numCheck|any(is.na(blat$maximumScore)))stop(simpleError('Problem finding max score'))
-		numCheck<-length(unique(blat$qName))
-		blat<-blat[blat$score==blat$maximumScore,]
-		if(ambigousNumThreshold==1&nrow(blat)!=numCheck)stop(simpleError('Problem selecting max score read'))
-		if(ambigousNumThreshold!=1)message('Returning multiple matches')
-		selector<-apply(blat[,c('match','qSize')],1,function(x,y)x['match']<(x['qSize'])*y,matchThreshold)
-		message(sum(selector),' reads have a match less than qSize*',matchThreshold,'. Discarding.')
-		if(debug){print(t(t(tapply(blat[selector,'qName'],blat[selector,'file'],function(x)length(unique(x))))));browser()}
-		blat<-blat[!selector,]
-		return(blat)
+	goodHits<-tapply(blat$score,blat$qName,function(x,y)sum(x>=max(x)*y),ambigousThreshold)
+	selector<-goodHits>ambigousNumThreshold
+	message(sum(selector),' reads have at least ',ambigousNumThreshold,' matches more than max(match)*',ambigousThreshold,'. Discarding.')
+	selector<-!blat$qName %in% names(goodHits)[selector]
+	if(debug)print(t(t(tapply(blat[!selector,'qName'],blat[!selector,'file'],function(x)length(unique(x))))))
+	blat<-blat[selector,]
+	goodHits<-tapply(blat$score,blat$qName,function(x)max(x))
+	goodHits<-data.frame('qName'=names(goodHits),'maximumScore'=goodHits,stringsAsFactors=FALSE)
+	numCheck<-nrow(blat)
+	blat<-merge(blat,goodHits,all.x=TRUE)
+	if(nrow(blat)!=numCheck|any(is.na(blat$maximumScore)))stop(simpleError('Problem finding max score'))
+	numCheck<-length(unique(blat$qName))
+	blat<-blat[blat$score==blat$maximumScore,]
+	if(ambigousNumThreshold==1&nrow(blat)!=numCheck)stop(simpleError('Problem selecting max score read'))
+	if(ambigousNumThreshold!=1)message('Returning multiple matches')
+	selector<-apply(blat[,c('match','qSize')],1,function(x,y)x['match']<(x['qSize'])*y,matchThreshold)
+	message(sum(selector),' reads have a match less than qSize*',matchThreshold,'. Discarding.')
+	if(debug){print(t(t(tapply(blat[selector,'qName'],blat[selector,'file'],function(x)length(unique(x))))));browser()}
+	blat<-blat[!selector,]
+	return(blat)
 }
 
 #blat: dataframe from readBlat
