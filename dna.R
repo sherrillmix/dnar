@@ -1997,7 +1997,7 @@ findPrimers<-function(seqs,barcode,primer=rep('',length(barcode)),id,vocal=FALSE
 #n: number of observations pulled from the individuals
 #returns: number of combinations containing at least one individual from each group
 chooseAtLeastOneFromEach<-function(nGroups,groupSize,n){
-	if(nGroups<=0)return(0)
+	if(nGroups<=0|nGroups>n)return(0)
 	if(nGroups>1){
 		children<-sapply(1:(nGroups-1),function(x)chooseAtLeastOneFromEach(nGroups-x,groupSize,n))
 		nChildren<-sapply(1:(nGroups-1),function(x)choose(nGroups,x))
