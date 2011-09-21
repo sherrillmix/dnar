@@ -509,10 +509,14 @@ startStop2Range<-function(starts,stops){
 #read in a bunch of fasta files in a target directory
 #dir: target directory
 #suffix: regex to select file names
-readFaDir<-function(dir='.',suffix='\\.fn?a$',...){
-	faFiles<-list.files(dir,suffix)
+#recursive: recurse through data directory?
+#vocal: status message for each file loading
+#...: extra arguments to read.fa
+readFaDir<-function(dir='.',suffix='\\.fn?a$',recursive=FALSE,vocal=FALSE,...){
+	faFiles<-list.files(dir,suffix,recursive=recursive)
 	if(length(faFiles)<1)stop(simpleError('No fa files found'))
 	for(i in faFiles){
+		if(vocal)message('Working on ',i)
 		tmp<-read.fa(sprintf('%s/%s',dir,i),...)
 		tmp$file<-i
 		if(exists('allFa'))allFa<-rbind(allFa,tmp)
