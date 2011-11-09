@@ -1135,6 +1135,9 @@ killBlat<-function(port){
 #calcScore: calculate score column?
 #returns: dataframe of blat data
 readBlat<-function(fileName,skips=5,nrows=-1,calcScore=TRUE,fixStarts=TRUE,...){
+	#test for empty file
+	test<-readLines(fileName,n=6)
+	if(length(test)-5<1)return(NULL) 
 	#read in test lines
 	test<-read.table(fileName,skip=skips,sep="\t",stringsAsFactors=FALSE,nrows=10,...)
 	thisColNum<-ncol(test)
