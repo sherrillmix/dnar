@@ -1844,11 +1844,14 @@ findPrimer<-function(seqs,forward=NULL,reverse=NULL,padding=0){
 }
 
 #condense any blocks of matches that aren't separated by condenseLimit bases
-#start: vector of start locations
-#block: vector of match lengths
+#start: vector (or string) of start locations
+#block: vector (or string)  of match lengths
 #condenseLimit: condense two neighboring matches together if separated by <=condenseLimit
-#start2: a vector of start locations. do not condense unless both starts are <=condenseLimit
+#start2: a vector (or string) of start locations. do not condense unless both starts are <=condenseLimit
 condenseCoords<-function(start,block,condenseLimit=5,start2=NULL){
+	if(is.character(start))start<-as.numeric(strsplit(start,',')[[1]])
+	if(is.character(block))block<-as.numeric(strsplit(block,',')[[1]])
+	if(!is.null(start2)&&is.character(start2))start2<-as.numeric(strsplit(start2,',')[[1]])
   	ends<-start+block-1
 	startOrder<-order(start)
 	startRank<-rank(start)
@@ -1857,6 +1860,7 @@ condenseCoords<-function(start,block,condenseLimit=5,start2=NULL){
 
 	isDual<-!is.null(start2)
 	if(isDual){
+		if(start2[1]>start2[length(start2)])start2<-0-start2-block+1
 		ends2<-start2+block-1
 		startOrder2<-order(start2)
 		startRank2<-rank(start2)
