@@ -846,26 +846,34 @@ read.phd<-function(fileName,trimEnds=TRUE,trimQual=30){
 
 #read a fasta file
 #fileName:name of file
+#longNameTrim:trim off anything after a space for name column (preserve original in long name)
+#assumeSingleLine:don't process sequence lines. just assume they're one line per sequence
 #returns: dataframe with columns name (name between > and the first ' '), seq (sequence), and longName (the whole > line)
-read.fa<-function(fileName,longNameTrim=TRUE){
+read.fa<-function(fileName,longNameTrim=TRUE,assumeSingleLine=FALSE){
 	x<-readLines(fileName)
-	selector<-grep('^[^>].* .*[^ ]$',x,perl=TRUE)
-	x[selector]<-paste(x[selector],' ',sep='')
-	if(length(x)==0)return(NULL)
-	x<-x[!grepl('^[#;]',x,perl=TRUE)&x!='']
-	y<-paste(x,collapse="\n")
-	splits<-strsplit(y,'>',fixed=TRUE)[[1]][-1]
-	splits2<-strsplit(splits,"\n",fixed=TRUE)
-	output<-lapply(splits2,function(x){return(c(x[1],paste(x[-1],collapse='')))})
-	output<-as.data.frame(do.call(rbind,output),stringsAsFactors=FALSE)
-	colnames(output)<-c('longName','seq')
+	if(assumeSingleLine){
+		output<-data.frame('longName'=x[seq(1,length(x),2)],'seq'=x[seq(2,length(x),2)],stringsAsFactors=FALSE)
+		if(any(grepl('^>',output$seq,perl=TRUE)|!grepl('^>',output$longName,perl=TRUE)))stop(simpleError('Problem reading single line fasta'))
+		output$longName<-substring(output$longName,2)
+	}else{
+		selector<-grep('^[^>].* .*[^ ]$',x,perl=TRUE)
+		x[selector]<-paste(x[selector],' ',sep='')
+		if(length(x)==0)return(NULL)
+		x<-x[!grepl('^[#;]',x,perl=TRUE)&x!='']
+		y<-paste(x,collapse="\n")
+		splits<-strsplit(y,'>',fixed=TRUE)[[1]][-1]
+		splits2<-strsplit(splits,"\n",fixed=TRUE)
+		output<-lapply(splits2,function(x){return(c(x[1],paste(x[-1],collapse='')))})
+		output<-as.data.frame(do.call(rbind,output),stringsAsFactors=FALSE)
+		colnames(output)<-c('longName','seq')
+	}
 	if(longNameTrim){
 		output$name<-unlist(lapply(strsplit(output$longName,' ',fixed=TRUE),function(x)x[1]))
 		output<-output[,3:1]
 	}else{
 		colnames(output)<-c('name','seq')	
 	}
-	output$seq<-gsub(' +$','',output$seq)
+	output$seq<-gsub(' +$','',output$seq,perl=TRUE)
 	return(output)
 }
 #alternative version of the above (a bit quicker)
@@ -1022,11 +1030,13 @@ parseEqualLines<-function(nameLine,firstDel=TRUE){
 #dna: the sequences
 #fileName: file to write to
 #addBracket: add > to start of names?
-write.fa<-function(names,dna,fileName,addBracket=FALSE){
+write.fa<-function(names,dna,fileName,addBracket=FALSE,isGz=grepl('.gz$',fileName)){
 	if(addBracket|any(grep('^[^>]',names)))names<-paste('>',names,sep='')
 	dna<-sub(' +$','',dna,perl=TRUE)
 	output<-paste(names,dna,sep="\n")
+	if(isGz)fileName<-gzfile(fileName)
 	writeLines(output,sep="\n",con=fileName)
+	if(isGz)close(fileName)
 }
 
 
@@ -1113,6 +1123,43 @@ runBlat<-function(faFile,gfClientOptions='',outFile=gsub('\\.fn?a$','.blat',faFi
 	system(cmd)
 
 	killBlat(port)
+}
+
+#make a 2bit file from one set of reads and blat another set against it
+#reads: vector of query reads with names
+#refs: vector of reference reads with names
+#faToTwoBit: path to faToTwoBit program from blat
+#...: additional arguments to run blat
+blatReadsVsRefs<-function(reads,refs,outFile,faToTwoBit='faToTwoBit',...){
+	tmpDir<-sprintf('%s/%s',tempdir(),paste(sample(c(letters,LETTERS),20),collapse='')) #tempdir doesnt change
+	dir.create(tmpDir)
+	readFile<-sprintf('%s/read.fa',tmpDir)
+	write.fa(names(reads),reads,readFile)
+	refFile<-sprintf('%s/refs.fa',tmpDir)
+	write.fa(names(refs),refs,refFile)
+	twobitFile<-sprintf('%s/refs.2bit',tmpDir)
+	system(sprintf('%s %s %s',faToTwoBit,refFile,twobitFile))
+	runBlat(readFile,outFile=outFile,bit2=twobitFile,...)
+	file.remove(twobitFile,refFile,readFile,tmpDir)
+}
+
+#run blat parallel (requires parallel package included in vim 2.4.1)
+#reads: vector of query reads with names
+#refs: vector of query refs with names
+#...:arguments for blatReadsVsRefs
+multiBlatReadsVsRefs<-function(reads,refs,outFile,nCore=4,...){
+	library(parallel)
+	bigRun<-mclapply(split(reads,sort(rep(1:nCore,length.out=length(reads)))),function(x){
+		tmpFile<-sprintf('%s%s',tempfile(),paste(sample(c(LETTERS,letters),20),collapse=''))
+		blatReadsVsRefs(x,refs,tmpFile,startPort=floor(runif(1)*1000)+37900,...) #likes to start on same port apparently
+		#print((tmpFile))
+		x<-readLines(tmpFile)[-1:-5]
+		file.remove(tmpFile)
+		return(x)
+	},mc.cores=nCore)
+	blatOut<-do.call(c,bigRun)
+	writeLines(blatOut,outFile)
+	invisible(blatOut)
 }
 
 #kill blat running on port port
