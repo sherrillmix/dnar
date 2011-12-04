@@ -1129,9 +1129,9 @@ runBlat<-function(faFile,gfClientOptions='',outFile=gsub('\\.fn?a$','.blat',faFi
 #reads: vector of query reads with names
 #refs: vector of reference reads with names
 #faToTwoBit: path to faToTwoBit program from blat
+#tmpDir: directory to store work files
 #...: additional arguments to run blat
-blatReadsVsRefs<-function(reads,refs,outFile,faToTwoBit='faToTwoBit',...){
-	tmpDir<-sprintf('%s/%s',tempdir(),paste(sample(c(letters,LETTERS),20),collapse='')) #tempdir doesnt change
+blatReadsVsRefs<-function(reads,refs,outFile,faToTwoBit='faToTwoBit',tmpDir=sprintf('%s/%s',tempdir(),paste(sample(c(letters,LETTERS),20),collapse='')),...){
 	dir.create(tmpDir)
 	readFile<-sprintf('%s/read.fa',tmpDir)
 	write.fa(names(reads),reads,readFile)
@@ -1146,20 +1146,32 @@ blatReadsVsRefs<-function(reads,refs,outFile,faToTwoBit='faToTwoBit',...){
 #run blat parallel (requires parallel package included in vim 2.4.1)
 #reads: vector of query reads with names
 #refs: vector of query refs with names
+#tmpDir: directory to store work files
 #...:arguments for blatReadsVsRefs
-multiBlatReadsVsRefs<-function(reads,refs,outFile,nCore=4,...){
+multiBlatReadsVsRefs<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),isGz=grepl('.gz$',fileName),...){
 	library(parallel)
-	bigRun<-mclapply(split(reads,sort(rep(1:nCore,length.out=length(reads)))),function(x){
-		tmpFile<-sprintf('%s%s',tempfile(),paste(sample(c(LETTERS,letters),20),collapse=''))
-		blatReadsVsRefs(x,refs,tmpFile,startPort=floor(runif(1)*1000)+37900,...) #likes to start on same port apparently
+	if(!file.exists(tmpDir))dir.create(tmpDir)
+	bigRun<-mclapply(mapply(function(x,y)list(x,y),split(reads,sort(rep(1:nCore,length.out=length(reads)))),1:nCore),function(x){
+		tmpFile<-sprintf('%s/out___%d',tmpDir,x[[2]])
+		tmpDir<-sprintf('%s/work___%d',tmpDir,x[[2]])
+		blatReadsVsRefs(x[[1]],refs,tmpFile,startPort=floor(runif(1)*1000)+37900,tmpDir=tmpDir,...) #likes to start on same port apparently
 		#print((tmpFile))
-		x<-readLines(tmpFile)[-1:-5]
-		file.remove(tmpFile)
-		return(x)
+		return(tmpFile)
 	},mc.cores=nCore)
-	blatOut<-do.call(c,bigRun)
-	writeLines(blatOut,outFile)
-	invisible(blatOut)
+	if(any(!sapply(bigRun,file.exists)))stop(simpleError('Blat file missing'))
+	for(i in 1:length(bigRun)){
+		blat<-readLines(bigRun[i])
+		#take off header in later files
+		if(i==1){
+			append<-FALSE
+		}else{
+			append<-TRUE
+			blat<-blat[-1:-5]
+		}
+		if(isGz)outFile<-gzfile(outFile)
+		writeLines(outFile,sep="\n",con=outFile,append=append)
+		if(isGz)close(fileName)
+	}
 }
 
 #kill blat running on port port
