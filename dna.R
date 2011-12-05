@@ -1198,6 +1198,8 @@ killBlat<-function(port){
 #skips: number of lines to skip (5 for a normal blat file)
 #nrows: number of rows to read in (-1 for all)
 #calcScore: calculate score column?
+#fixStarts: convert start to 1-based?
+#...: additional arguments to read.table
 #returns: dataframe of blat data
 readBlat<-function(fileName,skips=5,nrows=-1,calcScore=TRUE,fixStarts=TRUE,...){
 	#test for empty file
@@ -1690,31 +1692,31 @@ trimBlat<-function(blat,ambigousThreshold,matchThreshold,ambigousNumThreshold=1,
 #debug: Display debug messages
 #returnSelector: if TRUE return logical selection matrix
 trimBlat2<-function(blat,ambigousThreshold,matchThreshold,ambigousNumThreshold=1,debug=FALSE,returnSelector=FALSE){
-		selectTable<-data.frame('BADAmbig'=rep(NA,nrow(blat)),'BADNotMax'=rep(NA,nrow(blat)),'BADMatch'=rep(NA,nrow(blat)))
-		goodHits<-tapply(blat$score,blat$qName,function(x,y)sum(x>=max(x)*y),ambigousThreshold)
-		selector<-goodHits>ambigousNumThreshold
-		message(sum(selector),' reads have at least ',ambigousNumThreshold,' matches more than max(match)*',ambigousThreshold,'. Discarding.')
-		selector<-!blat$qName %in% names(goodHits)[selector]
-		if(debug)print(t(t(tapply(blat[!selector,'qName'],blat[!selector,'file'],function(x)length(unique(x))))))
-		blat<-blat[selector,]
-		selectTable$BADAmbig<-!selector
+	selectTable<-data.frame('BADAmbig'=rep(NA,nrow(blat)),'BADNotMax'=rep(NA,nrow(blat)),'BADMatch'=rep(NA,nrow(blat)))
+	goodHits<-tapply(blat$score,blat$qName,function(x,y)sum(x>=max(x)*y),ambigousThreshold)
+	selector<-goodHits>ambigousNumThreshold
+	message(sum(selector),' reads have at least ',ambigousNumThreshold,' matches more than max(match)*',ambigousThreshold,'. Discarding.')
+	selector<-!blat$qName %in% names(goodHits)[selector]
+	if(debug)print(t(t(tapply(blat[!selector,'qName'],blat[!selector,'file'],function(x)length(unique(x))))))
+	blat<-blat[selector,]
+	selectTable$BADAmbig<-!selector
 
-		goodHits<-tapply(blat$score,blat$qName,function(x)max(x))
-		blat$maximumScore<-goodHits[blat$qName]
-		numCheck<-length(unique(blat$qName))
-		selector<-blat$score==blat$maximumScore
-		blat<-blat[selector,]
-		selectTable[!selectTable$BADAmbig,'BADNotMax']<-!selector
-		if(ambigousNumThreshold==1&nrow(blat)!=numCheck)stop(simpleError('Problem selecting max score read'))
-		if(ambigousNumThreshold!=1)message('Returning multiple matches')
-		selector<-blat[,'match']<blat[,'qSize']*matchThreshold
-		message(sum(selector),' reads have a match less than qSize*',matchThreshold,'. Discarding.')
-		if(debug){print(t(t(tapply(blat[selector,'qName'],blat[selector,'file'],function(x)length(unique(x))))));browser()}
-		blat<-blat[!selector,]
-		selectTable[!selectTable$BADAmbig,'BADMatch'][!selectTable$BADNotMax[!selectTable$BADAmbig]]<-selector
+	goodHits<-tapply(blat$score,blat$qName,function(x)max(x))
+	blat$maximumScore<-goodHits[blat$qName]
+	numCheck<-length(unique(blat$qName))
+	selector<-blat$score==blat$maximumScore
+	blat<-blat[selector,]
+	selectTable[!selectTable$BADAmbig,'BADNotMax']<-!selector
+	if(ambigousNumThreshold==1&nrow(blat)!=numCheck)stop(simpleError('Problem selecting max score read'))
+	if(ambigousNumThreshold!=1)message('Returning multiple matches')
+	selector<-blat[,'match']<blat[,'qSize']*matchThreshold
+	message(sum(selector),' reads have a match less than qSize*',matchThreshold,'. Discarding.')
+	if(debug){print(t(t(tapply(blat[selector,'qName'],blat[selector,'file'],function(x)length(unique(x))))));browser()}
+	blat<-blat[!selector,]
+	selectTable[!selectTable$BADAmbig,'BADMatch'][!selectTable$BADNotMax[!selectTable$BADAmbig]]<-selector
 
-		if(returnSelector) return(selectTable)
-		else return(blat)
+	if(returnSelector) return(selectTable)
+	else return(blat)
 }
 
 
