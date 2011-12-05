@@ -1086,8 +1086,8 @@ startBlat<-function(nibDir,options='',gfServer='gfServer',bit2=NULL,startPort=37
 		if(counter>30)stop(simpleError('All 30 checked ports taken'))
 		counter<-counter+1
 	}
-	if(!is.null(bit2))cmd<-sprintf('%s start localhost %d %s %s',gfServer,port,options,bit2)
-	else cmd<-sprintf('%s start localhost %d %s %s/*%s',gfServer,port,options,nibDir,nibSuffix)
+	if(!is.null(bit2))cmd<-sprintf('%s start localhost %d %s %s',gfServer,port,options,normalizePath(bit2))
+	else cmd<-sprintf('%s start localhost %d %s %s/*%s',gfServer,port,options,normalizePath(nibDir),nibSuffix)
 	message(cmd)
 	system(cmd,wait=FALSE)
 	counter<-1
@@ -1148,30 +1148,33 @@ blatReadsVsRefs<-function(reads,refs,outFile,faToTwoBit='faToTwoBit',tmpDir=spri
 #refs: vector of query refs with names
 #tmpDir: directory to store work files
 #...:arguments for blatReadsVsRefs
-multiBlatReadsVsRefs<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),isGz=grepl('.gz$',fileName),...){
+multiBlatReadsVsRefs<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),isGz=grepl('.gz$',outFile),...){
+	prefix<-paste(sample(c(letters,LETTERS),20,TRUE),collapse='')
 	library(parallel)
 	if(!file.exists(tmpDir))dir.create(tmpDir)
-	bigRun<-mclapply(mapply(function(x,y)list(x,y),split(reads,sort(rep(1:nCore,length.out=length(reads)))),1:nCore),function(x){
-		tmpFile<-sprintf('%s/out___%d',tmpDir,x[[2]])
-		tmpDir<-sprintf('%s/work___%d',tmpDir,x[[2]])
-		blatReadsVsRefs(x[[1]],refs,tmpFile,startPort=floor(runif(1)*1000)+37900,tmpDir=tmpDir,...) #likes to start on same port apparently
+	bigRun<-mclapply(mapply(function(x,y)list(x,y),split(reads,sort(rep(1:nCore,length.out=length(reads)))),1:nCore,SIMPLIFY=FALSE),function(x){
+		tmpFile<-sprintf('%s/out__%s__%d.blat',tmpDir,prefix,x[[2]])
+		thisTmpDir<-sprintf('%s/work__%s__%d',tmpDir,prefix,x[[2]])
+		blatReadsVsRefs(x[[1]],refs,tmpFile,startPort=37900+x[[2]]*10,tmpDir=thisTmpDir,...) #likes to start on same port apparently
 		#print((tmpFile))
 		return(tmpFile)
 	},mc.cores=nCore)
 	if(any(!sapply(bigRun,file.exists)))stop(simpleError('Blat file missing'))
+	if(isGz)outFile<-gzfile(outFile)
+	else outFile<-file(outFile)
 	for(i in 1:length(bigRun)){
-		blat<-readLines(bigRun[i])
+		blat<-readLines(bigRun[[i]])
 		#take off header in later files
-		if(i==1){
-			append<-FALSE
-		}else{
-			append<-TRUE
+		if(i!=1){
 			blat<-blat[-1:-5]
+			append<-TRUE
+		}else{
+			append<-FALSE
 		}
-		if(isGz)outFile<-gzfile(outFile)
-		writeLines(outFile,sep="\n",con=outFile,append=append)
-		if(isGz)close(fileName)
+		cat(blat,sep="\n",file=outFile,append=append)
+		file.remove(bigRun[[i]])
 	}
+	close(outFile)
 }
 
 #kill blat running on port port
