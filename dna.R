@@ -1160,8 +1160,9 @@ multiBlatReadsVsRefs<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),isGz=
 		return(tmpFile)
 	},mc.cores=nCore)
 	if(any(!sapply(bigRun,file.exists)))stop(simpleError('Blat file missing'))
-	if(isGz)outFile<-gzfile(outFile)
-	else outFile<-file(outFile)
+	if(isGz)outFile<-gzfile(outFile,open='w+')
+	else outFile<-file(outFile,open='w+')
+	counter<-0
 	for(i in 1:length(bigRun)){
 		blat<-readLines(bigRun[[i]])
 		#take off header in later files
@@ -1171,9 +1172,11 @@ multiBlatReadsVsRefs<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),isGz=
 		}else{
 			append<-FALSE
 		}
-		cat(blat,sep="\n",file=outFile,append=append)
+		writeLines(blat,sep="\n",con=outFile)
 		file.remove(bigRun[[i]])
+		counter<-counter+length(blat)
 	}
+	message('Wrote ',counter,' blat lines')
 	close(outFile)
 }
 
