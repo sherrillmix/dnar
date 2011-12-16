@@ -1148,36 +1148,43 @@ blatReadsVsRefs<-function(reads,refs,outFile,faToTwoBit='faToTwoBit',tmpDir=spri
 #refs: vector of query refs with names
 #tmpDir: directory to store work files
 #...:arguments for blatReadsVsRefs
-multiBlatReadsVsRefs<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),isGz=grepl('.gz$',outFile),...){
+multiBlatReadsVsRefs<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),isGz=grepl('.gz$',outFile),condense=TRUE,gzipPath='gzip',...){
 	prefix<-paste(sample(c(letters,LETTERS),20,TRUE),collapse='')
 	library(parallel)
 	if(!file.exists(tmpDir))dir.create(tmpDir)
 	bigRun<-mclapply(mapply(function(x,y)list(x,y),split(reads,sort(rep(1:nCore,length.out=length(reads)))),1:nCore,SIMPLIFY=FALSE),function(x){
-		tmpFile<-sprintf('%s/out__%s__%d.blat',tmpDir,prefix,x[[2]])
+		tmpFile<-sprintf('%s__%d.blat',sub('\\.blat(\\.gz)?$','',outFile),x[[2]])
 		thisTmpDir<-sprintf('%s/work__%s__%d',tmpDir,prefix,x[[2]])
 		blatReadsVsRefs(x[[1]],refs,tmpFile,startPort=37900+x[[2]]*10,tmpDir=thisTmpDir,...) #likes to start on same port apparently
+		if(isGz){
+			system(sprintf('%s %s',gzipPath,tmpFile))
+			tmpFile<-sprintf('%s.gz',tmpFile)
+		}
 		#print((tmpFile))
 		return(tmpFile)
 	},mc.cores=nCore)
 	if(any(!sapply(bigRun,file.exists)))stop(simpleError('Blat file missing'))
-	if(isGz)outFile<-gzfile(outFile,open='w+')
-	else outFile<-file(outFile,open='w+')
-	counter<-0
-	for(i in 1:length(bigRun)){
-		blat<-readLines(bigRun[[i]])
-		#take off header in later files
-		if(i!=1){
-			blat<-blat[-1:-5]
-			append<-TRUE
-		}else{
-			append<-FALSE
+	if(condense){
+		if(isGz)outFile<-gzfile(outFile,open='w+')
+		else outFile<-file(outFile,open='w+')
+		counter<-0
+		for(i in 1:length(bigRun)){
+			blat<-readLines(bigRun[[i]])
+			#take off header in later files
+			if(i!=1){
+				blat<-blat[-1:-5]
+				append<-TRUE
+			}else{
+				append<-FALSE
+			}
+			writeLines(blat,sep="\n",con=outFile)
+			file.remove(bigRun[[i]])
+			counter<-counter+length(blat)
 		}
-		writeLines(blat,sep="\n",con=outFile)
-		file.remove(bigRun[[i]])
-		counter<-counter+length(blat)
+		message('Wrote ',counter,' blat lines')
+		close(outFile)
 	}
-	message('Wrote ',counter,' blat lines')
-	close(outFile)
+	return(bigRun)
 }
 
 #kill blat running on port port
