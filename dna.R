@@ -1922,7 +1922,8 @@ findPrimer<-function(seqs,forward=NULL,reverse=NULL,padding=0){
 #block: vector (or string)  of match lengths
 #condenseLimit: condense two neighboring matches together if separated by <=condenseLimit
 #start2: a vector (or string) of start locations. do not condense unless both starts are <=condenseLimit
-condenseCoords<-function(start,block,condenseLimit=5,start2=NULL){
+#synchronizeCondenseLimit: condense two neighboring matches together if both starts and starts2 have a gap here <=synchronizeCondenseLimit and gap2-gap1-1<condenseLimit
+condenseCoords<-function(start,block,condenseLimit=5,start2=NULL,synchronizeCondenseLimit=-Inf){
 	if(is.character(start))start<-as.numeric(strsplit(start,',')[[1]])
 	if(is.character(block))block<-as.numeric(strsplit(block,',')[[1]])
 	if(!is.null(start2)&&is.character(start2))start2<-as.numeric(strsplit(start2,',')[[1]])
@@ -1946,7 +1947,7 @@ condenseCoords<-function(start,block,condenseLimit=5,start2=NULL){
 		gaps<-c(start[-1]-ends[-length(ends)]-1,Inf)
 		if(isDual){
 			gaps2<-c(start2[-1]-ends2[-length(ends2)]-1,Inf)[startRank2]
-			condenseSelect<-which((gaps[startRank]<=condenseLimit&gaps2[startRank2]<=condenseLimit)[startOrder])
+			condenseSelect<-which(((gaps[startRank]<=condenseLimit&gaps2[startRank2]<=condenseLimit)|(gaps[startRank]<=synchronizeCondenseLimit&gaps2[startRank2]<=synchronizeCondenseLimit&abs(gaps2[startRank2]-gaps[startRank])-1<condenseLimit))[startOrder])
 		}else{
 			condenseSelect<-which((gaps[startRank]<=condenseLimit)[startOrder])
 		}
