@@ -1923,45 +1923,53 @@ findPrimer<-function(seqs,forward=NULL,reverse=NULL,padding=0){
 #condenseLimit: condense two neighboring matches together if separated by <=condenseLimit
 #start2: a vector (or string) of start locations. do not condense unless both starts are <=condenseLimit
 #synchronizeCondenseLimit: condense two neighboring matches together if both starts and starts2 have a gap here <=synchronizeCondenseLimit and gap2-gap1-1<condenseLimit
-condenseCoords<-function(start,block,condenseLimit=5,start2=NULL,synchronizeCondenseLimit=-Inf){
+#invertCoords: Change from internal negative indexing to positive (inverting starts and ends)
+condenseCoords<-function(start,block,condenseLimit=5,start2=NULL,synchronizeCondenseLimit=-Inf,invertCoords=TRUE){
 	if(is.character(start))start<-as.numeric(strsplit(start,',')[[1]])
 	if(is.character(block))block<-as.numeric(strsplit(block,',')[[1]])
 	if(!is.null(start2)&&is.character(start2))start2<-as.numeric(strsplit(start2,',')[[1]])
+	if(start[1]>start[length(start)])start<-0-start-block+1
   	ends<-start+block-1
-	startOrder<-order(start)
-	startRank<-rank(start)
-	start<-start[startOrder]
-	ends<-ends[startOrder]
 
 	isDual<-!is.null(start2)
 	if(isDual){
 		if(start2[1]>start2[length(start2)])start2<-0-start2-block+1
 		ends2<-start2+block-1
-		startOrder2<-order(start2)
-		startRank2<-rank(start2)
-		start2<-start2[startOrder2]
-		ends2<-ends2[startOrder2]
 	}
 
 	if(length(start)>1){
 		gaps<-c(start[-1]-ends[-length(ends)]-1,Inf)
 		if(isDual){
-			gaps2<-c(start2[-1]-ends2[-length(ends2)]-1,Inf)[startRank2]
-			condenseSelect<-which(((gaps[startRank]<=condenseLimit&gaps2[startRank2]<=condenseLimit)|(gaps[startRank]<=synchronizeCondenseLimit&gaps2[startRank2]<=synchronizeCondenseLimit&abs(gaps2[startRank2]-gaps[startRank])-1<condenseLimit))[startOrder])
+			gaps2<-c(start2[-1]-ends2[-length(ends2)]-1,Inf)
+			condenseSelect<-which(((gaps<=condenseLimit&gaps2<=condenseLimit)|(gaps<=synchronizeCondenseLimit&gaps2<=synchronizeCondenseLimit&abs(gaps2-gaps)-1<condenseLimit)))
 		}else{
-			condenseSelect<-which((gaps[startRank]<=condenseLimit)[startOrder])
+			condenseSelect<-which((gaps<=condenseLimit))
 		}
 		if(any(condenseSelect)){
 			start<-start[-(condenseSelect+1)]
 			ends<-ends[-condenseSelect]
 			if(isDual){
-				start2<-start2[startRank2][-(condenseSelect+1)]
-				ends2<-ends2[startRank2][-condenseSelect]
+				start2<-start2[-(condenseSelect+1)]
+				ends2<-ends2[-condenseSelect]
 			}
 		}
 	}
-	if(isDual)return(data.frame('start'=start,'end'=ends,'start2'=start2,'end2'=ends2))
-	else return(data.frame('start'=start,'end'=ends))
+	if(invertCoords){
+		if(all(start<0)&&all(ends<0)){
+			tmp<--start
+			start<--ends
+			ends<-tmp
+		}
+		if(isDual&&all(start2<0)&&all(ends2<0)){
+			tmp<--start2
+			start2<--ends2
+			ends2<-tmp
+		}
+	}
+	if(isDual)out<-data.frame('start'=start,'end'=ends,'start2'=start2,'end2'=ends2)
+	else data.frame('start'=start,'end'=ends)
+	out<-out[order(out$start),]
+	return(out)
 }
 
 #convert starts and ends of matches to gaps between those matches
@@ -2123,7 +2131,7 @@ wilsonInt<-function(nTrue,nFalse,alpha=.05){
 #n: number of colors desired
 #start: start angle (in proportion of circle) in lab space
 #end: end angle (in proportion of circle) in lab space
-rainbow.lab<-function(n,start=1.5,end=-3,alpha=1){
+rainbow.lab<-function(n,start=1.5,end=-3,alpha=1,lightScale=.5){
 	#something is going crazy with R's implementation of lab
 	#angles<-seq(start*2*pi,end*2*pi,length.out=n)
 	#a<-sin(angles)*radius
@@ -2132,7 +2140,8 @@ rainbow.lab<-function(n,start=1.5,end=-3,alpha=1){
 	#srgb<-convertColor(Lab,from="Lab",to="sRGB")
 	#cols<-rgb(srgb[,1],srgb[,2],srgb[,3],alpha)
 	#return(cols)
-	rgb<-cl2pix(seq(0,1,length.out=n),seq(1,.4,length.out=n)^.5,start=start,end=end,toColor=FALSE)
+	l<-seq(1,.4,length.out=n)^lightScale
+	rgb<-cl2pix(seq(0,1,length.out=n),l,start=start,end=end,toColor=FALSE)
 	return(rgb(rgb,alpha=alpha))
 }
 
