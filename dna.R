@@ -901,15 +901,41 @@ read.fa2<-function(fileName,longNameTrim=TRUE,...){
 	}
 	return(output)
 }
+
+#call samtools view on a sam/bam file
+#fileName: sam/bam file to read
+#samArgs: 1 element character vector of args to pass to samtools view
+#...: additional arguments for read.sam
+#samtoolsBinary: location of samtools
+samView<-function(fileName,samArgs='',...,samtoolsBinary='samtools'){
+	if(length(fileName)>1){ #recurse
+		allOut<-do.call(rbind,lapply(fileName,function(x){
+			out<-samView(x,samArgs,...,samtoolsBinary=samtoolsBinary)
+			out$file<-x
+			return(out)
+		}))
+		return(allOut)
+	}else{ #do samtools on single file
+		cmd<-sprintf('%s view %s %s',samtoolsBinary,fileName,samArgs[1])
+		samOut<-textConnection(system(cmd,intern=TRUE))
+		out<-read.sam(samOut,skips=0,...)
+		close(samOut)
+		return(out)
+	}
+}
+
 #read a sam file
-#fileName:name of file
+#fileName: name of file
+#nrows: number of rows to return
+#skips: number of lines to skip (if negative find @ headers automtically)
+#condense: throw out a bunch of columns for smaller file size?
 #returns: dataframe with columns 
-read.sam<-function(fileName,nrows=-1,skips=0,smaller=TRUE){
+read.sam<-function(fileName,nrows=-1,skips=-1,condense=TRUE){
 	colNames<-c('qName','flag','tName','pos','mapq','cigar','mrnm','mpos','isize','seq','qual','tags')
-	if(smaller)colClasses<-c('character','numeric','character','numeric','null','character','null','null','null','character','null')
+	if(condense)colClasses<-c('character','numeric','character','numeric','null','character','null','null','null','character','null')
 	else colClasses<-c('character','numeric','character',rep('numeric',2),rep('character',2),rep('numeric',2),rep('character',2))
 	
-	if(skips==0){
+	if(skips<0){
 		testLines<-readLines(fileName,n=1000)
 		skips<-max(which(grepl('^@',testLines)))
 		message('Found ',skips,' line header')
@@ -930,37 +956,40 @@ read.sam<-function(fileName,nrows=-1,skips=0,smaller=TRUE){
 #starts: vector of starting positions in target
 #returns: dataframe with qStarts,tStarts,sizes or dataframe with starts, ends and ids
 cigarToBlock<-function(cigars,starts,startEnds=FALSE){
-	if(any(grep('[^0-9MIDN]',cigars)))stop(simpleError('Only MIDN cigar operations supported'))
+	#M=match, I=insertion in query, D=deletion in query, N="intron" deletion in query, S=soft clipping (clip sequence), H=hard clipping (sequence was already clipped)
+	if(length(starts)!=length(cigars))stop(simpleError('Cigars and starts not same length'))
+	supportedOps<-c('M','I','D','N','S','H')
+	if(any(grep(sprintf('[^0-9%s]',paste(supportedOps,collapse='')),cigars)))stop(simpleError(sprintf('Only %s cigar operations supported',paste(supportedOps,collapse=''))))
 	tPos<-starts
 	qPos<-rep(1,length(starts))
 	stillWorking<-rep(TRUE,length(cigars))
 	qStarts<-tStarts<-rep('',length(starts))
 	blockSizes<-tStarts<-rep('',length(starts))
 	if(startEnds){
-		startEndsOut<-data.frame('start'=-1,'end'=-1,'id'=-1)[0,]
+		startEndsOut<-data.frame('start'=-1,'end'=-1,'id'=-1,'qStart'=-1,'qEnd'=-1)[0,]
 		ids<-1:length(starts)
 	}
 	while(any(stillWorking)){
-		for(i in c('M','I','D','N')){
+		for(i in supportedOps){
 			regex<-sprintf('^([0-9]+)%s',i)
 			matches<-grep(regex,cigars[stillWorking])
 			if(!any(matches))next()
 			num<-as.numeric(sub(sprintf('%s.*',regex),'\\1',cigars[stillWorking][matches]))
 			cigars[stillWorking][matches]<-sub(regex,'',cigars[stillWorking][matches])
 			if(i %in% c('M')){
-			if(any(is.na(num)))browser()
+				if(any(is.na(num)))browser()
 				tStarts[stillWorking][matches]<-sprintf('%s,%d',tStarts[stillWorking][matches],tPos[stillWorking][matches])
 				qStarts[stillWorking][matches]<-sprintf('%s,%d',qStarts[stillWorking][matches],qPos[stillWorking][matches])
 				blockSizes[stillWorking][matches]<-sprintf('%s,%d',blockSizes[stillWorking][matches],num)
 				if(startEnds){
-					startEndsOut<-rbind(startEndsOut,data.frame('start'=tPos[stillWorking][matches],'end'=tPos[stillWorking][matches]+num-1,'id'=ids[stillWorking][matches]))
+					startEndsOut<-rbind(startEndsOut,data.frame('start'=tPos[stillWorking][matches],'end'=tPos[stillWorking][matches]+num-1,'id'=ids[stillWorking][matches],'qStart'=qPos[stillWorking][matches],'qEnd'=qPos[stillWorking][matches]+num-1))
 				}
 			}
 			if(i %in% c('M','D','N')){
-				tPos[stillWorking][matches]<-num+tPos[stillWorking][matches]	
+				tPos[stillWorking][matches]<-num+tPos[stillWorking][matches]
 			}
-			if(i %in% c('M','I')){
-				qPos[stillWorking][matches]<-num+qPos[stillWorking][matches]	
+			if(i %in% c('M','I','S')){
+				qPos[stillWorking][matches]<-num+qPos[stillWorking][matches]
 			}
 			stillWorking[stillWorking]<-nchar(cigars[stillWorking])>0
 		}
