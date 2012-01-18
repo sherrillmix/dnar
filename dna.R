@@ -909,6 +909,11 @@ read.sam<-function(fileName,nrows=-1,skips=0,smaller=TRUE){
 	if(smaller)colClasses<-c('character','numeric','character','numeric','null','character','null','null','null','character','null')
 	else colClasses<-c('character','numeric','character',rep('numeric',2),rep('character',2),rep('numeric',2),rep('character',2))
 	
+	if(skips==0){
+		testLines<-readLines(fileName,n=1000)
+		skips<-max(which(grepl('^@',testLines)))
+		message('Found ',skips,' line header')
+	}
 
 	#-15 to exclude tags that can be variable length and tab seperated
 	#will need to modify if we want tags
