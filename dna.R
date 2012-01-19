@@ -480,11 +480,21 @@ if (any(grep("Error",loader))){
 		return(output)
 	}
 }else{
-	checkCoverage <- function(starts, lengths, outLength=max(starts+lengths-1)) {
+	checkCoverage <- function(starts, lengths=NULL,ends=starts+lengths-1,outLength=max(ends),trimToStart=FALSE) {
 		if(is.null(starts))return(NULL)
-		if(length(starts)!=length(lengths))stop(simpleError('starts and lengths different lengths'))
-		if(any(starts+lengths-1>outLength))stop(simpleError('starts+length-1 greater than outLength'))
-		ans<-.C('checkCover',as.integer(rep(0,outLength)),as.integer(starts),as.integer(starts+lengths-1),as.integer(length(starts)))	
+		if(length(starts)!=length(ends))stop(simpleError('starts and ends different lengths'))
+		if(any(ends>outLength))stop(simpleError('starts+length-1 greater than outLength'))
+		if(any(ends<starts))stop(simpleError('ends less than starts'))
+		if(trimToStart){
+			firstNonZero<-min(starts)
+			outLength<-outLength-firstNonZero+1
+			starts<-starts-firstNonZero+1
+			ends<-ends-firstNonZero+1
+		}
+		ans<-.C('checkCover',as.integer(rep(0,outLength)),as.integer(starts),as.integer(ends),as.integer(length(starts)))	
+		if(trimToStart){
+			names(ans[[1]])<-format((1:outLength)+firstNonZero-1) #need format or 7000000 becomes 7e7
+		}
 		return(ans[[1]])
 	}
 }
@@ -1016,6 +1026,22 @@ orderIn<-function(query,target,strict=FALSE,orderFunc=order,...){
 	}
 	newOrder<-orderFunc(sapply(query,function(x)min(which(x==target))),...)
 	return(newOrder)
+}
+
+#flags: vector of integer flags from sam
+#test: either character vector of flag short names or integers
+samFlag<-function(flags,test='paired'){
+	if(!require(bitops))stop(simpleError('Sam flag requires bitops package'))
+	test<-unique(test)
+	if(!is.numeric(test)){
+		if(!all(test %in% samFlags$short))stop(simpleError(sprintf('Unknown flag please select from %s',paste(samFlags$short,collapse=', '))))
+		test<-samFlags[samFlags$short %in% test,'bit']
+	}else{
+		test<-as.integer(test)
+	}
+	testInt<-0
+	for(i in test)testInt<-bitOr(testInt,i)
+	return(bitAnd(flags,testInt)==testInt)
 }
 
 
@@ -2238,6 +2264,9 @@ cl2pix<-function(c, l,start=-3,end=4,toColor=TRUE) {
 }
 
 
-
+#data.frame of sam flags
+samFlags<-data.frame('short'=c('paired','properPair','unmapped','mateUnmapped','reverse','mateReverse','first','second','notPrimary','fail','dupe'),'desc'=c('read paired','read mapped in proper pair','read unmapped','mate unmapped','read reverse strand','mate reverse strand','first in pair','second in pair','not primary alignment','read fails platform/vendor quality checks','read is PCR or optical duplicate'),stringsAsFactors=FALSE)
+samFlags$bit<-2^(0:(nrow(samFlags)-1))
+rownames(samFlags)<-samFlags$short
 #data.frame of amino acids
 aminoAcids<-data.frame('codon'=c('UUU','UUC','UCU','UCC','UAU','UAC','UGU','UGC','UUA','UCA','UAA','UGA','UUG','UCG','UAG','UGG','CUU','CUC','CCU','CCC','CAU','CAC','CGU','CGC','CUA','CUG','CCA','CCG','CAA','CAG','CGA','CGG','AUU','AUC','ACU','ACC','AAU','AAC','AGU','AGC','AUA','ACA','AAA','AGA','AUG','ACG','AAG','AGG','GUU','GUC','GCU','GCC','GAU','GAC','GGU','GGC','GUA','GUG','GCA','GCG','GAA','GAG','GGA','GGG'),'abbr'=c('Phe','Phe','Ser','Ser','Tyr','Tyr','Cys','Cys','Leu','Ser','Ochre','Opal','Leu','Ser','Amber','Trp','Leu','Leu','Pro','Pro','His','His','Arg','Arg','Leu','Leu','Pro','Pro','Gln','Gln','Arg','Arg','Ile','Ile','Thr','Thr','Asn','Asn','Ser','Ser','Ile','Thr','Lys','Arg','Met','Thr','Lys','Arg','Val','Val','Ala','Ala','Asp','Asp','Gly','Gly','Val','Val','Ala','Ala','Glu','Glu','Gly','Gly'),'code'=c('F','F','S','S','Y','Y','C','C','L','S','X','X','L','S','X','W','L','L','P','P','H','H','R','R','L','L','P','P','Q','Q','R','R','I','I','T','T','N','N','S','S','I','T','K','R','M','T','K','R','V','V','A','A','D','D','G','G','V','V','A','A','E','E','G','G'),'name'=c('Phenylalanine','Phenylalanine','Serine','Serine','Tyrosine','Tyrosine','Cysteine','Cysteine','Leucine','Serine','Stop','Stop','Leucine','Serine','Stop','Tryptophan','Leucine','Leucine','Proline','Proline','Histidine','Histidine','Arginine','Arginine','Leucine','Leucine','Proline','Proline','Glutamine','Glutamine','Arginine','Arginine','Isoleucine','Isoleucine','Threonine','Threonine','Asparagine','Asparagine','Serine','Serine','Isoleucine','Threonine','Lysine','Arginine','Methionine','Threonine','Lysine','Arginine','Valine','Valine','Alanine','Alanine','Aspartic acid','Aspartic acid','Glycine','Glycine','Valine','Valine','Alanine','Alanine','Glutamic acid','Glutamic acid','Glycine','Glycine'),row.names=c('UUU','UUC','UCU','UCC','UAU','UAC','UGU','UGC','UUA','UCA','UAA','UGA','UUG','UCG','UAG','UGG','CUU','CUC','CCU','CCC','CAU','CAC','CGU','CGC','CUA','CUG','CCA','CCG','CAA','CAG','CGA','CGG','AUU','AUC','ACU','ACC','AAU','AAC','AGU','AGC','AUA','ACA','AAA','AGA','AUG','ACG','AAG','AGG','GUU','GUC','GCU','GCC','GAU','GAC','GGU','GGC','GUA','GUG','GCA','GCG','GAA','GAG','GGA','GGG'),stringsAsFactors=FALSE)
