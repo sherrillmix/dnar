@@ -917,7 +917,7 @@ read.fa2<-function(fileName,longNameTrim=TRUE,...){
 #samArgs: 1 element character vector of args to pass to samtools view
 #...: additional arguments for read.sam
 #samtoolsBinary: location of samtools
-samView<-function(fileName,samArgs='',...,samtoolsBinary='samtools'){
+samView<-function(fileName,samArgs='',...,samtoolsBinary='samtools',vocal=FALSE){
 	if(length(fileName)>1){ #recurse
 		allOut<-do.call(rbind,lapply(fileName,function(x){
 			out<-samView(x,samArgs,...,samtoolsBinary=samtoolsBinary)
@@ -927,7 +927,9 @@ samView<-function(fileName,samArgs='',...,samtoolsBinary='samtools'){
 		return(allOut)
 	}else{ #do samtools on single file
 		cmd<-sprintf('%s view %s %s',samtoolsBinary,fileName,samArgs[1])
+		if(vocal)message(cmd)
 		samOut<-textConnection(system(cmd,intern=TRUE))
+		if(vocal)message('Parsing')
 		out<-read.sam(samOut,skips=0,...)
 		close(samOut)
 		return(out)
