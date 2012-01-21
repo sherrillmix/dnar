@@ -60,12 +60,13 @@ seqSplit<-function(...,fill=NULL){
 
 
 #convenience function for selecting elements from a matrix
-indexMatrix<-function(x,y,mat){
+indexMatrix<-function(x,y,mat,returnIndex=FALSE){
 	if(!is.integer(x)){tmp<-1:nrow(mat);names(tmp)<-rownames(mat);x<-tmp[x]}
 	if(!is.integer(y)){tmp<-1:ncol(mat);names(tmp)<-colnames(mat);y<-tmp[y]}
 	if(length(x)!=length(y)|max(x)>nrow(mat)|max(y)>ncol(mat))stop(simpleError("Dimensions don't match up"))
 	index<-(y-1)*nrow(mat)+x
-	return(mat[index])
+	if(returnIndex)return(index)
+	else return(mat[index])
 }
 
 #convenience function for picking first most abundant of a set of values
