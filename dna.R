@@ -2030,7 +2030,7 @@ condenseCoords<-function(start,block,condenseLimit=5,start2=NULL,synchronizeCond
 		}
 	}
 	if(isDual)out<-data.frame('start'=start,'end'=ends,'start2'=start2,'end2'=ends2)
-	else data.frame('start'=start,'end'=ends)
+	else out<-data.frame('start'=start,'end'=ends)
 	out<-out[order(out$start),]
 	return(out)
 }
