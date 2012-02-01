@@ -2035,6 +2035,19 @@ condenseCoords<-function(start,block,condenseLimit=5,start2=NULL,synchronizeCond
 	return(out)
 }
 
+#Convert index to interesting ranges joining small gaps 
+#index: index to join up
+#buffer: extra bit to include at start and end
+#bufferMultiple: condense adjacent ranges within buffer * bufferMultiple of each other
+findInterestingRanges<-function(index,buffer=6,bufferMultiple=3){
+	if(is.logical(index))index<-which(index)
+	ranges<-index2range(index)
+	condensed<-condenseCoords(ranges$start,ranges$end-ranges$start+1,buffer*bufferMultiple)
+	condensed$start<-condensed$start-buffer
+	condensed$end<-condensed$end+buffer
+	return(condensed)
+}
+
 #convert starts and ends of matches to gaps between those matches
 #x: a 2xX matrix/dataframe of start and end coords with columns $start and $end
 findCoordGaps<-function(x){
