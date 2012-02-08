@@ -950,7 +950,9 @@ read.sam<-function(fileName,nrows=-1,skips=-1,condense=TRUE){
 	
 	if(skips<0){
 		testLines<-readLines(fileName,n=1000)
-		skips<-max(which(grepl('^@',testLines)))
+		atLines<-which(grepl('^@',testLines))
+		if(any(atLines))skips<-max(atLines)
+		else skips=-1
 		message('Found ',skips,' line header')
 	}
 
