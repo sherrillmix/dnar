@@ -2282,6 +2282,22 @@ cl2pix<-function(c, l,start=-3,end=4,toColor=TRUE) {
   return(out)
 }
 
+# find coords for arrow plotting
+#left: left coordinate of block
+#right: right coordinate of block
+#y: y position for middle of block
+#arrowLength: arrow length in usr coords
+#shaft: half of shaft thickness in usr coords
+#point: half of arrow thickness in usr coords
+#concat: concatenate multiple arrows into one data frame separated by NAs (ready for poly)?
+arrow<-function(left,right,y,arrowLength=diff(par('usr')[1:2])*.05,shaft=.2,point=.4,concat=TRUE){
+	if(any(left>right))stop(simpleError('Left border > right border of arrow'))
+	arrowX<-right-arrowLength
+	arrowX<-ifelse(arrowX<left,left+(right-left)/10,arrowX)
+	coords<-mapply(function(left,right,y,arrowX){data.frame('x'=c(left,arrowX,arrowX,right,arrowX,arrowX,left),'y'=y+c(shaft,shaft,point,0,-point,-shaft,-shaft))},left,right,y,arrowX,SIMPLIFY=FALSE)
+	if(concat)coords<-do.call(rbind,lapply(coords,function(x)return(rbind(x,c(NA,NA)))))
+	return(coords)
+}
 
 #data.frame of sam flags
 samFlags<-data.frame('short'=c('paired','properPair','unmapped','mateUnmapped','reverse','mateReverse','first','second','notPrimary','fail','dupe'),'desc'=c('read paired','read mapped in proper pair','read unmapped','mate unmapped','read reverse strand','mate reverse strand','first in pair','second in pair','not primary alignment','read fails platform/vendor quality checks','read is PCR or optical duplicate'),stringsAsFactors=FALSE)
