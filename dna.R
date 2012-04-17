@@ -915,10 +915,13 @@ read.fa2<-function(fileName,longNameTrim=TRUE,...){
 
 #call samtools view on a sam/bam file
 #fileName: sam/bam file to read
-#samArgs: 1 element character vector of args to pass to samtools view
+#samArgs: 1 element character vector of args to pass to samtools
+#samtoolsBinary: location of samtools
+#vocal: print status messages?
+#samCommand: which samtools tool to run
 #...: additional arguments for read.sam
 #samtoolsBinary: location of samtools
-samView<-function(fileName,samArgs='',...,samtoolsBinary='samtools',vocal=FALSE){
+samView<-function(fileName,samArgs='',...,samtoolsBinary='samtools',vocal=FALSE,samCommand='view'){
 	if(length(fileName)>1){ #recurse
 		allOut<-do.call(rbind,lapply(fileName,function(x){
 			out<-samView(x,samArgs,...,samtoolsBinary=samtoolsBinary)
@@ -927,11 +930,13 @@ samView<-function(fileName,samArgs='',...,samtoolsBinary='samtools',vocal=FALSE)
 		}))
 		return(allOut)
 	}else{ #do samtools on single file
-		cmd<-sprintf('%s view %s %s',samtoolsBinary,fileName,samArgs[1])
+		cmd<-sprintf('%s %s %s %s',samtoolsBinary,samCommand,fileName,samArgs[1])
 		if(vocal)message(cmd)
 		samOut<-textConnection(system(cmd,intern=TRUE))
 		if(vocal)message('Parsing')
-		out<-read.sam(samOut,skips=0,...)
+		if(samCommand=='view')out<-read.sam(samOut,skips=0,...)
+		else if(samCommand=='depth')out<-read.table(samOut,sep='\t',stringsAsFactors=FALSE)
+		else out<-readLines(samOut)
 		close(samOut)
 		return(out)
 	}
