@@ -2215,7 +2215,7 @@ wilsonInt<-function(nTrue,nFalse,alpha=.05){
 #n: number of colors desired
 #start: start angle (in proportion of circle) in lab space
 #end: end angle (in proportion of circle) in lab space
-rainbow.lab<-function(n,start=1.5,end=-3,alpha=1,lightScale=.5){
+rainbow.lab<-function(n,start=1.5,end=-3,alpha=1,lightScale=.5,lightMultiple=1){
 	#something is going crazy with R's implementation of lab
 	#angles<-seq(start*2*pi,end*2*pi,length.out=n)
 	#a<-sin(angles)*radius
@@ -2224,7 +2224,7 @@ rainbow.lab<-function(n,start=1.5,end=-3,alpha=1,lightScale=.5){
 	#srgb<-convertColor(Lab,from="Lab",to="sRGB")
 	#cols<-rgb(srgb[,1],srgb[,2],srgb[,3],alpha)
 	#return(cols)
-	l<-seq(1,.4,length.out=n)^lightScale
+	l<-seq(1,.4,length.out=n)^lightScale*lightMultiple
 	rgb<-cl2pix(seq(0,1,length.out=n),l,start=start,end=end,toColor=FALSE)
 	return(rgb(rgb,alpha=alpha))
 }
