@@ -1,6 +1,9 @@
 nimblegenPrimers<-c('CTCGAGAATTCTGGATCCTC','GAGGATCCAGAATTCTCGAGTT')
 primers454<-c("GCCTCCCTCGCGCCATCAG","GCCTTGCCAGCCCGCTCAG")
 primerTitanium<-c('CCATCTCATCCCTGCGTGTCTCCGACTCAG','CCTATCCCCTGTGTGCCTTGGCAGTCTCAG')
+#convenience function to resize R console window
+adjustWindow<-function()options(width=as.integer(Sys.getenv('COLUMNS')))
+
 ambigousBaseCodes<-c(
 	'R'='AG',
 	'Y'='CT',
@@ -935,7 +938,7 @@ samView<-function(fileName,samArgs='',...,samtoolsBinary='samtools',vocal=FALSE,
 		samOut<-textConnection(system(cmd,intern=TRUE))
 		if(vocal)message('Parsing')
 		if(samCommand=='view')out<-read.sam(samOut,skips=0,...)
-		else if(samCommand=='depth')out<-read.table(samOut,sep='\t',stringsAsFactors=FALSE)
+		else if(samCommand=='depth')out<-read.table(samOut,sep='\t',stringsAsFactors=FALSE,...)
 		else out<-readLines(samOut)
 		close(samOut)
 		return(out)
@@ -1109,6 +1112,19 @@ write.fa<-function(names,dna,fileName,addBracket=FALSE,isGz=grepl('.gz$',fileNam
 	if(isGz)close(fileName)
 }
 
+#writes a fastq file
+#names: sequence names for @/+ line
+#seqs: the sequences
+#quals: the qualities
+#fileName: file to write to
+write.fastq<-function(names,seqs,quals,fileName,isGz=grepl('.gz$',fileName)){
+	names1<-paste('@',names,sep='')
+	names2<-paste('+',names,sep='')
+	output<-paste(names1,seqs,names2,quals,sep="\n")
+	if(isGz)fileName<-gzfile(fileName)
+	writeLines(output,sep="\n",con=fileName)
+	if(isGz)close(fileName)
+}
 
 
 #read a tab-delimited blast file
@@ -2303,6 +2319,25 @@ arrow<-function(left,right,y,arrowLength=diff(par('usr')[1:2])*.05,shaft=.2,poin
 	if(concat)coords<-do.call(rbind,lapply(coords,function(x)return(rbind(x,c(NA,NA)))))
 	return(coords)
 }
+
+#stack regions into smallest number of lines (using greedy algo)
+#starts: vector of starts of regions (note can add buffer by substracting arbitrary spacer)
+#ends: vector of ends of regions (note can add buffer by adding arbitrary spacer)
+stackRegions<-function(starts,ends){
+	nReg<-length(starts)
+	if(nReg!=length(ends))stop(simpleError('Starts and ends must be same length'))
+	startEnds<-data.frame('id'=1:nReg,start=starts,end=ends)
+	startEnds<-startEnds[order(startEnds$start,startEnds$end),]
+	lineNum<-rep(NA,nReg)
+	linePos<-rep(min(starts)-1,nReg)
+	for(i in 1:nReg){
+		selectLine<-min(which(linePos<startEnds$start[i]))
+		lineNum[i]<-selectLine
+		linePos[selectLine]<-max(startEnds$end[i],linePos[selectLine])
+	}
+	return(lineNum[order(startEnds$id)])
+}
+
 
 #data.frame of sam flags
 samFlags<-data.frame('short'=c('paired','properPair','unmapped','mateUnmapped','reverse','mateReverse','first','second','notPrimary','fail','dupe'),'desc'=c('read paired','read mapped in proper pair','read unmapped','mate unmapped','read reverse strand','mate reverse strand','first in pair','second in pair','not primary alignment','read fails platform/vendor quality checks','read is PCR or optical duplicate'),stringsAsFactors=FALSE)
