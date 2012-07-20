@@ -977,21 +977,33 @@ read.sam<-function(fileName,nrows=-1,skips=-1,condense=TRUE){
 #convert cigar and starts to qStarts, tStarts, blockSizes as in blat
 #cigars: vector of SAM cigar strings
 #starts: vector of starting positions in target
+#seqs: vector of query sequences (only if alignments desired)
+#tSeq: single target sequence (only if alignments desired)
 #returns: dataframe with qStarts,tStarts,sizes or dataframe with starts, ends and ids
-cigarToBlock<-function(cigars,starts,startEnds=FALSE){
+cigarToBlock<-function(cigars,starts,startEnds=FALSE,seqs=NULL,tSeq=NULL){
 	#M=match, I=insertion in query, D=deletion in query, N="intron" deletion in query, S=soft clipping (clip sequence), H=hard clipping (sequence was already clipped)
-	if(length(starts)!=length(cigars))stop(simpleError('Cigars and starts not same length'))
+	nAligns<-length(starts)
+	if(nAligns!=length(cigars))stop(simpleError('Cigars and starts not same length'))
 	supportedOps<-c('M','I','D','N','S','H')
 	if(any(grep(sprintf('[^0-9%s]',paste(supportedOps,collapse='')),cigars)))stop(simpleError(sprintf('Only %s cigar operations supported',paste(supportedOps,collapse=''))))
 	tPos<-starts
-	qPos<-rep(1,length(starts))
-	stillWorking<-rep(TRUE,length(cigars))
-	qStarts<-tStarts<-rep('',length(starts))
-	blockSizes<-tStarts<-rep('',length(starts))
+	qPos<-rep(1,nAligns)
+	stillWorking<-rep(TRUE,nAligns)
+	qStarts<-tStarts<-rep('',nAligns)
+	blockSizes<-tStarts<-rep('',nAligns)
+	isAlign<-FALSE
+	if(!is.null(seqs)&&!is.null(tSeq)){
+		if(length(seqs)!=nAligns)stop(simpleError('Cigars and seqs not same length'))
+		tSeq<-tSeq[1]
+		isAlign<-TRUE
+		aligns<-data.frame('qAlign'=rep('',nAligns),'tAlign'=rep('',nAligns),stringsAsFactors=FALSE)
+	}
 	if(startEnds){
 		startEndsOut<-data.frame('start'=-1,'end'=-1,'id'=-1,'qStart'=-1,'qEnd'=-1)[0,]
 		ids<-1:length(starts)
 	}
+	N_DUMMY_GAPS<-1000000
+	dummyGaps<-paste(rep('-',N_DUMMY_GAPS),collapse='')
 	while(any(stillWorking)){
 		for(i in supportedOps){
 			regex<-sprintf('^([0-9]+)%s',i)
@@ -1009,10 +1021,21 @@ cigarToBlock<-function(cigars,starts,startEnds=FALSE){
 				}
 			}
 			if(i %in% c('M','D','N')){
+				if(isAlign){
+					aligns[stillWorking,][matches,c('tAlign')]<-sprintf('%s%s',aligns[stillWorking,][matches,c('tAlign')],substring(tSeq,tPos[stillWorking][matches],tPos[stillWorking][matches]+num-1))
+				}
 				tPos[stillWorking][matches]<-num+tPos[stillWorking][matches]
 			}
 			if(i %in% c('M','I','S')){
+				if(isAlign){
+					aligns[stillWorking,][matches,c('qAlign')]<-sprintf('%s%s',aligns[stillWorking,][matches,c('qAlign')],substring(seqs,qPos[stillWorking][matches],qPos[stillWorking][matches]+num-1))
+				}
 				qPos[stillWorking][matches]<-num+qPos[stillWorking][matches]
+			}
+			if(i!='M'&&isAlign){
+				if(isAlign)if(any(num>N_DUMMY_GAPS))stop(simpleError('Gap larger than ',N_DUMMY_GAPS))
+				if(i %in% c('D','N'))aligns[stillWorking,][matches,c('qAlign')]<-sprintf('%s%s',aligns[stillWorking,][matches,c('qAlign')],substring(dummyGaps,1,num))
+				if(i %in% c('I','S'))aligns[stillWorking,][matches,c('tAlign')]<-sprintf('%s%s',aligns[stillWorking,][matches,c('tAlign')],substring(dummyGaps,1,num))
 			}
 			stillWorking[stillWorking]<-nchar(cigars[stillWorking])>0
 		}
@@ -1020,9 +1043,32 @@ cigarToBlock<-function(cigars,starts,startEnds=FALSE){
 	qStarts<-sub('^,','',qStarts)
 	tStarts<-sub('^,','',tStarts)
 	blockSizes<-sub('^,','',blockSizes)
+	if(isAlign)return(aligns)
 	if(startEnds)return(startEndsOut)
 	else return(data.frame('qStarts'=qStarts,'tStarts'=tStarts,'sizes'=blockSizes,stringsAsFactors=FALSE))
 }
+
+#seqs: vector of sequences
+#tSeqs: vector of target sequences or a single target
+#qStarts: comma separated starts of query matches e.g. from blat or cigarToBlock (1 based)
+#tStarts: comma separated starts of target matches e.g. from blat or cigarToBlock (1 based)
+#sizes: comma separated lengths of matches e.g. from blat or cigarToBlock
+#blockToAlign<-function(seqs,tSeqs,qStarts,tStarts,sizes){
+#	nSeqs<-length(seqs)
+#	if(length(tSeqs)!=length(seqs)&&length(tSeqs)!=1)stop(simpleError('Target seqs not same length as seqs and not a single sequence')
+#	if(!all.equal(length(seqs),length(qStarts),length(tStarts),length(sizes)))stop(simpleError('All arguments not same length'))
+#	qStarts<-lapply(strsplit(qStarts,','),as.numeric)
+#	tStarts<-lapply(strsplit(tStarts,','),as.numeric)
+#	sizes<-lapply(strsplit(sizes,','),as.numeric)
+#	nPieces<-sapply(qStarts,length)
+#	if(any(nPieces!=sapply(tStarts,length))||any(nPieces!=sapply(qStarts,length)))stop(simpleError('Individual qStarts, tStarts and sizes not all the same length'))
+#	pairs<-do.call(rbind,mapply(function(seq,tSeq,qStarts,tStarts,sizes){
+#		nBlocks<-length(sizes)
+#		nChar<-qStarts[nBlocks]
+#		aligns<-rep(rep('X',
+#	},seq,tSeq,qStarts,tStarts,sizes,SIMPLIFY=FALSE))
+#
+#}
 
 #return order of one vector in another
 #query: values to be sorted in target order
