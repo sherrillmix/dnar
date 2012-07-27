@@ -938,7 +938,7 @@ samView<-function(fileName,samArgs='',...,samtoolsBinary='samtools',vocal=FALSE,
 		samOut<-textConnection(system(cmd,intern=TRUE))
 		if(vocal)message('Parsing')
 		if(samCommand=='view')out<-read.sam(samOut,skips=0,...)
-		else if(samCommand=='depth')out<-read.table(samOut,sep='\t',stringsAsFactors=FALSE,...)
+		else if(samCommand=='depth'||grepl('bam2depth',samtoolsBinary))out<-read.table(samOut,sep='\t',stringsAsFactors=FALSE,...)
 		else out<-readLines(samOut)
 		close(samOut)
 		return(out)
