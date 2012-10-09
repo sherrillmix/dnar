@@ -1376,6 +1376,29 @@ readBlat<-function(fileName,skips=5,nrows=-1,calcScore=TRUE,fixStarts=TRUE,...){
 	return(x)
 }
 
+#fileName: wiggle file to read
+readWiggle<-function(fileName){
+	x<-readLines(fileName)
+	trackLines<-grep('chrom=',x)
+	if(length(trackLines)==0)stop(simpleError('No track lines found in wiggle file'))
+	out<-do.call(rbind,mapply(function(startLine,endLine){
+		regex<-'^.*chrom=([^ \t]+).*$'
+		if(!grepl(regex,x[startLine]))stop(simpleError("Can't assign chromosome in wiggle file"))
+		chr<-sub(regex,'\\1',x[startLine])
+		regex<-'^.*span=([^ \t]+).*$'
+		if(grepl(regex,x[startLine]))span<-as.numeric(sub(regex,'\\1',x[startLine]))
+		else span<-1
+		out<-data.frame(do.call(rbind,strsplit(x[(startLine+1):endLine],'\t')),stringsAsFactors=FALSE)
+		colnames(out)<-c('start','value')
+		out$start<-as.numeric(out$start)
+		out$value<-as.numeric(out$value)
+		out$end<-out$start+span-1
+		out$chr<-chr
+		return(out)
+	},trackLines,c(trackLines[-1]-1,length(x)),SIMPLIFY=FALSE))
+	return(out)
+}
+
 trimEnd<-function(seqs,revCompPrimer,trimmed=rep(FALSE,length(seqs)),minSubstring=8,location='end'){
 	if(length(seqs)!=length(trimmed)) stop(simpleError('Already trimmed vector and seqs vector not same length'))
 	if(!location %in% c('start','end'))stop(simpleError('Please specify location as start or end'))
