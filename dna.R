@@ -24,6 +24,34 @@ stopError<-function(...){
 	stop(simpleError(paste(...,sep='')))
 }
 
+#cache an operation to disk or load if present
+#cacheFile: file location to save data to 
+#operation: a function taking ... arguments and returning object to be stored
+#...: arguments for operation function
+#OVERWRITE: If FALSE throw an error if hash of ... changes from cached values. If TRUE redo operation and overwrite cache without asking
+#VOCAL: If TRUE report on status of caching
+cacheOperation<-function(cacheFile,operation,...,OVERWRITE=FALSE,VOCAL=TRUE){
+	allArgs<-list(...)
+	if(!require(digest))stop(simpleError('caching requires digest'))
+	md5<-digest(allArgs)
+	if(file.exists(cacheFile)){
+		tmp<-new.env()
+		load(cacheFile,env=tmp)
+		if(with(tmp,md5)==md5){
+			if(VOCAL)message('Cache does exist. Loading data')
+			return(with(tmp,out))
+		}else{
+			if(!OVERWRITE)stop(simpleError(sprintf('Input does not match cache for %s. Please delete cache file',cacheFile)))
+			if(VOCAL)message('Cache hash does not match args. Rerunning operation')
+		}
+	}
+
+	if(VOCAL)message('Cache does not exist. Running operation')
+	out<-do.call(operation,allArgs)
+	save(md5,out,file=cacheFile)
+	return(out)
+}
+
 
 #string: string to be hashed
 #hashSize: size of hashed strings
