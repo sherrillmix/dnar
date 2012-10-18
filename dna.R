@@ -1007,7 +1007,7 @@ read.sam<-function(fileName,nrows=-1,skips=-1,condense=TRUE){
 #starts: vector of starting positions in target
 #seqs: vector of query sequences (only if alignments desired)
 #tSeq: single target sequence (only if alignments desired)
-#returns: dataframe with qStarts,tStarts,sizes or dataframe with starts, ends and ids
+#returns: dataframe with qStarts,tStarts,sizes if !startEnds or dataframe with starts, ends and ids if startEnds or dataframe with pairwise query alignments, qAlign, and target alignments, tAlign if provided seqs and tSeq
 cigarToBlock<-function(cigars,starts,startEnds=FALSE,seqs=NULL,tSeq=NULL){
 	#M=match, I=insertion in query, D=deletion in query, N="intron" deletion in query, S=soft clipping (clip sequence), H=hard clipping (sequence was already clipped)
 	nAligns<-length(starts)
@@ -1049,15 +1049,11 @@ cigarToBlock<-function(cigars,starts,startEnds=FALSE,seqs=NULL,tSeq=NULL){
 				}
 			}
 			if(i %in% c('M','D','N')){
-				if(isAlign){
-					aligns[stillWorking,][matches,c('tAlign')]<-sprintf('%s%s',aligns[stillWorking,][matches,c('tAlign')],substring(tSeq,tPos[stillWorking][matches],tPos[stillWorking][matches]+num-1))
-				}
+				if(isAlign)aligns[stillWorking,][matches,c('tAlign')]<-sprintf('%s%s',aligns[stillWorking,][matches,c('tAlign')],substring(tSeq,tPos[stillWorking][matches],tPos[stillWorking][matches]+num-1))
 				tPos[stillWorking][matches]<-num+tPos[stillWorking][matches]
 			}
 			if(i %in% c('M','I','S')){
-				if(isAlign){
-					aligns[stillWorking,][matches,c('qAlign')]<-sprintf('%s%s',aligns[stillWorking,][matches,c('qAlign')],substring(seqs,qPos[stillWorking][matches],qPos[stillWorking][matches]+num-1))
-				}
+				if(isAlign)aligns[stillWorking,][matches,c('qAlign')]<-sprintf('%s%s',aligns[stillWorking,][matches,c('qAlign')],substring(seqs[stillWorking][matches],qPos[stillWorking][matches],qPos[stillWorking][matches]+num-1))
 				qPos[stillWorking][matches]<-num+qPos[stillWorking][matches]
 			}
 			if(i!='M'&&isAlign){
