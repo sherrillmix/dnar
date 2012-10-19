@@ -2432,6 +2432,30 @@ stackRegions<-function(starts,ends){
 }
 
 
+#chr: vector of chromosomes
+#start: vector of start coordinate 1-based
+#end: vector of end coordinate 1-based
+#strand: vector of strands
+#chainFile: location of chain file for liftover
+#liftoverBin: location of the liftOver executable
+#return: 4 column data frame of coordinates
+liftCoords<-function(chr,start,end,strand,chainFile,liftoverBin='liftOver'){
+	tmpFiles<-c(tempfile(),tempfile(),tempfile())
+	y<-data.frame('chr'=chr,'start'=start,'end'=end,'strand'=strand,stringsAsFactors=FALSE)
+	y$id<-1:nrow(y)
+	writeLines(sprintf('%s\t%d\t%d\t%d\t%d\t%s',y$chr,y$start-1,y$end,y$id,1,strand),tmpFiles[1])
+	cmd<-sprintf('%s %s %s %s %s',liftoverBin,tmpFiles[1],chainFile,tmpFiles[2],tmpFiles[3])
+	system(cmd)
+	lift<-read.table(tmpFiles[2],stringsAsFactors=FALSE)
+	lift<-lift[,-5]
+	colnames(lift)<-c('chr','start','end','id','strand')
+	if(any(table(lift$id)>1))warning('Liftover created duplicates')
+	y<-merge(y[,'id',drop=FALSE],lift,all.x=TRUE)
+	y<-y[,colnames(y)!='id']
+	y$start<-y$start+1
+	return(y)
+}
+
 #data.frame of sam flags
 samFlags<-data.frame('short'=c('paired','properPair','unmapped','mateUnmapped','reverse','mateReverse','first','second','notPrimary','fail','dupe'),'desc'=c('read paired','read mapped in proper pair','read unmapped','mate unmapped','read reverse strand','mate reverse strand','first in pair','second in pair','not primary alignment','read fails platform/vendor quality checks','read is PCR or optical duplicate'),stringsAsFactors=FALSE)
 samFlags$bit<-2^(0:(nrow(samFlags)-1))
