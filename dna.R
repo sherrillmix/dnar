@@ -33,12 +33,13 @@ stopError<-function(...){
 cacheOperation<-function(cacheFile,operation,...,OVERWRITE=FALSE,VOCAL=TRUE){
 	allArgs<-list(...)
 	if(!require(digest))stop(simpleError('caching requires digest'))
-	md5<-digest(allArgs)
+	#try to prevent function scope from changing things
+	md5<-digest(lapply(allArgs,function(x)if(is.function(x))deparse(x)else x))
 	if(file.exists(cacheFile)){
 		tmp<-new.env()
 		load(cacheFile,env=tmp)
 		if(with(tmp,md5)==md5){
-			if(VOCAL)message('Cache does exist. Loading data')
+			if(VOCAL)message('Cache ',cacheFile,' does exist. Loading data')
 			return(with(tmp,out))
 		}else{
 			if(!OVERWRITE)stop(simpleError(sprintf('Input does not match cache for %s. Please delete cache file',cacheFile)))
@@ -46,7 +47,7 @@ cacheOperation<-function(cacheFile,operation,...,OVERWRITE=FALSE,VOCAL=TRUE){
 		}
 	}
 
-	if(VOCAL)message('Cache does not exist. Running operation')
+	if(VOCAL)message('Cache does ',cacheFile,' not exist. Running operation')
 	out<-do.call(operation,allArgs)
 	save(md5,out,file=cacheFile)
 	return(out)
