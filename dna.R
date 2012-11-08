@@ -555,7 +555,7 @@ startStop2Range<-function(starts,stops){
 #recursive: recurse through data directory?
 #vocal: status message for each file loading
 #...: extra arguments to read.fa
-readFaDir<-function(dir='.',suffix='\\.fn?a$',recursive=FALSE,vocal=FALSE,...){
+readFaDir<-function(dir='.',suffix='\\.(fn?a|fasta)$',recursive=FALSE,vocal=FALSE,...){
 	faFiles<-list.files(dir,suffix,recursive=recursive)
 	if(length(faFiles)<1)stop(simpleError('No fa files found'))
 	for(i in faFiles){
