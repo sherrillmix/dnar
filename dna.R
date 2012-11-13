@@ -1424,6 +1424,38 @@ readWiggle<-function(fileName){
 	return(out)
 }
 
+#seqs:sequences to be trimmed
+#start: trim starts?
+#end: trim ends?
+#nonNStretch: number of nonNs required
+#nStretch: delete until no stretch of Ns greater than this
+trimNs<-function(seqs,start=TRUE,end=TRUE,nonNStretch=NULL,nStretch=10){
+	regex<-sprintf('[ACTG]{%d,}',nonNStretch)
+	if(start&!is.null(nonNStretch)){
+		starts<-regexpr(sprintf('%s',regex),seqs)
+		seqs[starts==-1]<-''
+		seqs<-substring(seqs,starts)
+	}
+	if(end&!is.null(nonNStretch)){
+		starts<-sapply(gregexpr(sprintf('%s',regex),seqs),tail,1)
+		lengths<-sapply(gregexpr(sprintf('%s',regex),seqs),function(x)tail(attr(x,'match.length'),1))
+		seqs[starts==-1]<-''
+		seqs<-substring(seqs,1,starts+lengths-1)
+	}
+	if(!is.null(nStretch)){
+		regex<-sprintf('N{%d,}',nStretch)		
+		nStretches<-gregexpr(regex,seqs)
+		seqs<-mapply(function(reg,seq){
+			starts<-unique(c(reg,nchar(seq)+1))
+			ends<-c(0,reg+attr(reg,'match.length')-1)
+			diffs<-starts-ends-1
+			select<-which.max(diffs)
+			return(substring(seq,ends[select]+1,starts[select]-1))
+		},nStretches,seqs)
+	}
+	return(seqs)
+}
+
 trimEnd<-function(seqs,revCompPrimer,trimmed=rep(FALSE,length(seqs)),minSubstring=8,location='end'){
 	if(length(seqs)!=length(trimmed)) stop(simpleError('Already trimmed vector and seqs vector not same length'))
 	if(!location %in% c('start','end'))stop(simpleError('Please specify location as start or end'))
