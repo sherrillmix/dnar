@@ -4,7 +4,7 @@ primerTitanium<-c('CCATCTCATCCCTGCGTGTCTCCGACTCAG','CCTATCCCCTGTGTGCCTTGGCAGTCTC
 #convenience function to resize R console window
 adjustWindow<-function()options(width=as.integer(Sys.getenv('COLUMNS')))
 #convenience function to list objects by size
-object.sizes<-function(env=.GlobalEnv)sort(sapply(ls(env=env),function(x)object.size(get(x)),decreasing=TRUE)
+object.sizes<-function(env=.GlobalEnv)sort(sapply(ls(env=env),function(x)object.size(get(x))),decreasing=TRUE)
 
 ambigousBaseCodes<-c(
 	'R'='AG',
