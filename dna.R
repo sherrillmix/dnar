@@ -3,6 +3,8 @@ primers454<-c("GCCTCCCTCGCGCCATCAG","GCCTTGCCAGCCCGCTCAG")
 primerTitanium<-c('CCATCTCATCCCTGCGTGTCTCCGACTCAG','CCTATCCCCTGTGTGCCTTGGCAGTCTCAG')
 #convenience function to resize R console window
 adjustWindow<-function()options(width=as.integer(Sys.getenv('COLUMNS')))
+#convenience function to list objects by size
+object.sizes<-function(env=.GlobalEnv)sort(sapply(ls(env=env),function(x)object.size(get(x)),decreasing=TRUE)
 
 ambigousBaseCodes<-c(
 	'R'='AG',
@@ -30,8 +32,12 @@ stopError<-function(...){
 #...: arguments for operation function
 #OVERWRITE: If FALSE throw an error if hash of ... changes from cached values. If TRUE redo operation and overwrite cache without asking
 #VOCAL: If TRUE report on status of caching
-cacheOperation<-function(cacheFile,operation,...,OVERWRITE=FALSE,VOCAL=TRUE){
-	allArgs<-list(...)
+#EXCLUDE: Vector of names of arguments to exclude from md5 digest comparison (for very large arguments)
+cacheOperation<-function(cacheFile,operation,...,OVERWRITE=FALSE,VOCAL=TRUE,EXCLUDE=NULL){
+	#avoid evaluation EXCLUDEd args until necessary since they're probably big
+	unevalArgs<-match.call(expand.dots=FALSE)$'...'
+	varSelector<-if(is.null(names(unevalArgs)))rep(TRUE,length(unevalArgs)) else !names(unevalArgs) %in% EXCLUDE
+	allArgs<-lapply(unevalArgs[varSelector],eval)
 	if(!require(digest))stop(simpleError('caching requires digest'))
 	#try to prevent function scope from changing things
 	md5<-digest(lapply(allArgs,function(x)if(is.function(x))deparse(x)else x))
@@ -47,7 +53,9 @@ cacheOperation<-function(cacheFile,operation,...,OVERWRITE=FALSE,VOCAL=TRUE){
 		}
 	}
 
-	if(VOCAL)message('Cache does ',cacheFile,' not exist. Running operation')
+	if(VOCAL)message('Cache ',cacheFile,' does not exist. Running operation')
+	#make sure we have all the args if we excluded some
+	if(!is.null(EXCLUDE))allArgs<-list(...)
 	out<-do.call(operation,allArgs)
 	save(md5,out,file=cacheFile)
 	return(out)
@@ -1413,7 +1421,7 @@ readWiggle<-function(fileName){
 		regex<-'^.*span=([^ \t]+).*$'
 		if(grepl(regex,x[startLine]))span<-as.numeric(sub(regex,'\\1',x[startLine]))
 		else span<-1
-		out<-data.frame(do.call(rbind,strsplit(x[(startLine+1):endLine],'\t')),stringsAsFactors=FALSE)
+		out<-data.frame(do.call(rbind,strsplit(x[(startLine+1):endLine],'[\t ]')),stringsAsFactors=FALSE)
 		colnames(out)<-c('start','value')
 		out$start<-as.numeric(out$start)
 		out$value<-as.numeric(out$value)
@@ -1847,7 +1855,7 @@ flow2seq<-function(flow,flowOrder=c('T','A','C','G')){
 
 #reads bed file
 #returns list with a dataframe (columns chr,start,end) for each track
-read.bed<-function(fileName){
+read.bed<-function(fileName,startAddOne=FALSE){
 	x<-readLines(fileName)
 	tracks<-grep('track',x)
 	if(length(tracks)==0){
@@ -1865,6 +1873,7 @@ read.bed<-function(fileName){
 		colnames(output[[trackNames[i]]])<-thisNames
 		output[[trackNames[i]]][,'start']<-as.numeric(output[[trackNames[i]]][,'start'])
 		output[[trackNames[i]]][,'end']<-as.numeric(output[[trackNames[i]]][,'end'])
+		if(startAddOne)output[[trackNames[i]]][,'start']<-output[[trackNames[i]]][,'start']+1
 	}
 	return(output)
 }
@@ -2472,13 +2481,15 @@ stackRegions<-function(starts,ends){
 #chainFile: location of chain file for liftover
 #liftoverBin: location of the liftOver executable
 #return: 4 column data frame of coordinates
-liftCoords<-function(chr,start,end,strand,chainFile,liftoverBin='liftOver'){
+liftCoords<-function(chr,start,end,strand,chainFile,liftoverBin='liftOver',vocal=FALSE,removeNAs=TRUE){
 	tmpFiles<-c(tempfile(),tempfile(),tempfile())
 	y<-data.frame('chr'=chr,'start'=start,'end'=end,'strand'=strand,stringsAsFactors=FALSE)
 	y$id<-1:nrow(y)
 	writeLines(sprintf('%s\t%d\t%d\t%d\t%d\t%s',y$chr,y$start-1,y$end,y$id,1,strand),tmpFiles[1])
 	cmd<-sprintf('%s %s %s %s %s',liftoverBin,tmpFiles[1],chainFile,tmpFiles[2],tmpFiles[3])
-	system(cmd)
+	if(vocal)message(cmd)
+	returnCode<-system(cmd)
+	if(vocal)message('Return: ',returnCode)
 	lift<-read.table(tmpFiles[2],stringsAsFactors=FALSE)
 	lift<-lift[,-5]
 	colnames(lift)<-c('chr','start','end','id','strand')
@@ -2486,7 +2497,61 @@ liftCoords<-function(chr,start,end,strand,chainFile,liftoverBin='liftOver'){
 	y<-merge(y[,'id',drop=FALSE],lift,all.x=TRUE)
 	y<-y[,colnames(y)!='id']
 	y$start<-y$start+1
+	selector<-is.na(y$chr)|is.na(y$start)|is.na(y$end)
+	if(removeNAs&&any(selector)){
+		message("Removing ",sum(selector)," of ",length(selector)," reads for failing to liftover")
+		y<-y[!selector,]
+	}
 	return(y)
+}
+
+#seqs: sequences to get GC content of
+#chars: characters to count (G,C by default)
+#returns: proportion of GC in sequence
+gcPercent<-function(seqs,chars=c('C','G')){
+	regex<-sprintf('[%s]+',paste(chars,collapse=''))
+	gcs<-nchar(gsub(regex,'',seqs,perl=TRUE))
+	return(gcs/nchar(seqs))
+}
+
+#seqs: vector of strings, sequences to form a position weight matrix from (all same length)
+#chars: allowed characters
+#priors: additional counts to add to each column with (default is a lazy way to get a named 0 vector)
+pwm<-function(seqs,chars=c('C','G','T','A'),priors=table(chars)-1){
+	nBases<-nchar(seqs[1])
+	if(any(nchar(seqs)!=nBases))stop(simpleError('All sequences not same length for PWM'))
+	if(any(sort(names(priors))!=sort(chars)))stop(simpleError('Priors and possible characters do not match'))
+	seqMat<-do.call(rbind,strsplit(seqs,''))
+	out<-apply(seqMat,2,function(x){
+		x<-x[x %in% chars]
+		baseTable<-(table(c(chars,x))-1)
+		baseTable<-baseTable+priors[names(baseTable)]
+		return(baseTable/(length(x)+sum(priors)))
+	})
+	return(out)
+}
+
+#seqs: vector of strings, sequences to score
+#pwm: position weight matrix with uniqueBasesxseqLength dimensions
+scoreFromPWM<-function(seqs,pwm){
+	bases<-rownames(pwm)	
+	nBases<-length(bases)
+	seqLength<-nchar(seqs[1])
+	if(any(nchar(seqs)!=seqLength))stop(simpleError('All sequences not same length for PWM'))
+	if(seqLength!=ncol(pwm))stop(simpleError('Sequences and PWM not same length'))
+	badSeqs<-grepl(sprintf('[^%s]',paste(bases,collapse='')),seqs)
+	if(any(badSeqs))warning('Unknown bases for PWM scoring')
+	seqs<-seqs[!badSeqs]
+
+	nSeqs<-length(seqs)
+	scores<-rep(NA,length(seqs))
+	seqMat<-do.call(rbind,strsplit(seqs[!badSeqs],''))
+	ids<-1:nBases
+	names(ids)<-bases
+	#assuming as.vector takes items columnwise
+	probs<-matrix(indexMatrix(ids[as.vector(seqMat)],rep(1:seqLength,each=nSeqs),pwm),nrow=nSeqs)
+	scores[!badSeqs]<-apply(log(probs),1,sum)
+	return(scores)
 }
 
 #data.frame of sam flags
