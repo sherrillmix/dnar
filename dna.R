@@ -196,6 +196,7 @@ shannon<-apply(rbind(baseMat,num),1,function(x){x[1:4]*(2-(shannon(x[1:4],base=2
 #counts: a vector of counts with one entry per "species"
 #returns: chao index
 chao<-function(counts){
+	counts<-counts[counts>0]
 	return(length(counts)+sum(counts==1)*(sum(counts==1)-1)/2/(sum(counts==2)+1))
 }
 
