@@ -2563,11 +2563,12 @@ convertLineToUser<-function(line,axis=1){
 	axisPair<-sort((c(axis-1,axis+1)%%4)+1)
 	isHeight<-(axis%%2)==1
 	isSecond<-axis>2
-	marWidth<-par('mar')[axis]/sum(par('mar')[axisPair])*(par('din')-par('pin'))[isHeight+1]
-	widthPerLine<-marWidth/par('mar')[axis]
-	base<-ifelse(isSecond,par('pin')[isHeight+1],0)
-	func<-ifelse(isHeight,grconvertY,grconvertX)
-	out<-func(base+line*widthPerLine,'inch','user')
+	thisMar<-par('mar')[axis]
+	marWidth<-thisMar/sum(par('mar')[axisPair])*(par('fin')-par('pin'))[isHeight+1]
+	widthPerLine<-marWidth/thisMar
+	base<-ifelse(isSecond,par('fin')[isHeight+1]-widthPerLine*thisMar,widthPerLine*thisMar)
+	func<-if(isHeight)grconvertY else grconvertX
+	out<-func(base+line*widthPerLine*ifelse(isSecond,1,-1),'inches','user')
 	return(out)
 }
 
