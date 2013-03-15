@@ -101,6 +101,7 @@ seqSplit<-function(...,fill=NULL){
 
 #convenience function for selecting elements from a matrix
 indexMatrix<-function(x,y,mat,returnIndex=FALSE){
+	mat<-as.matrix(mat)
 	if(!is.integer(x)){tmp<-1:nrow(mat);names(tmp)<-rownames(mat);x<-tmp[x]}
 	if(!is.integer(y)){tmp<-1:ncol(mat);names(tmp)<-colnames(mat);y<-tmp[y]}
 	if(length(x)!=length(y)|max(x)>nrow(mat)|max(y)>ncol(mat))stop(simpleError("Dimensions don't match up"))
@@ -2554,6 +2555,22 @@ scoreFromPWM<-function(seqs,pwm){
 	scores[!badSeqs]<-apply(log(probs),1,sum)
 	return(scores)
 }
+
+#line: line to convert to user coordinates
+#axis: axis to do conversion on (1:4 same as axis, mtext command)
+convertLineToUser<-function(line,axis=1){
+	if(!(axis %in% 1:4))stop(simpleError('Undefined axis'))
+	axisPair<-sort((c(axis-1,axis+1)%%4)+1)
+	isHeight<-(axis%%2)==1
+	isSecond<-axis>2
+	marWidth<-par('mar')[axis]/sum(par('mar')[axisPair])*(par('din')-par('pin'))[isHeight+1]
+	widthPerLine<-marWidth/par('mar')[axis]
+	base<-ifelse(isSecond,par('pin')[isHeight+1],0)
+	func<-ifelse(isHeight,grconvertY,grconvertX)
+	out<-func(base+line*widthPerLine,'inch','user')
+	return(out)
+}
+
 
 #data.frame of sam flags
 samFlags<-data.frame('short'=c('paired','properPair','unmapped','mateUnmapped','reverse','mateReverse','first','second','notPrimary','fail','dupe'),'desc'=c('read paired','read mapped in proper pair','read unmapped','mate unmapped','read reverse strand','mate reverse strand','first in pair','second in pair','not primary alignment','read fails platform/vendor quality checks','read is PCR or optical duplicate'),stringsAsFactors=FALSE)
