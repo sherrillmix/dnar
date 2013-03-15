@@ -2566,7 +2566,8 @@ convertLineToUser<-function(line,axis=1){
 	thisMar<-par('mar')[axis]
 	marWidth<-thisMar/sum(par('mar')[axisPair])*(par('fin')-par('pin'))[isHeight+1]
 	widthPerLine<-marWidth/thisMar
-	base<-ifelse(isSecond,par('fin')[isHeight+1]-widthPerLine*thisMar,widthPerLine*thisMar)
+	#find base line + add in if plot doesn't cover whole device e.g. par(mfrow=c(2,1))
+	base<-ifelse(isSecond,par('fin')[isHeight+1]-widthPerLine*thisMar,widthPerLine*thisMar) + par('fig')[1+isHeight*2]*par('din')[isHeight+1]
 	func<-if(isHeight)grconvertY else grconvertX
 	out<-func(base+line*widthPerLine*ifelse(isSecond,1,-1),'inches','user')
 	return(out)
