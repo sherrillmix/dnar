@@ -26,6 +26,31 @@ stopError<-function(...){
 	stop(simpleError(paste(...,sep='')))
 }
 
+#calculating moving average/max/min etc
+#vec: to average over
+#statFunc: function to use
+#spacer: how many +- to average
+movingStat<-function(vec,statFunc=max,spacer=2){
+	n<-length(vec)
+	sapply(1:n,function(x)statFunc(vec[max(1,x-spacer):min(n,x+spacer)]))
+}
+
+#convenience function to check all args are same length
+#...: arguments to check the lengths of 
+allSameLength<-function(...){
+	args<-list(...)
+	ns<-sapply(args,length)
+	return(all(ns==ns[1]))
+}
+
+#convenience function to check all args don't have NAs
+#...: arguments to check the lengths of 
+anyNa<-function(...){
+	args<-list(...)
+	hasNa<-sapply(args,function(x)any(is.na(x)))
+	return(any(hasNa))
+}
+
 #cache an operation to disk or load if present
 #cacheFile: file location to save data to 
 #operation: a function taking ... arguments and returning object to be stored
@@ -976,13 +1001,28 @@ samView<-function(fileName,samArgs='',...,samtoolsBinary='samtools',vocal=FALSE,
 		if(vocal)message(cmd)
 		samOut<-textConnection(system(cmd,intern=TRUE))
 		if(vocal)message('Parsing')
-		if(samCommand=='view')out<-read.sam(samOut,skips=0,...)
-		else if(samCommand=='depth'||grepl('bam2depth',samtoolsBinary))out<-read.table(samOut,sep='\t',stringsAsFactors=FALSE,...)
-		else out<-readLines(samOut)
+		if(length(readLines(samOut,n=1))<1){
+			out<-NULL
+		}else{
+			if(samCommand=='view')out<-read.sam(samOut,skips=0,...)
+			else if(samCommand=='depth'||grepl('bam2depth',samtoolsBinary))out<-read.table(samOut,sep='\t',stringsAsFactors=FALSE,...)
+			else out<-readLines(samOut)
+		}
 		close(samOut)
 		return(out)
 	}
 }
+
+#reg: region in the format "chrX:123545-123324"
+#files: bam files to pull the counts from
+#bam2depthBinary: bam2depth executable file
+pullRegion<-function(reg,files,bam2depthBinary='./bam2depth'){
+	samArg<-sprintf('-r %s',reg)
+	fileArg<-paste(files,collapse=' ')
+	cover<-samView(fileArg,samArgs=samArg,samCommand='',samtoolsBinary=bam2depthBinary,colClasses=c('character',rep('numeric',length(files)+1)))
+	return(cover)
+}
+
 
 #read a sam file
 #fileName: name of file
@@ -2572,7 +2612,6 @@ convertLineToUser<-function(line,axis=1){
 	out<-func(base+line*widthPerLine*ifelse(isSecond,1,-1),'inches','user')
 	return(out)
 }
-
 
 #data.frame of sam flags
 samFlags<-data.frame('short'=c('paired','properPair','unmapped','mateUnmapped','reverse','mateReverse','first','second','notPrimary','fail','dupe'),'desc'=c('read paired','read mapped in proper pair','read unmapped','mate unmapped','read reverse strand','mate reverse strand','first in pair','second in pair','not primary alignment','read fails platform/vendor quality checks','read is PCR or optical duplicate'),stringsAsFactors=FALSE)
