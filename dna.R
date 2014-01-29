@@ -20,6 +20,22 @@ ambigousBaseCodes<-c(
 	'N'='ACGT'
 )
 
+#get the conservative edge of the odds ratio from fisher's exact test
+#x: a 2x2 numeric matrix to feed to fisher.test
+conservativeOddsRatio<-function(x){
+	conf.int<-fisher.test(x)$conf.int
+	out<-ifelse(all(conf.int>1),conf.int[1],ifelse(all(conf.int<1),conf.int[2],1))
+	return(out)
+}
+
+#convenience function for lagging with NA
+lagNA<-function(x,lag=1,fill=NA){
+	out<-x	
+	if(lag>0)out<-c(out[-(1:lag)],rep(fill,lag))
+	if(lag<0)out<-c(rep(fill,abs(lag)),out[-(length(x)-(1:lag)+1)])
+	return(out)
+}
+
 
 #convenience function for stop(simpleError())
 stopError<-function(...){
@@ -645,6 +661,7 @@ makeBedGraph<-function(fileName,chroms,starts,ends,values=NULL,header='',vocal=F
 	}
 	data<-data[,c('chroms','starts','ends','values')]
 	colnames(data)<-c('chrom','start','end','value')
+	data<-data[order(data$start),]
 	if(!is.null(proportion))data$value<-data$value/proportion
 	#make sure we don't get any 6.231e-09
 	if(is.null(yMax))yMax<-max(data$value)
@@ -714,8 +731,9 @@ index2range<-function(index){
 
 #reverse strings
 #strings: vector of strings to be revered
-reverseString<-function(strings){
-	output<-sapply(strsplit(strings,''),function(x)paste(rev(x),collapse=''))	
+reverseString<-function(strings,faster=TRUE){
+	if(faster) output<-sapply(strings,function(x)intToUtf8(rev(utf8ToInt(x)))) #http://stackoverflow.com/questions/13612967/how-to-reverse-a-string-in-r
+	else output<-sapply(strsplit(strings,''),function(x)paste(rev(x),collapse=''))	
 	return(output)
 }
 #compliment dna 
@@ -831,6 +849,7 @@ read.fastq<-function(fileName,convert=TRUE){
 	x<-readLines(fileName)
 	plusLines<-grep('^\\+',x)
 	atLines<-grep('^@',x)
+	#make sure matching + and @
 	plusLines<-plusLines[plusLines %in% (atLines+2)]
 	atLines<-atLines[atLines %in% (plusLines-2)]
 	if(any(grep('[^ACTGN]',x[atLines+1])))warning('Non ATCGN chars found in sequence')
@@ -1024,9 +1043,19 @@ pullRegion<-function(reg,files,bam2depthBinary='./bam2depth'){
 	samArg<-sprintf('-r %s',reg)
 	fileArg<-paste(files,collapse=' ')
 	cover<-samView(fileArg,samArgs=samArg,samCommand='',samtoolsBinary=bam2depthBinary,colClasses=c('character',rep('numeric',length(files)+1)))
+	if(is.null(cover))cover<-do.call(data.frame,c(list('XXX'),as.list(-(1:(length(files)+1)))))[0,]
+	colnames(cover)<-c('chr','pos',sprintf('counts%d',1:(ncol(cover)-2)))
 	return(cover)
 }
 
+#reg: region in the format "chrX:123545-123324"
+parseRegion<-function(reg){
+	splits<-strsplit(reg,'[:-]')
+	if(any(sapply(splits,length)!=3))stop(simpleError('Region not parsed'))
+	out<-data.frame('chr'=sapply(splits,'[[',1),stringsAsFactors=FALSE)
+	out[,c('start','end')]<-as.numeric(do.call(rbind,lapply(splits,'[',2:3)))
+	return(out)
+}
 
 #read a sam file
 #fileName: name of file
@@ -1132,22 +1161,39 @@ cigarToBlock<-function(cigars,starts,startEnds=FALSE,seqs=NULL,tSeq=NULL){
 #qStarts: comma separated starts of query matches e.g. from blat or cigarToBlock (1 based)
 #tStarts: comma separated starts of target matches e.g. from blat or cigarToBlock (1 based)
 #sizes: comma separated lengths of matches e.g. from blat or cigarToBlock
-#blockToAlign<-function(seqs,tSeqs,qStarts,tStarts,sizes){
-#	nSeqs<-length(seqs)
-#	if(length(tSeqs)!=length(seqs)&&length(tSeqs)!=1)stop(simpleError('Target seqs not same length as seqs and not a single sequence')
-#	if(!all.equal(length(seqs),length(qStarts),length(tStarts),length(sizes)))stop(simpleError('All arguments not same length'))
-#	qStarts<-lapply(strsplit(qStarts,','),as.numeric)
-#	tStarts<-lapply(strsplit(tStarts,','),as.numeric)
-#	sizes<-lapply(strsplit(sizes,','),as.numeric)
-#	nPieces<-sapply(qStarts,length)
-#	if(any(nPieces!=sapply(tStarts,length))||any(nPieces!=sapply(qStarts,length)))stop(simpleError('Individual qStarts, tStarts and sizes not all the same length'))
-#	pairs<-do.call(rbind,mapply(function(seq,tSeq,qStarts,tStarts,sizes){
-#		nBlocks<-length(sizes)
-#		nChar<-qStarts[nBlocks]
-#		aligns<-rep(rep('X',
-#	},seq,tSeq,qStarts,tStarts,sizes,SIMPLIFY=FALSE))
-#
-#}
+blockToAlign<-function(seqs,tSeqs,qStarts,tStarts,sizes){
+	nSeqs<-length(seqs)
+	if(length(tSeqs)==1)tSeqs<-rep(tSeqs,length(seqs))
+	if(length(tSeqs)!=length(seqs))stop(simpleError('Target seqs not same length as seqs and not a single sequence'))
+	if(!all.equal(length(seqs),length(qStarts),length(tStarts),length(sizes)))stop(simpleError('All arguments not same length'))
+	tPieces<-blat2exons(1:length(seqs),1:length(seqs),tStarts,sizes)
+	tPieces$seq<-substring(tSeqs[tPieces$name],tPieces$start,tPieces$end)
+	qPieces<-blat2exons(1:length(seqs),1:length(seqs),qStarts,sizes)
+	qPieces$seq<-substring(seqs[qPieces$name],qPieces$start,qPieces$end)
+	if(any(tPieces$exonName!=qPieces$exonName))stop(simpleError('Problem constructing fragments'))
+	gaps<-blatFindGaps(qStarts,tStarts,sizes)
+	gaps<-mapply(function(gap,tSeq,qSeq){
+		gap<-as.data.frame(gap,stringsAsFactors=FALSE)
+		#depending on substring(seq,x,x-1) returning ''
+		if(nrow(gap)==0)return(gap)
+		gap$tSeq<-substring(tSeq,gap$tGapStartAfter+1,gap$tGapStartAfter+gap$tGaps)
+		gap$qSeq<-substring(qSeq,gap$qGapStartAfter+1,gap$qGapStartAfter+gap$qGaps)
+		dummy<-paste(rep('-',max(nchar(c(gap$tSeq,gap$qSeq)))),collapse='')
+		gap[,c('tSeq','qSeq')]<-t(apply(gap[,c('tSeq','qSeq')],1,function(x)paste(x,substring(dummy,1,max(nchar(x))-nchar(x)),sep='')))
+		return(gap)
+	},gaps,tSeqs,seqs,SIMPLIFY=FALSE)
+	qSeqs<-sapply(1:length(seqs),function(ii){
+		x<-qPieces[qPieces$name==ii,]
+		thisGaps<-gaps[[ii]]
+		return(paste(c(x$seq,thisGaps$qSeq)[order(c(x$start,thisGaps$qGapStartAfter+.5))],collapse=''))
+	})
+	tSeqs<-sapply(1:length(seqs),function(ii){
+		x<-tPieces[tPieces$name==ii,]
+		thisGaps<-gaps[[ii]]
+		return(paste(c(x$seq,thisGaps$tSeq)[order(c(x$start,thisGaps$tGapStartAfter+.5))],collapse=''))
+	})
+	return(data.frame('qSeq'=qSeqs,'tSeq'=tSeqs,stringsAsFactors=FALSE))
+}
 
 #return order of one vector in another
 #query: values to be sorted in target order
@@ -1282,6 +1328,7 @@ readBlast2<-function(fileName,excludeUnculture=TRUE){
 
 
 
+
 #start a gfServer on an open port and return port
 #nibDir: directory containing nib files to align against
 #options: options to gfServer
@@ -1331,9 +1378,93 @@ runBlat<-function(faFile,gfClientOptions='',outFile=gsub('\\.fn?a$','.blat',faFi
 	
 	cmd<-sprintf('%s localhost %d / %s %s %s',gfClient,port,faFile,gfClientOptions,outFile)
 	message(cmd)
-	system(cmd)
+	errorCode<-system(cmd)
+	if(errorCode!=0){
+		message('Error running blat on port ',port, '. Trying again')
+		errorCode<-system(cmd)
+	}
 
+	print(checkBlat(port))
+	message('Code: ',errorCode,' on port ',port)
+	message('Killing blat server on port ',port)
 	killBlat(port)
+}
+
+
+#run blat from blat executable instead of gfserver/clien
+#reads: named vector of sequences
+#refs: named vector of references
+#blat: path to blat program
+#blatArgs: string of arguments for blat
+#tmpDir: a directory to write tempfiles to
+#outfile: file to write blat to 
+#readFile: file to use instead of reads (will be deleted)
+runBlatNoServer<-function(reads=NULL,refs,blatArgs='',outFile='out.blat',blat='blat',tmpDir=tempdir(),readFile=NULL,deleteFiles=!is.null(reads)){
+	if(!file.exists(tmpDir))dir.create(tmpDir)
+	if(is.null(reads)&is.null(readFile))stop(simpleError('Please provide reads or readFile'))
+	if(is.null(readFile)){
+		readFile<-sprintf('%s/read.fa',tmpDir)
+		write.fa(names(reads),reads,readFile)
+	}
+	refFile<-sprintf('%s/refs.fa',tmpDir)
+	write.fa(names(refs),refs,refFile)
+	cmd<-sprintf('%s %s %s %s %s',blat,refFile,readFile,blatArgs,outFile)
+	message(cmd)
+	errorCode<-system(cmd)
+	if(errorCode!=0)stop(simpleError('Problem running blat'))
+	if(deleteFiles)file.remove(refFile,readFile,tmpDir)
+	return(TRUE)
+}	
+
+#run blat from blat executable instead of gfserver/clien
+#reads: named vector of sequences
+#refs: named vector of references
+#blat: path to blat program
+#blatArgs: string of arguments for blat
+#tmpDir: a directory to write tempfiles to
+#nCore: number of cores to use
+#outfile: file to write blat to (if ends in .gz then isGz defaults to true and writes to gzipped file)
+multiRunBlatNoServer<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),condense=TRUE,isGz=grepl('.gz$',outFile),sleepIncrement=1,...){
+	prefix<-paste(sample(c(letters,LETTERS),20,TRUE),collapse='')
+	library(parallel)
+	if(!file.exists(tmpDir))dir.create(tmpDir)
+	message('Preparing files')
+	runFiles<-mapply(function(seqs,id){
+		thisTmpDir<-sprintf('%s/work__%s__%d',tmpDir,prefix,id)
+		dir.create(thisTmpDir)
+		tmpFile<-sprintf('%s__%d.blat',sub('\\.blat(\\.gz)?$','',outFile),id)
+		faFile<-sprintf('%s/reads.fa',thisTmpDir)
+		write.fa(names(seqs),seqs,faFile)
+		return(c(thisTmpDir,tmpFile,faFile))
+	},split(reads,sort(rep(1:nCore,length.out=length(reads)))),1:nCore,SIMPLIFY=FALSE)
+	message('Running blats')
+	bigRun<-mclapply(runFiles,function(x){
+		message('Starting ',x[2])
+		runBlatNoServer(readFile=x[3],refs=refs,outFile=x[2],tmpDir=x[1],deleteFiles=TRUE,...)
+		return(x[2])
+	},mc.cores=nCore)
+
+	if(any(!sapply(bigRun,file.exists)))stop(simpleError('Blat file missing'))
+	if(isGz)outFile<-gzfile(outFile,open='w+')
+	else outFile<-file(outFile,open='w+')
+	counter<-0
+	for(i in 1:length(bigRun)){
+		message('Reading blat file ',i)
+		blat<-readLines(bigRun[[i]])
+		#take off header in later files
+		if(i!=1){
+			blat<-blat[-1:-5]
+			append<-TRUE
+		}else{
+			append<-FALSE
+		}
+		writeLines(blat,sep="\n",con=outFile)
+		file.remove(bigRun[[i]])
+		counter<-counter+length(blat)
+	}
+	message('Wrote ',counter,' blat lines')
+	close(outFile)
+	return(outFile)
 }
 
 #make a 2bit file from one set of reads and blat another set against it
@@ -1354,7 +1485,7 @@ blatReadsVsRefs<-function(reads,refs,outFile,faToTwoBit='faToTwoBit',tmpDir=spri
 	file.remove(twobitFile,refFile,readFile,tmpDir)
 }
 
-#run blat parallel (requires parallel package included in vim 2.4.1)
+#run blat parallel (requires parallel package included in R 2.4.1)
 #reads: vector of query reads with names
 #refs: vector of query refs with names
 #tmpDir: directory to store work files
@@ -1410,37 +1541,78 @@ killBlat<-function(port){
 	}	
 }
 
+#read a large blat file piece by piece NOTE: assumes blat files is sorted by qName
+readLargeBlat<-function(fileName,nHeader=5,nrows=1e6,isGz=grepl('.gz$',fileName),filterFunc=function(x)rep(TRUE,nrow(x)),...){
+	#R complains about seek and gzipped files. should work but...
+	#openFile<-gzfile(fileName,'r')
+	#so we'll do the stupid way if it's a gzipped file
+	if(isGz){
+		openFile<-pipe(sprintf('zcat %s',fileName),'r')
+	}else{
+		openFile<-file(fileName,'r')
+	}
+	on.exit(close(openFile))
+	#burn off the header
+	readLines(openFile,n=nHeader)
+	leftOverData<-readBlat(openFile,skips=0,nrows=1,...)
+	out<-leftOverData[0,]
+	counter<-1
+	finished<-FALSE
+	while(!finished){
+		message('Working on ',counter*nrows)
+		counter<-counter+1
+		thisData<-readBlat(openFile,skips=0,nrows=nrows,...)
+		finished<-nrow(thisData)<1
+		thisData<-rbind(leftOverData,thisData)
+		if(finished){
+			#we're done
+			leftOverData<-thisData[0,]
+		}else{
+			#we're not sure if the last entry is complete
+			lastSelector<-thisData$qName==tail(thisData$qName,1)
+			leftOverData<-thisData[lastSelector,]
+			thisData<-thisData[!lastSelector,]
+		}
+		#if all reads were same qName then we could have empty (otherwise shouldn't occur)
+		if(nrow(thisData)>0){
+			selector<-filterFunc(thisData)
+			if(any(is.na(selector)))stop(simpleError('NA returned from selection function'))
+			message('Filtering ',sum(!selector),' of ',length(selector),' matches for ',length(unique(thisData$qName)),' reads')
+			out<-rbind(out,thisData[selector,])
+		}
+	}
+
+	return(out)
+}
 
 #read a blat file
 #fileName: name of file
 #skips: number of lines to skip (5 for a normal blat file)
-#nrows: number of rows to read in (-1 for all)
+#nCols: 21 (no alignments) or 23 columns (alignments)
 #calcScore: calculate score column?
 #fixStarts: convert start to 1-based?
+#filterFunction: if not NULL then pass the output data.frame to this function and filter by logical value returned
 #...: additional arguments to read.table
 #returns: dataframe of blat data
-readBlat<-function(fileName,skips=5,nrows=-1,calcScore=TRUE,fixStarts=TRUE,...){
+readBlat<-function(fileName,skips=5,calcScore=TRUE,fixStarts=TRUE,nCols=21,filterFunction=NULL,...){
+	#if we don't read in all lines at once it becomes a pain to deal with open/closed connections when we want to peak 
+	
 	#test for empty file
-	test<-readLines(fileName,n=6)
-	if(length(test)-5<1)return(NULL) 
-	#read in test lines
-	test<-read.table(fileName,skip=skips,sep="\t",stringsAsFactors=FALSE,nrows=10,...)
-	thisColNum<-ncol(test)
-	if(!thisColNum %in% c(21,23))stop(simpleError('Wrong number of columns in blat output'))
-	if(thisColNum==21){
-		colNames<-c('match','mismatch','repmatch','ns','qGaps','qGapBases','tGaps','tGapBases','strand','qName','qSize','qStart','qEnd','tName','tSize','tStart','tEnd','blocks','blockSizes','qStarts','tStarts')
-		colClasses<-c(rep('numeric',8),rep('character',2),rep('numeric',3),'character',rep('numeric',4),rep('character',3))
+	#if(length(allLines)<1)return(NULL) 
+	#testDf<-read.table(textConnection(allLines[1]),sep="\t",stringsAsFactors=FALSE,...)
+	if(!nCols %in% c(21,23))stop(simpleError('Please select 21 or 23 columns'))
+	colNames<-c('match','mismatch','repmatch','ns','qGaps','qGapBases','tGaps','tGapBases','strand','qName','qSize','qStart','qEnd','tName','tSize','tStart','tEnd','blocks','blockSizes','qStarts','tStarts')
+	colClasses<-c(rep('numeric',8),rep('character',2),rep('numeric',3),'character',rep('numeric',4),rep('character',3))
+	if(nCols==23){
+		colNames<-c(colNames,'qAlign','tAlign')
+		colClasses<-c(colClasses,rep('character',2))
 	}
-	if(thisColNum==23){
-		colNames<-c('match','mismatch','repmatch','ns','qGaps','qGapBases','tGaps','tGapBases','strand','qName','qSize','qStart','qEnd','tName','tSize','tStart','tEnd','blocks','blockSizes','qStarts','tStarts','qAlign','tAlign')
-		colClasses<-c(rep('numeric',8),rep('character',2),rep('numeric',3),'character',rep('numeric',4),rep('character',5))
-	}
-	x<-read.table(fileName,skip=skips,sep="\t",stringsAsFactors=FALSE,colClasses=colClasses,nrows=nrows,...)
-	colnames(x)<-colNames
+	#textConnection is too slow to be useful here
+	x<-read.table(fileName,sep="\t",stringsAsFactors=FALSE,skip=skips,colClasses=colClasses,col.names=colNames,...)
 
 	#Score equation from blat's webpage
 	if(calcScore)x$score<-x$match-x$mismatch-x$qGaps-x$tGaps
-	if(fixStarts){
+	if(fixStarts&nrow(x)>0){
 		#blat uses 0-index starts and 1-index ends
 		#put starts in 1-index
 		x$tStart<-x$tStart+1
@@ -1450,7 +1622,14 @@ readBlat<-function(fileName,skips=5,nrows=-1,calcScore=TRUE,fixStarts=TRUE,...){
 		x$qStartsBak<-x$qStarts
 		negSelect<-x$strand=='-'
 		#qSize-(blockSizes-1)-(qStarts-1)
-		x$qStarts[negSelect]<-mapply(function(x,y,z){paste(as.numeric(z)-as.numeric(x)-as.numeric(y)+2,collapse=',')},strsplit(x$qStarts[negSelect],','),strsplit(x$blockSizes[negSelect],','),x$qSize[negSelect])
+		if(any(negSelect)){
+			x$qStarts[negSelect]<-mapply(function(qStart,blockSize,qSize){
+				paste(as.numeric(qSize)-as.numeric(qStart)-as.numeric(blockSize)+2,collapse=',')
+			},strsplit(x$qStarts[negSelect],','),strsplit(x$blockSizes[negSelect],','),x$qSize[negSelect])
+		}
+	}
+	if(!is.null(filterFunction)){
+		x<-x[filterFunction(x),]
 	}
 	return(x)
 }
