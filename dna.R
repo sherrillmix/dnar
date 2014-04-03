@@ -377,6 +377,21 @@ dnaPos2aa<-function(dna,pos,start=1,end=nchar(dna),frame=0,strand='+',refStart=1
 		
 }
 
+#find closest region for query
+#qStart: query start coordinate
+#qEnd: query end coordinate
+#tStarts: query start coordinates
+#tEnds: query end coordinates
+closestRegion<-function(qStart,qEnd,tStarts,tEnds){
+	distRight<-tStarts-qEnd
+	distLeft<-qStart-tEnds
+	isRight<-distRight>0
+	isLeft<-distLeft>0
+	!isRight&!isLeft
+	dists<-ifelse(!isRight&!isLeft,0,ifelse(isLeft,distLeft,distRight)) #0 if overlap
+	#should probably deal with best overlap better
+	return(which.min(dists))
+}
 
 #check overlap between two sets of coordinates
 #starts: start coordinates
