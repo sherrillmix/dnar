@@ -280,12 +280,12 @@ rarefy<-function(species,counts=rep(1,length(species)),samples=seq(10,sum(counts
 #calculate rarefaction using formula
 #sample: vector of numbers of individuals per species
 #step: size of sampling steps for rarefaction
-quickRare<-function(sample,step=10){
+#maxN: maximum sample size tested
+quickRare<-function(sample,step=10,maxN=sum(sample)){
 	sampleSize<-20;
-	steps<-unique(c(seq(step,sum(sample),step),sum(sample)))
+	steps<-unique(c(seq(step,maxN,step),maxN))
 	output<-sapply(steps,function(x)rareEquation(sample,x))
-	return(cbind(output,steps))
-
+	return(data.frame('rare'=output,'sampleN'=steps))
 }
 
 #speciesCounts: vector of counts for each "species" e.g. c(10,100,5)
@@ -297,8 +297,9 @@ rareEquation<-function(speciesCounts,sampleSize){
 	#no way to log sum 
 	#logSum<-log(sum(choose(sum(sample)-sample,sampleSize)))
 	#output<-length(sample) - exp(- lchoose(sum(sample),sampleSize) + logSum)
+	#zeros can take computational time
+	speciesCounts<-speciesCounts[speciesCounts>0]
 	output<-sum(1-exp(lchoose(sum(speciesCounts)-speciesCounts,sampleSize)-lchoose(sum(speciesCounts),sampleSize)))
-	
 	if(is.na(output)||is.infinite(output))browser()
 	return(output)
 }
