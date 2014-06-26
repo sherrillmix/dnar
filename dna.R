@@ -102,6 +102,72 @@ cacheOperation<-function(cacheFile,operation,...,OVERWRITE=FALSE,VOCAL=TRUE,EXCL
 	return(out)
 }
 
+#generate all possible splices
+#donors: data.frame of donors with columns name and start
+#acceptors: data.frame of acceptors with columns name and start
+#noSkips: donors that shouldn't be skipped (this is a bit dodgy)
+#returns: character vector with dash separated donor-acceptor e.g. D1-A2-D3-A4 or '' for unspliced
+possibleSpliceForms<-function(donors,acceptors,noSkips=c()){
+	if(nrow(donors)==0||nrow(acceptors)==0)return(NULL)
+	paths<-c('')#no splicing
+	if(donors$name[1] %in% noSkips) donorChoices<-1
+	else donorChoices<-1:nrow(donors)
+	for(i in donorChoices){
+		thisAcceptors<-acceptors[acceptors$start>donors$start[i],]
+		if(nrow(thisAcceptors)==0)break
+		for(j in 1:nrow(thisAcceptors)){
+			downstreamDonors<-donors[donors$start>thisAcceptors$start[j],]
+			path<-possibleSpliceForms(downstreamDonors,thisAcceptors[thisAcceptors$start>thisAcceptors$start[j],],noSkips=noSkips)
+			if(is.null(path)) paths<-c(paths,sprintf('%s-%s',donors$name[i],thisAcceptors$name[j]))
+			else paths<-c(paths,sprintf(ifelse(path=='','%s-%s%s','%s-%s-%s'),donors$name[i],thisAcceptors$name[j],path)) #should allocate ahead of time
+		if(any(grep('-$',paths)))browser()
+		}
+	}
+	return(paths)
+}
+
+#x: vector/list to apply over
+#mc.cores: number of cores to use
+#applyFunc: function to apply
+#extraCode: character vector of setup code (each command self-contained within on cell or concatenated with ;)
+#...: arguments for mclapply
+#nSplits: number of splits to make (if > mc.cores then R will restart more frequently)
+cleanMclapply<-function(x,mc.cores,applyFunc,...,extraCode='',nSplits=mc.cores){
+	library(parallel)
+	if(nSplits<mc.cores)nSplits<-mc.cores
+	splits<-unique(round(seq(0,length(x),length.out=nSplits+1)))
+	if(length(splits)<nSplits+1)nSplits<-length(splits)-1 #not enough items to fill so set lower
+	dotVars<-match.call(expand.dots=FALSE)$'...'
+	extraArgs<-lapply(dotVars,eval)
+	names(extraArgs)
+	files<-c()
+	outFiles<-c()
+	scriptFiles<-c()
+	logFiles<-c()
+	for(ii in 1:nSplits){
+		message("Writing core ",ii," data")
+		thisInRdat<-tempfile()
+		thisRScript<-tempfile()
+		thisOutRdat<-tempfile()
+		thisLog<-tempfile()
+		THISDATA__<-x[(splits[ii]+1):splits[ii+1]]
+		SAVEDATA__<-c('THISDATA__'=list(THISDATA__),'applyFunc'=applyFunc,extraArgs)
+		save(SAVEDATA__,file=thisInRdat)
+		script<-sprintf('load("%s")\nwith(SAVEDATA__,{%s})\nout<-with(SAVEDATA__,lapply(THISDATA__,applyFunc%s%s))\nsave(out,file="%s");',thisInRdat,paste(extraCode,collapse=';'),ifelse(length(extraArgs)>0,',',''),paste(names(extraArgs),names(extraArgs),sep='=',collapse=','),thisOutRdat)
+		writeLines(script,thisRScript)
+		outFiles<-c(outFiles,thisOutRdat)		
+		scriptFiles<-c(scriptFiles,thisRScript)		
+		logFiles<-c(logFiles,thisLog)		
+	}
+	message("Running")
+	message("Logs: ",paste(logFiles,collapse=', '))
+	exitCode<-mclapply(mapply(c,scriptFiles,logFiles,SIMPLIFY=FALSE),function(x){out<-system(sprintf("R CMD BATCH --no-save --no-restore %s %s",x[1],x[2]));cat('.');return(out)},mc.cores=mc.cores)
+	cat('\n')
+	if(any(exitCode!=0)){message('Problem running multi R code');browser()}
+	message("Loading split outputs")
+	out<-do.call(c,lapply(outFiles,function(outFile){load(outFile);return(out)}))
+	return(out)
+}
 
 #string: string to be hashed
 #hashSize: size of hashed strings
@@ -336,12 +402,12 @@ codon2aa<-function(codons,type='code',naReplace='z',warn=TRUE){
 #dna: a string of DNA/RNA
 #frame: starting frame (0=start on first base, 1=on second, 2=on third)
 #debug: print debug info?
-dna2aa<-function(dna,frame=0,debug=FALSE,...){
+dna2aa<-Vectorize(function(dna,frame=0,debug=FALSE,...){
 	codons<-dna2codons(dna,frame)	
 	if(debug)print(codons)
 	output<-paste(codon2aa(codons,...),collapse='')
 	return(output)
-}
+})
 
 
 #find a single codon at a given position in dna
@@ -560,28 +626,35 @@ findReads<-function(low,starts,lengths,high=low){
 checkSO<-'~/scripts/R/c/checkCover.so'
 loader<-try(dyn.load(checkSO),TRUE)
 if (any(grep("Error",loader))){
-	checkCoverage<-function(starts,lengths,totalNumBases=max(starts+lengths),range=FALSE,coverMin=0){
-		if(length(starts)!=length(lengths))stop(simpleError('Starts and lengths not same length'))
-		if(any(starts+lengths-1>totalNumBases))stop(simpleError('totalNumBases < starts + lengths'))
-		if(!range){
-			output<-rep(0,totalNumBases)
-			counter<-1
-			tmp<-apply(cbind(starts,lengths),1,function(x){if(counter%%1000==0)message(counter);counter<<-counter+1;output[x[1]:(x[1]+x[2]-1)]<<-output[x[1]:(x[1]+x[2]-1)]+1})
-		}else{
-			holder<-c()
-			counter<-1
-			tmp<-apply(cbind(starts,lengths),1,function(x){
-				if(counter%%1000==0)message(counter)
-				counter<<-counter+1
-				indices<-paste(x[1]:(x[1]+x[2]-1))
-				set<-indices %in% names(holder)
-				holder[indices[set]]<<-holder[indices[set]]+1
-				holder[indices[!set]]<<-1
-			})
-			holder<-as.numeric(names(holder)[holder>coverMin])
-			output<-index2range(holder)
+	system("R CMD SHLIB ~/scripts/R/c/checkCover.c")
+	loader<-try(dyn.load(checkSO),TRUE)
+	if (any(grep("Error",loader))){
+		stop(simpleError("Couldn't find or compile checkCover.c"))
+	}
+	if(FALSE){
+		checkCoverage<-function(starts,lengths,totalNumBases=max(starts+lengths),range=FALSE,coverMin=0){
+			if(length(starts)!=length(lengths))stop(simpleError('Starts and lengths not same length'))
+			if(any(starts+lengths-1>totalNumBases))stop(simpleError('totalNumBases < starts + lengths'))
+			if(!range){
+				output<-rep(0,totalNumBases)
+				counter<-1
+				tmp<-apply(cbind(starts,lengths),1,function(x){if(counter%%1000==0)message(counter);counter<<-counter+1;output[x[1]:(x[1]+x[2]-1)]<<-output[x[1]:(x[1]+x[2]-1)]+1})
+			}else{
+				holder<-c()
+				counter<-1
+				tmp<-apply(cbind(starts,lengths),1,function(x){
+					if(counter%%1000==0)message(counter)
+					counter<<-counter+1
+					indices<-paste(x[1]:(x[1]+x[2]-1))
+					set<-indices %in% names(holder)
+					holder[indices[set]]<<-holder[indices[set]]+1
+					holder[indices[!set]]<<-1
+				})
+				holder<-as.numeric(names(holder)[holder>coverMin])
+				output<-index2range(holder)
+			}
+			return(output)
 		}
-		return(output)
 	}
 }else{
 	checkCoverage <- function(starts, lengths=NULL,ends=starts+lengths-1,outLength=max(ends),trimToStart=FALSE) {
@@ -766,7 +839,7 @@ complimentDna<-function(dnas,brackets=TRUE,ambigs=TRUE){
 		replaces<-sprintf('%s%s',replaces,paste(ambigComp,collapse=''))
 	}
 
-	if(brackets){finds<-paste(finds,'[]',sep='');replaces<-paste(replaces,'][',sep='')}
+	if(brackets){finds<-paste(finds,'[]()',sep='');replaces<-paste(replaces,'][)(',sep='')}
 	return(chartr(finds,replaces,dnas))
 }
 
@@ -994,20 +1067,20 @@ read.fa<-function(fileName,longNameTrim=TRUE,assumeSingleLine=FALSE){
 	return(output)
 }
 #alternative version of the above (a bit quicker)
-read.fa2<-function(fileName,longNameTrim=TRUE,...){
-	x<-readLines(fileName,warn=FALSE,...)
+read.fa2<-function(fileName=NULL,longNameTrim=TRUE,x=NULL,...){
+	if(is.null(fileName)&is.null(x))stop(simpleError('Please specify fileName or string vector x'))
+	if(is.null(x))x<-readLines(fileName,warn=FALSE,...)
 	if(length(x)==0)return(NULL)
 	x<-x[!grepl('^[;#]',x,perl=TRUE)&x!='']
-	nameLines<-grep('^>',x)
-	thisNames<-sub('^>','',x[nameLines])
-	if(any(grep(' [^ ]',x[-nameLines][3],perl=TRUE)))hasSpaces<-TRUE
-	else hasSpaces<-FALSE
+	nameLines<-grep('^>',x,perl=TRUE)
+	thisNames<-sub('^>','',x[nameLines],perl=TRUE)
+	hasSpaces<-any(grep(' [^ ]',x[-nameLines],perl=TRUE))
 	seqs<-apply(cbind(nameLines+1,c(nameLines[-1]-1,length(x))),1,function(coords){
-		if(coords[1]<=coords[2])return(paste(x[coords[1]:coords[2]],collapse=ifelse(hasSpaces,' ','')))
+		if(coords[1]<=coords[2])return(paste(x[coords[1]:coords[2]],collapse=''))
 		else return('')
 	})
-	seqs<-gsub('  +',' ',seqs,perl=TRUE)
-	seqs<-sub(' $','',seqs,perl=TRUE)
+	#seqs<-gsub('  +',' ',seqs,perl=TRUE)
+	seqs<-sub(' +$','',seqs,perl=TRUE)
 
 	output<-data.frame('longName'=thisNames,'seq'=seqs,stringsAsFactors=FALSE)
 	if(longNameTrim){
@@ -1440,7 +1513,7 @@ runBlatNoServer<-function(reads=NULL,refs,blatArgs='',outFile='out.blat',blat='b
 #tmpDir: a directory to write tempfiles to
 #nCore: number of cores to use
 #outfile: file to write blat to (if ends in .gz then isGz defaults to true and writes to gzipped file)
-multiRunBlatNoServer<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),condense=TRUE,isGz=grepl('.gz$',outFile),sleepIncrement=1,...){
+multiRunBlatNoServer<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),condense=TRUE,isGz=grepl('.gz$',outFile),sleepIncrement=1,runFilter=NULL,...){
 	prefix<-paste(sample(c(letters,LETTERS),20,TRUE),collapse='')
 	library(parallel)
 	if(!file.exists(tmpDir))dir.create(tmpDir)
@@ -1461,6 +1534,16 @@ multiRunBlatNoServer<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),conde
 	},mc.cores=nCore)
 
 	if(any(!sapply(bigRun,file.exists)))stop(simpleError('Blat file missing'))
+	if(!is.null(runFilter)){
+		bigRun<-mclapply(bigRun,function(x,runFilter){
+			newFile<-sprintf('%s__2',x)
+			message('Filtering ',x)
+			system(sprintf('cat %s|%s>%s',x,runFilter,newFile))
+			file.remove(x)
+			return(newFile)
+		},runFilter,mc.cores=nCore)
+	}
+	return(FALSE)
 	if(isGz)outFile<-gzfile(outFile,open='w+')
 	else outFile<-file(outFile,open='w+')
 	counter<-0
@@ -1468,18 +1551,16 @@ multiRunBlatNoServer<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),conde
 		message('Reading blat file ',i)
 		blat<-readLines(bigRun[[i]])
 		#take off header in later files
-		if(i!=1){
+		if(i!=1&is.null(runFilter)){
 			blat<-blat[-1:-5]
-			append<-TRUE
-		}else{
-			append<-FALSE
 		}
 		writeLines(blat,sep="\n",con=outFile)
-		file.remove(bigRun[[i]])
+		#file.remove(bigRun[[i]])
 		counter<-counter+length(blat)
 	}
 	message('Wrote ',counter,' blat lines')
 	close(outFile)
+
 	return(outFile)
 }
 
