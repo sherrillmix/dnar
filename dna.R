@@ -36,10 +36,14 @@ lagNA<-function(x,lag=1,fill=NA){
 	return(out)
 }
 
-
 #convenience function for stop(simpleError())
 stopError<-function(...){
 	stop(simpleError(paste(...,sep='')))
+}
+
+#convenience function to check for errors
+isError<-function(x){
+    sapply(x,function(y)inherits(y,'simpleError')|inherits(y,'try-error'))
 }
 
 #calculating moving average/max/min etc
@@ -408,6 +412,28 @@ dna2aa<-Vectorize(function(dna,frame=0,debug=FALSE,...){
 	output<-paste(codon2aa(codons,...),collapse='')
 	return(output)
 })
+
+#aa: amino acid to convert to dna
+#type: code or abbr or name
+#regex: if true return a (X|Y) regex of codons else return vector
+aa2codon<-Vectorize(function(aa,type='code',regex=TRUE){
+	selector<-aminoAcids[,type]==aa
+	if(!any(selector))stopError('Unknown amino acid',aa)
+	codons<-aminoAcids[selector,'codon']
+	if(regex&&length(codons)>1){
+		codons<-sprintf('(%s)',paste(codons,collapse='|'))
+	}
+	return(codons)
+})
+
+#convert amino acids to dna regex
+#aas: vector of amino acids to turn to dna regex
+aa2dna<-function(aas){
+	splitAas<-strsplit(aas,'')
+	out<-sapply(splitAas,function(x)paste(aa2codon(x),collapse=''))
+	out<-gsub('U','T',out)
+	return(out)
+}
 
 
 #find a single codon at a given position in dna
@@ -1532,7 +1558,10 @@ multiRunBlatNoServer<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),conde
 		runBlatNoServer(readFile=x[3],refs=refs,outFile=x[2],tmpDir=x[1],deleteFiles=TRUE,...)
 		return(x[2])
 	},mc.cores=nCore)
-
+    if(any(isError(bigRun))){
+        print(bigRun)
+        stopError("Error in running blat")
+    }
 	if(any(!sapply(bigRun,file.exists)))stop(simpleError('Blat file missing'))
 	if(!is.null(runFilter)){
 		bigRun<-mclapply(bigRun,function(x,runFilter){
@@ -1542,8 +1571,11 @@ multiRunBlatNoServer<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),conde
 			file.remove(x)
 			return(newFile)
 		},runFilter,mc.cores=nCore)
+        if(any(isError(bigRun))){
+            print(bigRun)
+            stopError("Error in filtering blat")
+        }
 	}
-	return(FALSE)
 	if(isGz)outFile<-gzfile(outFile,open='w+')
 	else outFile<-file(outFile,open='w+')
 	counter<-0
@@ -1555,12 +1587,11 @@ multiRunBlatNoServer<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),conde
 			blat<-blat[-1:-5]
 		}
 		writeLines(blat,sep="\n",con=outFile)
-		#file.remove(bigRun[[i]])
+		file.remove(bigRun[[i]])
 		counter<-counter+length(blat)
 	}
 	message('Wrote ',counter,' blat lines')
 	close(outFile)
-
 	return(outFile)
 }
 
