@@ -648,6 +648,7 @@ findReads<-function(low,starts,lengths,high=low){
 }
 
 
+if(FALSE){
 #changed argument order may need adjusted
 checkSO<-'~/scripts/R/c/checkCover.so'
 loader<-try(dyn.load(checkSO),TRUE)
@@ -655,7 +656,8 @@ if (any(grep("Error",loader))){
 	system("R CMD SHLIB ~/scripts/R/c/checkCover.c")
 	loader<-try(dyn.load(checkSO),TRUE)
 	if (any(grep("Error",loader))){
-		stop(simpleError("Couldn't find or compile checkCover.c"))
+		#stop(simpleError("Couldn't find or compile checkCover.c"))
+		###WORK HERE
 	}
 	if(FALSE){
 		checkCoverage<-function(starts,lengths,totalNumBases=max(starts+lengths),range=FALSE,coverMin=0){
@@ -701,6 +703,8 @@ if (any(grep("Error",loader))){
 		return(ans[[1]])
 	}
 }
+}
+
 #alternative check coverage (better for sparse coverage in high numbers of bases)
 #starts:starts of coverage ranges
 #ends:ends of coverage ranges
@@ -1514,8 +1518,8 @@ runBlat<-function(faFile,gfClientOptions='',outFile=gsub('\\.fn?a$','.blat',faFi
 #tmpDir: a directory to write tempfiles to
 #outfile: file to write blat to 
 #readFile: file to use instead of reads (will be deleted)
-runBlatNoServer<-function(reads=NULL,refs,blatArgs='',outFile='out.blat',blat='blat',tmpDir=tempdir(),readFile=NULL,deleteFiles=!is.null(reads)){
-	if(!file.exists(tmpDir))dir.create(tmpDir)
+runBlatNoServer<-function(reads=NULL,refs,blatArgs='',outFile='out.blat',blat='blat',tmpDir=tempfile(),readFile=NULL,deleteFiles=!is.null(reads),gzFile=grepl('\\.gz$',outFile)){
+	if(!file.exists(tmpDir))dir.create(tmpDir,recursive=TRUE)
 	if(is.null(reads)&is.null(readFile))stop(simpleError('Please provide reads or readFile'))
 	if(is.null(readFile)){
 		readFile<-sprintf('%s/read.fa',tmpDir)
@@ -1523,11 +1527,16 @@ runBlatNoServer<-function(reads=NULL,refs,blatArgs='',outFile='out.blat',blat='b
 	}
 	refFile<-sprintf('%s/refs.fa',tmpDir)
 	write.fa(names(refs),refs,refFile)
+	if(gzFile)outFile<-sub('\\.gz$','',outFile)
 	cmd<-sprintf('%s %s %s %s %s',blat,refFile,readFile,blatArgs,outFile)
 	message(cmd)
 	errorCode<-system(cmd)
 	if(errorCode!=0)stop(simpleError('Problem running blat'))
 	if(deleteFiles)file.remove(refFile,readFile,tmpDir)
+	if(gzFile){
+		system(sprintf('gzip %s',outFile))
+		if(!file.exists(sprintf('%s.gz',outFile)))stop(simpleError('Problem gzipping file'))
+	}
 	return(TRUE)
 }	
 
