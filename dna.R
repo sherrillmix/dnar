@@ -2961,7 +2961,7 @@ convertUserToLine<-function(usr,axis=1){
 	func<-if(isHeight)grconvertY else grconvertX
 	usrInches<-func(usr,'user','inches')
 	base<-ifelse(isSecond,par('fin')[isHeight+1]-widthPerLine*thisMar,widthPerLine*thisMar) + par('fig')[1+isHeight*2]*par('din')[isHeight+1]
-	out<--(usrInches-base)/widthPerLine
+	out<-(usrInches-base)/widthPerLine*ifelse(isSecond,-1,1)
 	return(out)
 }
 
