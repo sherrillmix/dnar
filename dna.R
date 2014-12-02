@@ -20,11 +20,19 @@ ambigousBaseCodes<-c(
 	'N'='ACGT'
 )
 
+#get the conservative edge of a confidence interval
+#boundaries: upper and lower values
+#base: base value e.g. 0 or 1
+conservativeBoundary<-function(boundaries,base=0){
+	boundaries<-sort(boundaries)
+	return(ifelse(all(boundaries>base),boundaries[1],ifelse(all(boundaries<base),boundaries[2],base)))
+}
+
 #get the conservative edge of the odds ratio from fisher's exact test
 #x: a 2x2 numeric matrix to feed to fisher.test
 conservativeOddsRatio<-function(x){
 	conf.int<-fisher.test(x)$conf.int
-	out<-ifelse(all(conf.int>1),conf.int[1],ifelse(all(conf.int<1),conf.int[2],1))
+	out<-conservativeBoundary(conf.int,1)
 	return(out)
 }
 
@@ -1174,6 +1182,11 @@ parseRegion<-function(reg){
 	out<-data.frame('chr'=sapply(splits,'[[',1),stringsAsFactors=FALSE)
 	out[,c('start','end')]<-as.numeric(do.call(rbind,lapply(splits,'[',2:3)))
 	return(out)
+}
+
+#make region from chr start end
+pasteRegion<-function(chrs,starts,ends){
+	sprintf('%s:%s-%s',chrs,format(starts,scientific=FALSE),format(ends,scientific=FALSE))
 }
 
 #read a sam file
@@ -2930,6 +2943,25 @@ convertLineToUser<-function(line,axis=1){
 	base<-ifelse(isSecond,par('fin')[isHeight+1]-widthPerLine*thisMar,widthPerLine*thisMar) + par('fig')[1+isHeight*2]*par('din')[isHeight+1]
 	func<-if(isHeight)grconvertY else grconvertX
 	out<-func(base+line*widthPerLine*ifelse(isSecond,1,-1),'inches','user')
+	return(out)
+}
+
+#usr: usr coordinate to convert to line
+#axis: axis to do conversion on (1:4 same as axis, mtext command)
+convertUserToLine<-function(usr,axis=1){
+	if(!(axis %in% 1:4))stop(simpleError('Undefined axis'))
+	axisPair<-sort((c(axis-1,axis+1)%%4)+1)
+	isHeight<-(axis%%2)==1
+	isSecond<-axis>2
+	thisMar<-par('mar')[axis]
+	marWidth<-thisMar/sum(par('mar')[axisPair])*(par('fin')-par('pin'))[isHeight+1]
+	widthPerLine<-marWidth/thisMar
+	#find base line + add in if plot doesn't cover whole device e.g. par(mfrow=c(2,1))
+	plotWidth<-par('fin')[isHeight+1]
+	func<-if(isHeight)grconvertY else grconvertX
+	usrInches<-func(usr,'user','inches')
+	base<-ifelse(isSecond,par('fin')[isHeight+1]-widthPerLine*thisMar,widthPerLine*thisMar) + par('fig')[1+isHeight*2]*par('din')[isHeight+1]
+	out<--(usrInches-base)/widthPerLine
 	return(out)
 }
 
