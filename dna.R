@@ -151,7 +151,6 @@ cleanMclapply<-function(x,mc.cores,applyFunc,...,extraCode='',nSplits=mc.cores){
 	if(length(splits)<nSplits+1)nSplits<-length(splits)-1 #not enough items to fill so set lower
 	dotVars<-match.call(expand.dots=FALSE)$'...'
 	extraArgs<-lapply(dotVars,eval)
-	names(extraArgs)
 	files<-c()
 	outFiles<-c()
 	scriptFiles<-c()
@@ -656,8 +655,6 @@ findReads<-function(low,starts,lengths,high=low){
 }
 
 
-if(FALSE){
-#changed argument order may need adjusted
 checkSO<-'~/scripts/R/c/checkCover.so'
 loader<-try(dyn.load(checkSO),TRUE)
 if (any(grep("Error",loader))){
@@ -691,6 +688,7 @@ if (any(grep("Error",loader))){
 			}
 			return(output)
 		}
+
 	}
 }else{
 	checkCoverage <- function(starts, lengths=NULL,ends=starts+lengths-1,outLength=max(ends),trimToStart=FALSE) {
@@ -710,7 +708,6 @@ if (any(grep("Error",loader))){
 		}
 		return(ans[[1]])
 	}
-}
 }
 
 #alternative check coverage (better for sparse coverage in high numbers of bases)
@@ -1163,15 +1160,46 @@ samView<-function(fileName,samArgs='',...,samtoolsBinary='samtools',vocal=FALSE,
 	}
 }
 
+
+#cover: output from pullRegion with missing zero positions
+fillZeros<-function(cover,posCol='pos',countCols=colnames(cover)[grep('counts',colnames(cover))]){
+	repeatedCols<-!colnames(cover) %in% c(posCol,countCols)
+	if(any(apply(cover[,repeatedCols,drop=FALSE],2,function(x)length(unique(x)))>1))stop(simpleError('Found nonunique extra columns in fillZeros'))
+	cover<-cover[order(cover[,posCol]),]
+	diffs<-diff(cover[,posCol])
+	missingZeros<-which(diffs>1)
+	if(!any(missingZeros))return(cover)
+	missingPos<-unlist(mapply(function(start,end)start:end,cover[missingZeros,posCol]+1,cover[missingZeros+1,posCol]-1,SIMPLIFY=FALSE))
+	filler<-cover[rep(1,length(missingPos)),]
+	filler[,countCols]<-0
+	filler[,posCol]<-missingPos
+	out<-rbind(cover,filler)
+	out<-out[order(out[,posCol]),]
+	return(out)
+}
+
 #reg: region in the format "chrX:123545-123324"
 #files: bam files to pull the counts from
 #bam2depthBinary: bam2depth executable file
-pullRegion<-function(reg,files,bam2depthBinary='./bam2depth'){
+pullRegion<-function(reg,files,bam2depthBinary='./bam2depth',fillMissingZeros=TRUE){
+	region<-parseRegion(reg)
+	region$start<-region$start+1 #bam2depth using ucsc 0-start, 1-ends
 	samArg<-sprintf('-r %s',reg)
 	fileArg<-paste(files,collapse=' ')
 	cover<-samView(fileArg,samArgs=samArg,samCommand='',samtoolsBinary=bam2depthBinary,colClasses=c('character',rep('numeric',length(files)+1)))
 	if(is.null(cover))cover<-do.call(data.frame,c(list('XXX'),as.list(-(1:(length(files)+1)))))[0,]
-	colnames(cover)<-c('chr','pos',sprintf('counts%d',1:(ncol(cover)-2)))
+	countCols<-sprintf('counts%d',1:(ncol(cover)-2))
+	colnames(cover)<-c('chr','pos',countCols)
+	if(fillMissingZeros){
+		#deal with missing start or ends
+		filler<-cover[rep(1,2),]
+		filler$chr<-region$chr
+		filler[,countCols]<-0
+		filler$pos<-unlist(region[,c('start','end')])
+		if(!region$start %in% cover$pos)cover<-rbind(filler[1,],cover)
+		if(!region$end %in% cover$pos)cover<-rbind(cover,filler[2,])
+		cover<-fillZeros(cover)
+	}
 	return(cover)
 }
 
@@ -1186,7 +1214,7 @@ parseRegion<-function(reg){
 
 #make region from chr start end
 pasteRegion<-function(chrs,starts,ends){
-	sprintf('%s:%s-%s',chrs,format(starts,scientific=FALSE),format(ends,scientific=FALSE))
+	sprintf('%s:%s-%s',chrs,trim(format(starts,scientific=FALSE)),trim(format(ends,scientific=FALSE)))
 }
 
 #read a sam file
