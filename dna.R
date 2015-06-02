@@ -658,13 +658,13 @@ findReads<-function(low,starts,lengths,high=low){
 checkSO<-'~/scripts/R/c/checkCover.so'
 loader<-try(dyn.load(checkSO),TRUE)
 if (any(grep("Error",loader))){
-	system("R CMD SHLIB ~/scripts/R/c/checkCover.c")
-	loader<-try(dyn.load(checkSO),TRUE)
-	if (any(grep("Error",loader))){
-		#stop(simpleError("Couldn't find or compile checkCover.c"))
-		###WORK HERE
-	}
 	if(FALSE){
+		try(system("R CMD SHLIB ~/scripts/R/c/checkCover.c"),TRUE)
+		loader<-try(dyn.load(checkSO),TRUE)
+		if (any(grep("Error",loader))){
+			#stop(simpleError("Couldn't find or compile checkCover.c"))
+			###WORK HERE
+		}
 		checkCoverage<-function(starts,lengths,totalNumBases=max(starts+lengths),range=FALSE,coverMin=0){
 			if(length(starts)!=length(lengths))stop(simpleError('Starts and lengths not same length'))
 			if(any(starts+lengths-1>totalNumBases))stop(simpleError('totalNumBases < starts + lengths'))
