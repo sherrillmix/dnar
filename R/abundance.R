@@ -187,3 +187,37 @@ chooseAtLeastOneFromEach<-function(n,nGroups,groupSize){
 }
 
 
+
+#' Calculate the shared branch length from a matrix of taxonomic labels
+#'
+#' @param xx a matrix with a row for each read and a column for each taxonomic assignment
+#' @param yy a matrix with a row for each read and a column for each taxonomic assignment
+#' @param weighted logical indicating whether to sum the differences in reads for each branch or if FALSE to look only at presence absence
+#' @return the proportion of the shared branches 
+#' @export
+#' @examples
+#' x<-matrix(c('a','b','a','c'),ncol=2,byrow=TRUE)
+#' y<-matrix(c('a','b','a','d'),ncol=2,byrow=TRUE)
+#' unifrac(x,x)
+#' unifrac(x,y)
+unifracMatrix<-function(xx,yy,weighted=TRUE){
+  n<-ncol(xx)
+  if(ncol(yy)!=n)stop('Number of taxonomic ranks not the same')
+  dists<-do.call(rbind,lapply(n:1,function(ii){
+    xTaxa<-table(apply(xx[,1:ii,drop=FALSE],1,paste,collapse='_||_'))
+    xTaxa<-xTaxa/sum(xTaxa)
+    yTaxa<-table(apply(yy[,1:ii,drop=FALSE],1,paste,collapse='_||_'))
+    yTaxa<-yTaxa/sum(yTaxa)
+    merged<-merge(data.frame('name'=names(xTaxa),'x'=as.numeric(xTaxa)),data.frame('name'=names(yTaxa),'y'=as.numeric(yTaxa)),all=TRUE)
+    merged[is.na(merged)]<-0
+    if(weighted){
+      dists<-apply(merged[,c('x','y')],1,diff)
+      out<-c(sum(abs(dists)),2)
+    }else{
+      isDiff<-sum(apply(merged[,c('x','y')]>0,1,function(zz)zz[1]!=zz[2]))
+      out<-c(isDiff,nrow(merged))
+    }
+    return(out)
+  }))
+  return(sum(dists[,1])/sum(dists[,2]))
+}
