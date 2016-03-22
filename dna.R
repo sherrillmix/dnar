@@ -6,7 +6,7 @@ adjustWindow<-function()options(width=as.integer(Sys.getenv('COLUMNS')))
 #convenience function to list objects by size
 object.sizes<-function(env=.GlobalEnv)sort(sapply(ls(env=env),function(x)object.size(get(x))),decreasing=TRUE)
 
-ambigousBaseCodes<-c(
+ambiguousBaseCodes<-c(
 	'R'='AG',
 	'Y'='CT',
 	'M'='AC',
@@ -19,6 +19,8 @@ ambigousBaseCodes<-c(
 	'D'='AGT',
 	'N'='ACGT'
 )
+
+reverseAmbiguous<-structure(names(ambiguousBaseCodes),.Names=ambiguousBaseCodes)
 
 #get the conservative edge of a confidence interval
 #boundaries: upper and lower values
@@ -136,6 +138,44 @@ possibleSpliceForms<-function(donors,acceptors,noSkips=c()){
 		}
 	}
 	return(paths)
+}
+
+#count nMers in a string
+#string: string to be searched for nmers
+#k: length of nmers
+#n: return the top n nmers
+countNmers<-function(string,k=10,n=10){
+	if(nchar(string)<k){
+		warning('string shorter than k')
+		return(0)
+	}
+	indices<-1:(nchar(string)-k+1)
+	substrings<-substring(string,indices,indices+k-1)
+	return(tail(sort(table(substrings)),n))
+}
+
+#check predictions of glm on left out data
+#model: a glm to cross validate
+#K: number of pieces to split data into
+#nCores: number of cores to use
+#subsets: predefined subsets
+#vocal: echo progress indicator
+cv.glm.par<-function(model,K=nrow(thisData),nCores=1,subsets=NULL,vocal=TRUE){
+	modelCall<-model$call
+	thisData<-eval(modelCall$data)
+	n<-nrow(thisData)
+	if(is.null(subsets))subsets<-split(1:n,sample(rep(1:K,length.out=n)))
+	preds<-mclapply(subsets,function(outGroup){
+		if(vocal)cat('.')
+		subsetData<-thisData[-outGroup,,drop=FALSE]
+		predData<-thisData[outGroup,,drop=FALSE]
+		thisModel<-modelCall
+		thisModel$data<-subsetData
+		return(predict(eval(thisModel),predData))
+	},mc.cores=nCores)
+	pred<-unlist(preds)[order(unlist(subsets))]
+	subsetId<-rep(1:K,sapply(subsets,length))[order(unlist(subsets))]
+	return(data.frame(pred,subsetId))
 }
 
 #x: vector/list to apply over
@@ -427,9 +467,7 @@ aa2codon<-Vectorize(function(aa,type='code',regex=TRUE){
 	selector<-aminoAcids[,type]==aa
 	if(!any(selector))stopError('Unknown amino acid',aa)
 	codons<-aminoAcids[selector,'codon']
-	if(regex&&length(codons)>1){
-		codons<-sprintf('(%s)',paste(codons,collapse='|'))
-	}
+	codons<-sprintf('(%s)',paste(codons,collapse='|'))
 	return(codons)
 })
 
@@ -867,7 +905,7 @@ complimentDna<-function(dnas,brackets=TRUE,ambigs=TRUE){
 	replaces<-'ACTG'
 	#deal with ambigous
 	if(ambigs){
-		sortAmbig<-sapply(lapply(strsplit(ambigousBaseCodes,''),sort),paste,collapse='')
+		sortAmbig<-sapply(lapply(strsplit(ambiguousBaseCodes,''),sort),paste,collapse='')
 		revAmbig<-sapply(strsplit(complimentDna(sortAmbig,ambigs=FALSE),''),function(x)paste(sort(x),collapse=''))
 		ambigComp<-names(sortAmbig)[sapply(revAmbig,function(x)which(x==sortAmbig))]
 		finds<-sprintf('%s%s',finds,paste(names(sortAmbig),collapse=''))
@@ -1012,20 +1050,20 @@ read.solexa<-function(fileName,convert=TRUE,limit=-1,vocal=FALSE){
 #returns: regular expression
 ambigous2regex<-function(dna){
 	dna<-toupper(dna)
-	for (i in names(ambigousBaseCodes)){
-		dna<-gsub(i,paste('[',ambigousBaseCodes[i],']',sep=''),dna)
+	for (i in names(ambiguousBaseCodes)){
+		dna<-gsub(i,paste('[',ambiguousBaseCodes[i],']',sep=''),dna)
 	}
 	return(dna)
 }
 #convert set of single bases to ambigous code
 #bases: vector of single character base strings
-bases2ambigous<-function(bases){
+bases2ambiguous<-bases2ambigous<-function(bases){
 	bases<-sort(unique(bases))
 	nBases<-nchar(bases[1])
 	if(any(nchar(bases)!=nBases))stop(simpleError('Convert bases to ambigous requires same length sequences'))
 	if(length(bases)==1)return(bases)
-	if(nBases>1)return(paste(sapply(1:nBases,function(x)bases2ambigous(substring(bases,x,x))),collapse=''))
-	else return(names(ambigousBaseCodes)[paste(bases,collapse='')==ambigousBaseCodes])
+	if(nBases>1)return(paste(sapply(1:nBases,function(x)bases2ambiguous(substring(bases,x,x))),collapse=''))
+	else return(reverseAmbiguous[paste(bases,collapse='')])
 }
 
 
@@ -1034,16 +1072,16 @@ bases2ambigous<-function(bases){
 #dna: vector dna containing ambigous bases
 #unlist: return a unlisted vector instead of a list
 #returns: list with each entry containing all combinations for that entry of the vector
-expandAmbigous<-function(dna,delist=FALSE){
+expandAmbiguous<-expandAmbigous<-function(dna,delist=FALSE){
 	dna<-toupper(dna)
-	ambigRegex<-sprintf('[%s]',paste(names(ambigousBaseCodes),collapse=''))
+	ambigRegex<-sprintf('[%s]',paste(names(ambiguousBaseCodes),collapse=''))
 	out<-lapply(dna,function(x){
 		pos<-regexpr(ambigRegex,x)	
 		if(pos!=-1){
-			replaces<-strsplit(ambigousBaseCodes[substring(x,pos,pos)],'')[[1]]
+			replaces<-strsplit(ambiguousBaseCodes[substring(x,pos,pos)],'')[[1]]
 			new<-rep(x,length(replaces))
 			for(i in 1:length(replaces))substring(new[i],pos,pos)<-replaces[i]
-			out<-expandAmbigous(new,TRUE)
+			out<-expandAmbiguous(new,TRUE)
 		}else{out<-x}
 		return(out)
 	})
@@ -1205,10 +1243,13 @@ pullRegion<-function(reg,files,bam2depthBinary='./bam2depth',fillMissingZeros=TR
 
 #reg: region in the format "chrX:123545-123324"
 parseRegion<-function(reg){
+	strand<-ifelse(substring(reg,nchar(reg)) %in% c('*','-','+'),substring(reg,nchar(reg)),'*')
+	reg<-sub('[-+*]$','',reg)
 	splits<-strsplit(reg,'[:-]')
 	if(any(sapply(splits,length)!=3))stop(simpleError('Region not parsed'))
 	out<-data.frame('chr'=sapply(splits,'[[',1),stringsAsFactors=FALSE)
 	out[,c('start','end')]<-as.numeric(do.call(rbind,lapply(splits,'[',2:3)))
+	out$strand<-strand
 	return(out)
 }
 
@@ -2047,6 +2088,7 @@ cutBlatReads<-function(seqs,starts,fillStarts=NULL,fillEnds=NULL,gaps=NULL){
 #qStarts: comma seperated starts for query seq
 #tStarts: comma seperated starts for target seq
 #blockSizes: comma seperated block sizes
+#currently finds from start of both sequences. could add argument and make the c(0,XX) conditional
 blatFindGaps<-function(qStarts,tStarts,blockSizes){
 	if(length(qStarts)!=length(tStarts)||length(blockSizes)!=length(qStarts))stop(simpleError('Lengths of starts and blocksizes not equal'))
 	qStartList<-lapply(strsplit(qStarts,','),as.numeric)
@@ -2054,14 +2096,17 @@ blatFindGaps<-function(qStarts,tStarts,blockSizes){
 	blockSizeList<-lapply(strsplit(blockSizes,','),as.numeric)
 	blockNums<-sapply(qStartList,length)
 	if(any(blockNums!=sapply(tStartList,length))||any(blockNums!=sapply(blockSizeList,length)))stop(simpleError('Comma seperated lists of starts and blocksizes not equal length'))
+
 	gaps<-mapply(function(qStarts,tStarts,blockSizes){
+		qStarts<-c(0,qStarts)
+		tStarts<-c(0,tStarts)
+		blockSizes<-c(1,blockSizes)
 		tEnds<-tStarts+blockSizes-1
 		qEnds<-qStarts+blockSizes-1
-
 		tGapLengths<-tStarts[-1]-tEnds[-length(tEnds)]-1
 		qGapLengths<-qStarts[-1]-qEnds[-length(qEnds)]-1
 		return(cbind('qGaps'=qGapLengths,'tGaps'=tGapLengths,'qGapStartAfter'=qEnds[-length(qEnds)],'tGapStartAfter'=tEnds[-length(tEnds)]))
-	},qStartList,tStartList,blockSizeList)
+	},qStartList,tStartList,blockSizeList,SIMPLIFY=FALSE)
 
 	return(gaps)
 }
@@ -2086,7 +2131,7 @@ blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),len
 	if(adjustStart!=0)startsList<-lapply(startsList,function(x)as.numeric(x)+adjustStart)
 	exonCounts<-exonCountsStrand<-sapply(startsList,length)
 	endsList<-strsplit(ends,',')
-	if(lengths)endsList<-mapply(function(x,y)as.numeric(x)+as.numeric(y)-1,endsList,startsList)
+	if(lengths)endsList<-mapply(function(x,y)as.numeric(x)+as.numeric(y)-1,endsList,startsList,SIMPLIFY=FALSE)
 	if(any(exonCounts!=sapply(endsList,length)))stop(simpleError("Starts and ends not equal"))
 	#make sure extraCols and extraSplits are dataframes
 	if(is.vector(extraSplits))extraSplits<-data.frame(extraSplits,stringsAsFactors=FALSE)
@@ -2500,13 +2545,13 @@ plotPrimers<-function(forward,reverse,seqs,refSeq,groups,fName='Forward',rName='
 	gapRev<-addGaps(revComp(reverse),which(apply(do.call(rbind,strsplit(primerCut2,'')),2,function(x)mean(x=='-'))<.5))
 
 	repNum<-ceiling(length(seqs)/20)
-	gapRevRep<-expandAmbigous(gapRev)[[1]]
+	gapRevRep<-expandAmbiguous(gapRev)[[1]]
 	gapRevRep<-rep(gapRevRep,length.out=max(repNum,length(gapRevRep)))
-	gapForRep<-expandAmbigous(gapFor)[[1]]
+	gapForRep<-expandAmbiguous(gapFor)[[1]]
 	gapForRep<-rep(gapForRep,length.out=max(repNum,length(gapForRep)))
 
 	gapCombo<-addGaps(sprintf('%s%s',forward,revComp(reverse)),notGap[(notGap>=forPos[1]&notGap<=forPos[2])|(notGap>=revPos[1]&notGap<=revPos[2])]-forPos[1]+1)
-	gapComboRep<-gsub('-','.',expandAmbigous(gapCombo)[[1]])
+	gapComboRep<-gsub('-','.',expandAmbiguous(gapCombo)[[1]])
 	gapComboRep<-rep(gapComboRep,length.out=max(repNum,length(gapComboRep)))
 
 
@@ -2524,14 +2569,14 @@ findPrimer<-function(seqs,forward=NULL,reverse=NULL,padding=0){
 	trims<-degap(seqs)
 
 	if(!is.null(reverse)){
-		revExpand<-expandAmbigous(revComp(reverse))[[1]]
+		revExpand<-expandAmbiguous(revComp(reverse))[[1]]
 		reverseStart<-sapply(trims,function(x)multiMismatch(revExpand,x)[2],USE.NAMES=FALSE)
 		revEnd<-mostAbundant(mapply(noGap2Gap,seqs,reverseStart+nchar(reverse)-1+padding,USE.NAMES=FALSE))
 		revStart<-mostAbundant(mapply(noGap2Gap,seqs,reverseStart-padding,USE.NAMES=FALSE))
 		if(is.null(forward))return(as.numeric(c(revStart,revEnd)))
 	}
 	if(!is.null(forward)){
-		forExpand<-expandAmbigous(forward)[[1]]
+		forExpand<-expandAmbiguous(forward)[[1]]
 		forwardStart<-sapply(trims,function(x)multiMismatch(forExpand,x)[2],USE.NAMES=FALSE)
 		forStart<-mostAbundant(mapply(noGap2Gap,seqs,forwardStart-padding,USE.NAMES=FALSE))
 		forEnd<-mostAbundant(mapply(noGap2Gap,seqs,forwardStart+nchar(forward)-1+padding,USE.NAMES=FALSE))
@@ -2657,6 +2702,17 @@ connectGenomes<-function(tStarts,qStarts,blockSizes,tRange,qRange,yPos=c(1,2),co
 	pieces$qEnd<-standardizeCoords(pieces$end2,qRange)
 	mapply(function(tS,qS,tE,qE,yPos)polygon(c(tS,qS,qE,tE),c(yPos[1:2],yPos[2:1]),...),pieces$tStart,pieces$qStart,pieces$tEnd,pieces$qEnd,MoreArgs=list(yPos))
 	return(NULL)
+}
+
+#switch the case of positions in seq1 that mismatch seq2
+#seq1: sequence to highlight differences in 
+#seq2: sequence to compare to
+highlightDifferences<-function(seq1,seq2){
+	if(nchar(seq1)!=nchar(seq2))stop(simpleError('Highlighting differences in different length sequences not supported'))
+	seqMat<-seqSplit(seq1,seq2)
+	diffs<-which(apply(seqMat,2,function(x)x[1]!=x[2]))
+	for(ii in diffs)substring(seq1,ii,ii)<-toggleCase(substring(seq1,ii,ii))
+	return(seq1)
 }
 
 
