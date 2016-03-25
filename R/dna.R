@@ -349,10 +349,12 @@ checkOverlapMulti<-function(starts,ends,tStarts,tEnds,tNames,qChrom,tChrom,vocal
 	return(results)
 }
 
-#convert gapped coordinates to what the coordinates would be without gaps
-#gapSeq: the sequence containing gaps
-#coords: coordinates on the gapped gapSeq to be converted into equivalent nongap coordinatess
-#returns: equivalent gapped coordinates
+#' Convert gapped coordinates to what the coordinates would be without gaps
+#'
+#' @param gapSeq the reference sequence containing gaps
+#' @param coords coordinates on the gapped gapSeq to be converted into equivalent nongap coordinatess
+#' @export
+#' @return equivalent gapped coordinates
 gap2NoGap<-function(gapSeq,coords){
 	gapSeqSplit<-strsplit(gapSeq,'')[[1]]
 	nonDash<-!gapSeqSplit %in% c('*','.','-')
@@ -362,9 +364,11 @@ gap2NoGap<-function(gapSeq,coords){
 }
 
 #convert ungapped coordinates to what the coordinates would be with gaps
-#gapSeq: the sequence containing gaps
-#coords: coordinates on the ungapped gapSeq to be converted into equivalent gap coordinatess
-#returns: equivalent ungapped coordinates
+#'
+#' @param gapSeq the reference sequence containing gaps
+#' @param coords coordinates on the ungapped gapSeq to be converted into equivalent gap coordinates
+#' @export
+#' @return equivalent ungapped coordinates
 noGap2Gap<-function(gapSeq,coords){
 	gapSeqSplit<-strsplit(gapSeq,'')[[1]]
 	nonDash<-which(!gapSeqSplit %in% c('.','*','-'))
@@ -372,16 +376,20 @@ noGap2Gap<-function(gapSeq,coords){
 	return(nonDash[coords])
 }
 
-#find covered ranges in binary data
-#index:logical index
-#returns: dataframe with start and end of ranges
+#' Find covered ranges in binary data
+#'
+#' @param index logical vector containing TRUE in the regions of interest
+#' @export
+#' @return data.frame with rows for each contiguous region of interest with columns start and end of regions
 binary2range<-function(index){
 	return(index2range(which(index)))
 }
 
-#find ranges with at least one coverage in numerical index data
-#index: numeric indices
-#returns: dataframe with start and end of ranges
+#' Find covered ranges with numerical index data
+#'
+#' @param index numeric indices indicating positions of interest
+#' @export
+#' @return data.frame with rows for each contiguous region of interest with columns start and end of regions
 index2range<-function(index){
 	index<-sort(unique(index))
 	diffs<-c(diff(index),1)
