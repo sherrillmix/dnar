@@ -1,7 +1,8 @@
 VERSION:=$(shell grep Version: DESCRIPTION|sed 's/Version: //')
 NAME:=$(shell grep Package: DESCRIPTION|sed 's/Package: //')
 PACKAGEFILE:=$(NAME)_$(VERSION).tar.gz
-all: ../$(PACKAGEFILE) README.md
+#README.md
+all: ../$(PACKAGEFILE)
 
 .PHONY: all install
 
