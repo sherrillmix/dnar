@@ -2,7 +2,7 @@
 % Please edit documentation in R/dna.R
 \name{noGap2Gap}
 \alias{noGap2Gap}
-\title{}
+\title{Convert ungapped coordinates to what the coordinates would be with gaps}
 \usage{
 noGap2Gap(gapSeq, coords)
 }
@@ -15,6 +15,6 @@ noGap2Gap(gapSeq, coords)
 equivalent ungapped coordinates
 }
 \description{
-
+Convert ungapped coordinates to what the coordinates would be with gaps
 }
 

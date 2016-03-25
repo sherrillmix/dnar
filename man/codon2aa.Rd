@@ -9,7 +9,11 @@ codon2aa(codons, type = "code", naReplace = "z", warn = TRUE)
 \arguments{
 \item{codons}{Vector of 3 base codons}
 
-\item{type:}{amino acid info to return; code for single letter, name for full name, or abbr for 3-letter abbreviation}
+\item{type}{Amino acid info to return; code for single letter, name for full name, or abbr for 3-letter abbreviation}
+
+\item{naReplace}{Replace NAs with this string. Anything other than a single character will result in a protein longer than the number of codons}
+
+\item{warn}{Warn if any unknown codons are found. Usually due to ACTG characters}
 }
 \value{
 Vector of amino acids

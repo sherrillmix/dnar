@@ -231,7 +231,9 @@ dna2codons<-function(dna,frame=0){
 #' Convert codon to amino acid
 #'
 #' @param codons Vector of 3 base codons
-#' @param type: amino acid info to return; code for single letter, name for full name, or abbr for 3-letter abbreviation
+#' @param type Amino acid info to return; code for single letter, name for full name, or abbr for 3-letter abbreviation
+#' @param naReplace Replace NAs with this string. Anything other than a single character will result in a protein longer than the number of codons
+#' @param warn Warn if any unknown codons are found. Usually due to ACTG characters
 #' @export
 #' @return Vector of amino acids
 codon2aa<-function(codons,type='code',naReplace='z',warn=TRUE){
@@ -248,6 +250,7 @@ codon2aa<-function(codons,type='code',naReplace='z',warn=TRUE){
 #' @param dna A string of DNA/RNA
 #' @param frame Starting frame (0=start on first base, 1=on second, 2=on third)
 #' @param debug If TRUE print debug info
+#' @param ... Additional arguments to codon2aa
 #' @export
 #' @return A string of amino acids
 dna2aa<-Vectorize(function(dna,frame=0,debug=FALSE,...){
@@ -363,7 +366,7 @@ gap2NoGap<-function(gapSeq,coords){
 	return(newCoords[coords])
 }
 
-#convert ungapped coordinates to what the coordinates would be with gaps
+#' Convert ungapped coordinates to what the coordinates would be with gaps
 #'
 #' @param gapSeq the reference sequence containing gaps
 #' @param coords coordinates on the ungapped gapSeq to be converted into equivalent gap coordinates

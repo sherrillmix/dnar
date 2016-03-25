@@ -12,6 +12,8 @@ dna2aa(dna, frame = 0, debug = FALSE, ...)
 \item{frame}{Starting frame (0=start on first base, 1=on second, 2=on third)}
 
 \item{debug}{If TRUE print debug info}
+
+\item{...}{Additional arguments to codon2aa}
 }
 \value{
 A string of amino acids
