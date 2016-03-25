@@ -7,6 +7,7 @@ object.sizes<-function(env=.GlobalEnv)sort(sapply(ls(env=env),function(x)object.
 #'
 #' Convenience function for stop(simpleError()
 #' @param ... Strings to be concatenated into error message
+#' @export
 #' @return Generates stopping error before returning
 stopError<-function(...){
 	stop(simpleError(paste(...,sep='')))
@@ -71,6 +72,7 @@ anyNa<-function(...){
 #' @param OVERWRITE If FALSE throw an error if hash of ... changes from cached values. If TRUE redo operation and overwrite cache without asking
 #' @param VOCAL If TRUE report on status of caching
 #' @param EXCLUDE: Vector of names of arguments to exclude from md5 digest comparison (for very large arguments)
+#' @export
 #' @return Output from operation function with ... arguments
 cacheOperation<-function(cacheFile,operation,...,OVERWRITE=FALSE,VOCAL=TRUE,EXCLUDE=NULL){
 	#avoid evaluation EXCLUDEd args until necessary since they're probably big

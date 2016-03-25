@@ -3,6 +3,7 @@
 #' @param x Vector of counts or proportions
 #' @param base Base of logarithm
 #' @param standardize If TRUE divide x by sum x
+#' @export
 #' @return Shannon diversity
 shannon<-function(x,base=exp(1),standardize=TRUE){
    if(any(x<0))stop(simpleError('Please give positive values of x'))
@@ -17,6 +18,7 @@ shannon<-function(x,base=exp(1),standardize=TRUE){
 #'
 #' @param x Vector of counts or proportions of N elements
 #' @param dist Distance matrix of NxN elements
+#' @export
 #' @return Rao diversity
 rao<-function(x,dist){
 	zeros<-x==0
@@ -33,6 +35,7 @@ rao<-function(x,dist){
 #' @param x Vector of counts or proportions of N elements
 #' @param y Second vector of counts or proportions of N elements 
 #' @param base Base of logarithm
+#' @export
 #' @return Jensen-Shannon divergence
 jensenShannon<-function(x,y,base=2){
 	propX<-x/sum(x)
@@ -49,6 +52,7 @@ jensenShannon<-function(x,y,base=2){
 #' @param y Second vector of counts or proportions of N elements 
 #' @param base Base of logarithm
 #' @param standardize If TRUE divide x and y by sum(x) and sum(y)
+#' @export
 #' @return Kullback-Leibler divergence
 kullback<-function(x,y,base=2,standardize=TRUE){
 	selector<-y>0&x>0
@@ -66,6 +70,7 @@ kullback<-function(x,y,base=2,standardize=TRUE){
 #' Calculate chao diversity index
 #'
 #' @param counts A vector of counts with one entry per "species"
+#' @export
 #' @return Chao index
 chao<-function(counts){
 	counts<-counts[counts>0]
@@ -80,6 +85,7 @@ chao<-function(counts){
 #' @param reps How many random samples to take at each step
 #' @param quants Quantiles to return
 #' @param chaoAdjust If TRUE calculate chao-predicted species number on each random draw
+#' @export
 #' @return Dataframe of calculated quantiles with rownames of the number of samples drawn
 rarefy<-function(species,counts=rep(1,length(species)),samples=seq(10,sum(counts),10),reps=10000,quants=c(.5,.025,.975),chaoAdjust=FALSE,debug=FALSE,replaceSpecies=FALSE,minCount=0){
 	if(length(species)!=length(counts))stop(simpleError('Length of species and counts not equal'))
@@ -111,6 +117,7 @@ rarefy<-function(species,counts=rep(1,length(species)),samples=seq(10,sum(counts
 #'
 #' @param sample Vector of numbers of individuals per species
 #' @param step Size of sampling steps for rarefaction
+#' @export
 #' @return Matrix with two columns; number of draws and rarefaction value
 quickRare<-function(sample,step=10,maxN=sum(sample)){
 	sampleSize<-20;
@@ -123,6 +130,7 @@ quickRare<-function(sample,step=10,maxN=sum(sample)){
 #'
 #' @param speciesCounts Vector of counts for each "species" e.g. c(10,100,5)
 #' @param sampleSize Single value of number of draws from sample 
+#' @export
 #' @return Rarefaction value
 rareEquation<-function(speciesCounts,sampleSize){
 	#numbers too big

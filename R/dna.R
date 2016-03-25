@@ -19,6 +19,7 @@ reverseAmbiguous<-structure(names(ambiguousBaseCodes),.Names=ambiguousBaseCodes)
 #' Convenience function for picking first most abundant of a set of values
 #'
 #' @param values A vector of items
+#' @export
 #' @return First most abundant item as a string
 mostAbundant<-function(values){
 	tmp<-table(values)
@@ -41,6 +42,7 @@ isError<-function(x){
 #' @param y Y coorinate of matrix
 #' @param mat Matrix of interest
 #' @param returnIndex If TRUE return the one dimensional index for the items otherwise return the selected elements of the matrix
+#' @export
 #' @return A vector of indices if returnIndex is TRUE or a vector of the selected matrix elements
 indexMatrix<-function(x,y,mat,returnIndex=FALSE){
 	mat<-as.matrix(mat)
@@ -141,6 +143,7 @@ countNmers<-function(string,k=10,n=10){
 #' @param hashSize Size of hashed strings
 #' @param everyBase Generate a hash every X strings
 #' @param start Output labels start from e.g. label starting from 1000
+#' @export
 #' @return Output from operation function with ... arguments
 hashString<-function(string,hashSize,everyBase=1,start=1){
 	cuts<-seq(1,nchar(string)-hashSize+1,everyBase)
@@ -161,6 +164,7 @@ gcPercent<-function(seqs,chars=c('C','G')){
 #' Swap case of a string
 #'
 #' @param string String to have case toggled
+#' @export
 #' @return String with lowercase and uppercase swapped
 toggleCase<-function(string){
 	chartr(paste(letters,LETTERS,collapse='',sep=''),paste(LETTERS,letters,collapse='',sep=''),string)
@@ -170,6 +174,7 @@ toggleCase<-function(string){
 #'
 #' @param pattern Pattern to look for in strings
 #' @param strings Strings in which to look for pattern
+#' @export
 #' @return Strings with case of any occurences of pattern swapped
 highlightString<-function(pattern,strings){
 	locs<-gregexpr(pattern,strings)
@@ -193,6 +198,7 @@ highlightDifferences<-function(seq1,seq2){
 #'
 #' @param ... Various sequences to split into a matrix
 #' @param fill A character to pad ends of sequences. Sequences are left uneven lengths if NULL
+#' @export
 #' @return A matrix of single characters each row corresponding to a read
 seqSplit<-function(...,fill=NULL){
 	seqs<-c(...)
@@ -209,6 +215,7 @@ seqSplit<-function(...,fill=NULL){
 #'
 #' @param dna Single string of DNA
 #' @param frame Starting frame for codons (0=start on first base, 1=on second, 2=on third)
+#' @export
 #' @return Vector of 3 base codons
 dna2codons<-function(dna,frame=0){
 	if(nchar(dna)<3){
@@ -225,6 +232,7 @@ dna2codons<-function(dna,frame=0){
 #'
 #' @param codons Vector of 3 base codons
 #' @param type: amino acid info to return; code for single letter, name for full name, or abbr for 3-letter abbreviation
+#' @export
 #' @return Vector of amino acids
 codon2aa<-function(codons,type='code',naReplace='z',warn=TRUE){
 	if(!type %in% c('code','name','abbr'))stop(simpleError('Invalid amino acid type'))
@@ -240,6 +248,7 @@ codon2aa<-function(codons,type='code',naReplace='z',warn=TRUE){
 #' @param dna A string of DNA/RNA
 #' @param frame Starting frame (0=start on first base, 1=on second, 2=on third)
 #' @param debug If TRUE print debug info
+#' @export
 #' @return A string of amino acids
 dna2aa<-Vectorize(function(dna,frame=0,debug=FALSE,...){
 	codons<-dna2codons(dna,frame)	
@@ -278,6 +287,7 @@ aa2dna<-function(aas){
 #' @param strand Strand of dna (i.e. revcomp the dna first if '-')
 #' @param refStart Start coordinate of string
 #' @param debug If TRUE print debug info
+#' @export
 #' @return Amino acid code or NA if outside exon or outside string
 dnaPos2aa<-function(dna,pos,start=1,end=nchar(dna),frame=0,strand='+',refStart=1,debug=FALSE){
 	if(length(pos)==1&length(start)>1)pos<-rep(pos,length(start))
@@ -316,6 +326,7 @@ dnaPos2aa<-function(dna,pos,start=1,end=nchar(dna),frame=0,strand='+',refStart=1
 #' @param tNames Target names 
 #' @param allCover If TRUE entire start and end of base must fall within targets +- allCoverFuzz
 #' @param allCoverFuzz Extra overlap to consider on each end of target when using allCover
+#' @export
 #' @return '|' seperated vector of tNames within overlap or '' if no overlapping target
 checkOverlap<-function(starts,ends,tStarts,tEnds,tNames,allCover=FALSE,allCoverFuzz=0,sep='|'){
 	overlapNames<-apply(cbind(as.numeric(starts),as.numeric(ends)),1,function(x,tStarts,tEnds,tNames){
