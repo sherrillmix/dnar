@@ -239,7 +239,7 @@ codon2aa<-function(codons,type='code',naReplace='z',warn=TRUE){
 #'
 #' @param dna A string of DNA/RNA
 #' @param frame Starting frame (0=start on first base, 1=on second, 2=on third)
-#' @debug If TRUE print debug info
+#' @param debug If TRUE print debug info
 #' @return A string of amino acids
 dna2aa<-Vectorize(function(dna,frame=0,debug=FALSE,...){
 	codons<-dna2codons(dna,frame)	
@@ -417,7 +417,7 @@ trim<-function(x){
 	sub('\\s+$','',sub('^\\s+','',x),perl=TRUE)
 }
 
-degap<-<-function(seq,gaps=c('*','-','.')){
+degap<-function(seq,gaps=c('*','-','.')){
 	gsub(sprintf('[%s]+',paste(gaps,collapse='')),'',seq,perl=TRUE)
 }
 
