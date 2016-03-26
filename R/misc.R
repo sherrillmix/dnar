@@ -1,6 +1,13 @@
-#convenience function to resize R console window
+#' convenience function to resize R console window
+#'
+#' @export
 adjustWindow<-function()options(width=as.integer(Sys.getenv('COLUMNS')))
-#convenience function to list objects by size
+
+#' Convenience function to list objects by size
+#'
+#' env the environment to list
+#' @export
+#' @return object sizes in decreasing order
 object.sizes<-function(env=.GlobalEnv)sort(sapply(ls(env=env),function(x)object.size(get(x))),decreasing=TRUE)
 
 #' Generate an error
@@ -13,9 +20,12 @@ stopError<-function(...){
 	stop(simpleError(paste(...,sep='')))
 }
 
-#get the conservative edge of a confidence interval
-#boundaries: upper and lower values
-#base: base value e.g. 0 or 1
+#' Get the conservative edge of a confidence interval
+#'
+#' @param boundaries upper and lower values
+#' @param base value, e.g. 0 or 1
+#' @export
+#' @return single numberic. if the boundaries overlap the base then return base otherwise return value closest to base
 conservativeBoundary<-function(boundaries,base=0){
 	boundaries<-sort(boundaries)
 	return(ifelse(all(boundaries>base),boundaries[1],ifelse(all(boundaries<base),boundaries[2],base)))
