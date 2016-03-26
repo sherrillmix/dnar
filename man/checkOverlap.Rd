@@ -21,6 +21,8 @@ checkOverlap(starts, ends, tStarts, tEnds, tNames, allCover = FALSE,
 \item{allCover}{If TRUE entire start and end of base must fall within targets +- allCoverFuzz}
 
 \item{allCoverFuzz}{Extra overlap to consider on each end of target when using allCover}
+
+\item{sep}{Matches are pasted together separated by this}
 }
 \value{
 '|' seperated vector of tNames within overlap or '' if no overlapping target

@@ -85,6 +85,9 @@ chao<-function(counts){
 #' @param reps How many random samples to take at each step
 #' @param quants Quantiles to return
 #' @param chaoAdjust If TRUE calculate chao-predicted species number on each random draw
+#' @param debug If TRUE display debugging information
+#' @param minCount Remove and species with less than minCount counts
+#' @param replaceSpecies If TRUE sample with replacements. If FALSE sample without replacement.
 #' @export
 #' @return Dataframe of calculated quantiles with rownames of the number of samples drawn
 rarefy<-function(species,counts=rep(1,length(species)),samples=seq(10,sum(counts),10),reps=10000,quants=c(.5,.025,.975),chaoAdjust=FALSE,debug=FALSE,replaceSpecies=FALSE,minCount=0){
@@ -117,6 +120,7 @@ rarefy<-function(species,counts=rep(1,length(species)),samples=seq(10,sum(counts
 #'
 #' @param sample Vector of numbers of individuals per species
 #' @param step Size of sampling steps for rarefaction
+#' @param maxN The maximum number of counts to rarefy to
 #' @export
 #' @return Matrix with two columns; number of draws and rarefaction value
 quickRare<-function(sample,step=10,maxN=sum(sample)){

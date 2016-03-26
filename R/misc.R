@@ -5,10 +5,10 @@ adjustWindow<-function()options(width=as.integer(Sys.getenv('COLUMNS')))
 
 #' Convenience function to list objects by size
 #'
-#' env the environment to list
+#' @param env the environment to list
 #' @export
 #' @return object sizes in decreasing order
-object.sizes<-function(env=.GlobalEnv)sort(sapply(ls(env=env),function(x)object.size(get(x))),decreasing=TRUE)
+object.sizes<-function(env=.GlobalEnv)sort(sapply(ls(envir=env),function(x)object.size(get(x))),decreasing=TRUE)
 
 #' Generate an error
 #'
@@ -81,7 +81,7 @@ anyNa<-function(...){
 #' @param ... Arguments for operation function
 #' @param OVERWRITE If FALSE throw an error if hash of ... changes from cached values. If TRUE redo operation and overwrite cache without asking
 #' @param VOCAL If TRUE report on status of caching
-#' @param EXCLUDE: Vector of names of arguments to exclude from md5 digest comparison (for very large arguments)
+#' @param EXCLUDE Vector of names of arguments to exclude from md5 digest comparison (for very large arguments)
 #' @export
 #' @return Output from operation function with ... arguments
 cacheOperation<-function(cacheFile,operation,...,OVERWRITE=FALSE,VOCAL=TRUE,EXCLUDE=NULL){
@@ -89,12 +89,11 @@ cacheOperation<-function(cacheFile,operation,...,OVERWRITE=FALSE,VOCAL=TRUE,EXCL
 	unevalArgs<-match.call(expand.dots=FALSE)$'...'
 	varSelector<-if(is.null(names(unevalArgs)))rep(TRUE,length(unevalArgs)) else !names(unevalArgs) %in% EXCLUDE
 	allArgs<-lapply(unevalArgs[varSelector],eval)
-	if(!require(digest))stop(simpleError('caching requires digest'))
 	#try to prevent function scope from changing things
-	md5<-digest(lapply(allArgs,function(x)if(is.function(x))deparse(x)else x))
+	md5<-digest::digest(lapply(allArgs,function(x)if(is.function(x))deparse(x)else x))
 	if(file.exists(cacheFile)){
 		tmp<-new.env()
-		load(cacheFile,env=tmp)
+		load(cacheFile,envir=tmp)
 		if(with(tmp,md5)==md5){
 			if(VOCAL)message('Cache ',cacheFile,' does exist. Loading data')
 			return(with(tmp,out))
@@ -123,7 +122,7 @@ cv.glm.par<-function(model,K=nrow(thisData),nCores=1,subsets=NULL,vocal=TRUE){
 	thisData<-eval(modelCall$data)
 	n<-nrow(thisData)
 	if(is.null(subsets))subsets<-split(1:n,sample(rep(1:K,length.out=n)))
-	preds<-mclapply(subsets,function(outGroup){
+	preds<-parallel::mclapply(subsets,function(outGroup){
 		if(vocal)cat('.')
 		subsetData<-thisData[-outGroup,,drop=FALSE]
 		predData<-thisData[outGroup,,drop=FALSE]
@@ -143,7 +142,6 @@ cv.glm.par<-function(model,K=nrow(thisData),nCores=1,subsets=NULL,vocal=TRUE){
 #...: arguments for mclapply
 #nSplits: number of splits to make (if > mc.cores then R will restart more frequently)
 cleanMclapply<-function(x,mc.cores,applyFunc,...,extraCode='',nSplits=mc.cores){
-	library(parallel)
 	if(nSplits<mc.cores)nSplits<-mc.cores
 	splits<-unique(round(seq(0,length(x),length.out=nSplits+1)))
 	if(length(splits)<nSplits+1)nSplits<-length(splits)-1 #not enough items to fill so set lower
@@ -170,7 +168,7 @@ cleanMclapply<-function(x,mc.cores,applyFunc,...,extraCode='',nSplits=mc.cores){
 	}
 	message("Running")
 	message("Logs: ",paste(logFiles,collapse=', '))
-	exitCode<-mclapply(mapply(c,scriptFiles,logFiles,SIMPLIFY=FALSE),function(x){out<-system(sprintf("R CMD BATCH --no-save --no-restore %s %s",x[1],x[2]));cat('.');return(out)},mc.cores=mc.cores)
+	exitCode<-parallel::mclapply(mapply(c,scriptFiles,logFiles,SIMPLIFY=FALSE),function(x){out<-system(sprintf("R CMD BATCH --no-save --no-restore %s %s",x[1],x[2]));cat('.');return(out)},mc.cores=mc.cores)
 	cat('\n')
 	if(any(exitCode!=0)){message('Problem running multi R code');browser()}
 	message("Loading split outputs")

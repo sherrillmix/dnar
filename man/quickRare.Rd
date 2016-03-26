@@ -10,6 +10,8 @@ quickRare(sample, step = 10, maxN = sum(sample))
 \item{sample}{Vector of numbers of individuals per species}
 
 \item{step}{Size of sampling steps for rarefaction}
+
+\item{maxN}{The maximum number of counts to rarefy to}
 }
 \value{
 Matrix with two columns; number of draws and rarefaction value

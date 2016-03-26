@@ -21,6 +21,12 @@ rarefy(species, counts = rep(1, length(species)), samples = seq(10,
 \item{quants}{Quantiles to return}
 
 \item{chaoAdjust}{If TRUE calculate chao-predicted species number on each random draw}
+
+\item{debug}{If TRUE display debugging information}
+
+\item{replaceSpecies}{If TRUE sample with replacements. If FALSE sample without replacement.}
+
+\item{minCount}{Remove and species with less than minCount counts}
 }
 \value{
 Dataframe of calculated quantiles with rownames of the number of samples drawn

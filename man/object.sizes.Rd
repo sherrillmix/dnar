@@ -6,10 +6,13 @@
 \usage{
 object.sizes(env = .GlobalEnv)
 }
+\arguments{
+\item{env}{the environment to list}
+}
 \value{
 object sizes in decreasing order
 }
 \description{
-env the environment to list
+Convenience function to list objects by size
 }
 

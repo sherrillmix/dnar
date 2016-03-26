@@ -100,7 +100,6 @@ runBlatNoServer<-function(reads=NULL,refs,blatArgs='',outFile='out.blat',blat='b
 #outfile: file to write blat to (if ends in .gz then isGz defaults to true and writes to gzipped file)
 multiRunBlatNoServer<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),condense=TRUE,isGz=grepl('.gz$',outFile),sleepIncrement=1,runFilter=NULL,...){
 	prefix<-paste(sample(c(letters,LETTERS),20,TRUE),collapse='')
-	library(parallel)
 	if(!file.exists(tmpDir))dir.create(tmpDir)
 	message('Preparing files')
 	runFiles<-mapply(function(seqs,id){
@@ -112,7 +111,7 @@ multiRunBlatNoServer<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),conde
 		return(c(thisTmpDir,tmpFile,faFile))
 	},split(reads,sort(rep(1:nCore,length.out=length(reads)))),1:nCore,SIMPLIFY=FALSE)
 	message('Running blats')
-	bigRun<-mclapply(runFiles,function(x){
+	bigRun<-parallel::mclapply(runFiles,function(x){
 		message('Starting ',x[2])
 		runBlatNoServer(readFile=x[3],refs=refs,outFile=x[2],tmpDir=x[1],deleteFiles=TRUE,...)
 		return(x[2])
@@ -123,7 +122,7 @@ multiRunBlatNoServer<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),conde
     }
 	if(any(!sapply(bigRun,file.exists)))stop(simpleError('Blat file missing'))
 	if(!is.null(runFilter)){
-		bigRun<-mclapply(bigRun,function(x,runFilter){
+		bigRun<-parallel::mclapply(bigRun,function(x,runFilter){
 			newFile<-sprintf('%s__2',x)
 			message('Filtering ',x)
 			system(sprintf('cat %s|%s>%s',x,runFilter,newFile))
@@ -179,9 +178,8 @@ blatReadsVsRefs<-function(reads,refs,outFile,faToTwoBit='faToTwoBit',tmpDir=spri
 #...:arguments for blatReadsVsRefs
 multiBlatReadsVsRefs<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),isGz=grepl('.gz$',outFile),condense=TRUE,gzipPath='gzip',...){
 	prefix<-paste(sample(c(letters,LETTERS),20,TRUE),collapse='')
-	library(parallel)
 	if(!file.exists(tmpDir))dir.create(tmpDir)
-	bigRun<-mclapply(mapply(function(x,y)list(x,y),split(reads,sort(rep(1:nCore,length.out=length(reads)))),1:nCore,SIMPLIFY=FALSE),function(x){
+	bigRun<-parallel::mclapply(mapply(function(x,y)list(x,y),split(reads,sort(rep(1:nCore,length.out=length(reads)))),1:nCore,SIMPLIFY=FALSE),function(x){
 		tmpFile<-sprintf('%s__%d.blat',sub('\\.blat(\\.gz)?$','',outFile),x[[2]])
 		thisTmpDir<-sprintf('%s/work__%s__%d',tmpDir,prefix,x[[2]])
 		blatReadsVsRefs(x[[1]],refs,tmpFile,startPort=37900+x[[2]]*10,tmpDir=thisTmpDir,...) #likes to start on same port apparently

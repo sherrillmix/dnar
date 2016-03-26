@@ -10,6 +10,8 @@ dnaPos2aa(dna, pos, start = 1, end = nchar(dna), frame = 0,
 \arguments{
 \item{dna}{A string of DNA/RNA}
 
+\item{pos}{Position of interest}
+
 \item{start}{Start coordinate of exon}
 
 \item{end}{End coordinate of exon}

@@ -367,7 +367,7 @@ readAce<-function(aceFile,dropMosaik=TRUE,checkSnps=TRUE,vocal=TRUE){
 	bqLines<-grep('^BQ *$',x)
 	if(length(bqLines)!=1)stop(simpleError('Incorrect number of BQ lines found'))
 	contigSeq<-paste(x[(coLines+1):(bqLines-1)],sep='',collapse='')
-	if(nchar(contigSeq)!=contigBaseNum)stopError('Found ',char(contigSeq),' bases in contig but was expecting ',contigBaseNum,' bases')	
+	if(nchar(contigSeq)!=contigBaseNum)stopError('Found ',nchar(contigSeq),' bases in contig but was expecting ',contigBaseNum,' bases')	
 	#skipping BQ
 	afLines<-grep('^AF [^ ]+ [UC] [0-9]+ *$',x)
 	if(length(afLines)!=contigReadNum)stopError(length(afLines),' AF lines found but was expecting ',contigReadNum)
@@ -453,6 +453,13 @@ cutReads<-function(seqs,starts,low=min(starts),high=max(starts+nchar(seqs)-1),le
 	}
 }
 
+findReads<-function(low,starts,lengths,high=low){
+	if(length(starts)!=length(lengths))stopError('Length of starts and lengths not equal')
+	output<-rep(TRUE,length(starts))
+	output[starts>high]<-FALSE
+	output[starts+lengths<low]<-FALSE
+	return(output)
+}
 
 parseGff<-function(gffFile,individuals=NULL,contig=individuals[1]){
 	message('Using ',contig,' as main contig')

@@ -284,6 +284,7 @@ aa2dna<-function(aas){
 #' Find a single codon at a given position in dna
 #'
 #' @param dna A string of DNA/RNA
+#' @param pos Position of interest
 #' @param start Start coordinate of exon
 #' @param end End coordinate of exon
 #' @param frame Starting frame (0=start on first base, 1=on second, 2=on third)
@@ -329,6 +330,7 @@ dnaPos2aa<-function(dna,pos,start=1,end=nchar(dna),frame=0,strand='+',refStart=1
 #' @param tNames Target names 
 #' @param allCover If TRUE entire start and end of base must fall within targets +- allCoverFuzz
 #' @param allCoverFuzz Extra overlap to consider on each end of target when using allCover
+#' @param sep Matches are pasted together separated by this
 #' @export
 #' @return '|' seperated vector of tNames within overlap or '' if no overlapping target
 checkOverlap<-function(starts,ends,tStarts,tEnds,tNames,allCover=FALSE,allCoverFuzz=0,sep='|'){
@@ -572,7 +574,6 @@ blockToAlign<-function(seqs,tSeqs,qStarts,tStarts,sizes){
 #flags: vector of integer flags from sam
 #test: either character vector of flag short names or integers
 samFlag<-function(flags,test='paired'){
-	if(!require(bitops))stop(simpleError('Sam flag requires bitops package'))
 	test<-unique(test)
 	if(!is.numeric(test)){
 		if(!all(test %in% samFlags$short))stop(simpleError(sprintf('Unknown flag please select from %s',paste(samFlags$short,collapse=', '))))
@@ -581,8 +582,8 @@ samFlag<-function(flags,test='paired'){
 		test<-as.integer(test)
 	}
 	testInt<-0
-	for(i in test)testInt<-bitOr(testInt,i)
-	return(bitAnd(flags,testInt)==testInt)
+	for(i in test)testInt<-bitops::bitOr(testInt,i)
+	return(bitops::bitAnd(flags,testInt)==testInt)
 }
 
 

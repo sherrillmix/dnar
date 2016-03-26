@@ -18,7 +18,7 @@ cacheOperation(cacheFile, operation, ..., OVERWRITE = FALSE, VOCAL = TRUE,
 
 \item{VOCAL}{If TRUE report on status of caching}
 
-\item{EXCLUDE:}{Vector of names of arguments to exclude from md5 digest comparison (for very large arguments)}
+\item{EXCLUDE}{Vector of names of arguments to exclude from md5 digest comparison (for very large arguments)}
 }
 \value{
 Output from operation function with ... arguments
