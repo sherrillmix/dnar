@@ -31,16 +31,14 @@ conservativeBoundary<-function(boundaries,base=0){
 	return(ifelse(all(boundaries>base),boundaries[1],ifelse(all(boundaries<base),boundaries[2],base)))
 }
 
-#get the conservative edge of the odds ratio from fisher's exact test
-#x: a 2x2 numeric matrix to feed to fisher.test
-conservativeOddsRatio<-function(x){
-	conf.int<-fisher.test(x)$conf.int
-	out<-conservativeBoundary(conf.int,1)
-	return(out)
-}
 
-
-#convenience function for lagging with NA
+#' Convenience function for lagging with NA
+#'
+#' @param x a vector to be lagged
+#' @param lag an integer for how much to lag x. lag greater than zero moves values left. lag less than zero moves values right
+#' @param fill the value to fill at the start or end  of the output lagged vector
+#' @export
+#' @return a vector the same length as x 
 lagNA<-function(x,lag=1,fill=NA){
 	out<-x	
 	if(lag>0)out<-c(out[-(1:lag)],rep(fill,lag))
@@ -48,17 +46,23 @@ lagNA<-function(x,lag=1,fill=NA){
 	return(out)
 }
 
-#calculating moving average/max/min etc
-#vec: to average over
-#statFunc: function to use
-#spacer: how many +- to average
+#' Calculating a moving average/max/min statistic over a vector
+#'
+#' @param vec to average over
+#' @param statFunc function to use
+#' @param spacer how many neighbors to the left and right to average
+#' @export
+#' @return a vector the same length as vec
 movingStat<-function(vec,statFunc=max,spacer=2){
 	n<-length(vec)
 	sapply(1:n,function(x)statFunc(vec[max(1,x-spacer):min(n,x+spacer)]))
 }
 
-#convenience function to check all args are same length
-#...: arguments to check the lengths of 
+#' Convenience function to check all args are same length
+#'
+#' @param ... arguments to check the lengths of 
+#' @export
+#' @return logical indicating whether all input are the same length
 allSameLength<-function(...){
 	args<-list(...)
 	ns<-sapply(args,length)
@@ -66,8 +70,11 @@ allSameLength<-function(...){
 }
 
 
-#convenience function to check all args don't have NAs
-#...: arguments to check the lengths of 
+#' Convenience function to check whether any  args have NAs
+#' 
+#' @param ... arguments to check if contain NA
+#' @export
+#' @return logical indicating whether any argument contains NA
 anyNa<-function(...){
 	args<-list(...)
 	hasNa<-sapply(args,function(x)any(is.na(x)))
@@ -111,12 +118,14 @@ cacheOperation<-function(cacheFile,operation,...,OVERWRITE=FALSE,VOCAL=TRUE,EXCL
 	return(out)
 }
 
-#check predictions of glm on left out data
-#model: a glm to cross validate
-#K: number of pieces to split data into
-#nCores: number of cores to use
-#subsets: predefined subsets
-#vocal: echo progress indicator
+#' Check predictions of glm by cross validation
+#' @param model a glm to cross validate
+#' @param K number of pieces to split data into
+#' @param nCores number of cores to use
+#' @param subsets predefined subset of same length as data specifying groupings
+#' @param vocal echo progress indicator
+#' @export
+#' @return a dataframe giving predictions for each data point with columns prediction and subsetId
 cv.glm.par<-function(model,K=nrow(thisData),nCores=1,subsets=NULL,vocal=TRUE){
 	modelCall<-model$call
 	thisData<-eval(modelCall$data)
@@ -135,12 +144,16 @@ cv.glm.par<-function(model,K=nrow(thisData),nCores=1,subsets=NULL,vocal=TRUE){
 	return(data.frame(pred,subsetId))
 }
 
-#x: vector/list to apply over
-#mc.cores: number of cores to use
-#applyFunc: function to apply
-#extraCode: character vector of setup code (each command self-contained within on cell or concatenated with ;)
-#...: arguments for mclapply
-#nSplits: number of splits to make (if > mc.cores then R will restart more frequently)
+#' A function to break an mclapply into parts, save to disk and run independently
+#' 
+#' @param x vector/list to apply over
+#' @param mc.cores number of cores to use
+#' @param applyFunc function to apply
+#' @param extraCode character vector of setup code (each command self-contained within a cell or concatenated with ;)
+#' @param ... arguments for mclapply
+#' @param nSplits number of splits to make (if > mc.cores then R will restart more frequently)
+#' @export
+#' @return the concatenated outputs from applyFunc 
 cleanMclapply<-function(x,mc.cores,applyFunc,...,extraCode='',nSplits=mc.cores){
 	if(nSplits<mc.cores)nSplits<-mc.cores
 	splits<-unique(round(seq(0,length(x),length.out=nSplits+1)))
@@ -177,11 +190,15 @@ cleanMclapply<-function(x,mc.cores,applyFunc,...,extraCode='',nSplits=mc.cores){
 }
 
 
-#return order of one vector in another
-#query: values to be sorted in target order
-#target: order for query to be sorted into
-#strict: if true error if query not in target, if false append unknown queries to end of target
-#...: arguments for order
+#' Find the  order of one vector in another
+#'
+#' @param query values to be sorted in target order
+#' @param target order for query to be sorted into
+#' @param strict if true error if query not in target, if false append unknown queries to end of target
+#' @param orderFunc function to use for ordering
+#' @param ... arguments for order
+#' @export
+#' @return a vector the same length as query specifying the order of query elements in target
 orderIn<-function(query,target,strict=FALSE,orderFunc=order,...){
 	if(any(!query %in% target)){
 		if(strict){
