@@ -212,10 +212,13 @@ orderIn<-function(query,target,strict=FALSE,orderFunc=order,...){
 }
 
 
-#loop through list, get unique names and make sure every element has those names
-#x: list to loop through
-#namesList: names to make sure every element has (and delete extras)
-#fill: value to insert in missing elements
+#' Loop through list, get unique names and make sure every element has those names
+#'
+#' @param x list to loop through
+#' @param namesList names to make sure every element has (and delete extras)
+#' @param fill value to insert in missing elements
+#' @export
+#' @return list with missing elements filled in and elements not in namesList removed
 fillList<-function(x,namesList=unique(unlist(lapply(x,names))),fill=NA){
 	output<-lapply(x,function(x){
 		x<-x[names(x) %in% namesList]
@@ -226,9 +229,12 @@ fillList<-function(x,namesList=unique(unlist(lapply(x,names))),fill=NA){
 }
 
 
-
-#line: line to convert to user coordinates
-#axis: axis to do conversion on (1:4 same as axis, mtext command)
+#' Convert from axis line to user coordinates
+#'
+#' @param line line to convert to user coordinates
+#' @param axis axis to do conversion on (1:4 same as axis, mtext command)
+#' @export
+#' @return position in user coordinates
 convertLineToUser<-function(line,axis=1){
 	if(!(axis %in% 1:4))stop(simpleError('Undefined axis'))
 	axisPair<-sort((c(axis-1,axis+1)%%4)+1)
@@ -244,8 +250,12 @@ convertLineToUser<-function(line,axis=1){
 	return(out)
 }
 
-#usr: usr coordinate to convert to line
-#axis: axis to do conversion on (1:4 same as axis, mtext command)
+#' Convert from user coordinates to axis line
+#'
+#' @param usr user coordinate to convert to line
+#' @param axis axis to do conversion on (1:4 same as axis, mtext command)
+#' @export
+#' @return axis line position
 convertUserToLine<-function(usr,axis=1){
 	if(!(axis %in% 1:4))stop(simpleError('Undefined axis'))
 	axisPair<-sort((c(axis-1,axis+1)%%4)+1)
@@ -263,14 +273,16 @@ convertUserToLine<-function(usr,axis=1){
 	return(out)
 }
 
-# find coords for arrow plotting
-#left: left coordinate of block
-#right: right coordinate of block
-#y: y position for middle of block
-#arrowLength: arrow length in usr coords
-#shaft: half of shaft thickness in usr coords
-#point: half of arrow thickness in usr coords
-#concat: concatenate multiple arrows into one data frame separated by NAs (ready for poly)?
+#' Find coords for arrow plotting
+#' @param left left coordinate of block
+#' @param right right coordinate of block
+#' @param y y position for middle of block
+#' @param arrowLength arrow length in usr coords
+#' @param shaft half of shaft thickness in usr coords
+#' @param point half of arrow thickness in usr coords
+#' @param concat logical indicating whether to concatenate multiple arrows into one data frame separated by NAs (e.g. ready for poly)
+#' @export
+#' @return a data.frame with columns x and y specifying coordinates for arrows
 arrow<-function(left,right,y,arrowLength=diff(par('usr')[1:2])*.05,shaft=.2,point=.4,concat=TRUE){
 	if(any(left>right))stop(simpleError('Left border > right border of arrow'))
 	arrowX<-right-arrowLength
