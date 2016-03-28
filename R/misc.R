@@ -274,6 +274,7 @@ convertUserToLine<-function(usr,axis=1){
 }
 
 #' Find coords for arrow plotting
+#'
 #' @param left left coordinate of block
 #' @param right right coordinate of block
 #' @param y y position for middle of block
@@ -292,9 +293,12 @@ arrow<-function(left,right,y,arrowLength=diff(par('usr')[1:2])*.05,shaft=.2,poin
 	return(coords)
 }
 
-#stack regions into smallest number of lines (using greedy algo)
-#starts: vector of starts of regions (note can add buffer by substracting arbitrary spacer)
-#ends: vector of ends of regions (note can add buffer by adding arbitrary spacer)
+#' Stack regions into smallest number of lines (using greedy algorithm)
+#'
+#' @param starts vector of starts of regions (note can add buffer by substracting arbitrary spacer)
+#' @param ends vector of ends of regions (note can add buffer by adding arbitrary spacer)
+#' @export
+#' @return vector of row ids
 stackRegions<-function(starts,ends){
 	nReg<-length(starts)
 	if(nReg!=length(ends))stop(simpleError('Starts and ends must be same length'))
@@ -311,11 +315,13 @@ stackRegions<-function(starts,ends){
 }
 
 
-#calculate the Wilson score interval http://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval
-#nTrue: number of trues observed
-#nFalse: number of falses observed
-#alpha: error percentile
-#returns: lower, upper bounds of the interval
+#' Calculate the Wilson score interval http://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval
+#'
+#' @param nTrue number of trues observed
+#' @param nFalse number of falses observed
+#' @param alpha error percentile
+#' @export
+#' @return two element vector giving the lower and upper bounds of the interval 
 wilsonInt<-function(nTrue,nFalse,alpha=.05){
 	n<-nTrue+nFalse
 	prop<-nTrue/n
