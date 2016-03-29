@@ -152,21 +152,24 @@ rareEquation<-function(speciesCounts,sampleSize){
 
 
 
-#calculate the probability of observing observedX species from nGroups groups with groupsize members with n observations
-#nGroups: number of equally sized groups
-#groupSize: size of the equally sized groups
-#n: number of observations pulled from the individuals
-#observedX: number of species observed
-#returns: probability of observing observedX species from nGroups groups with groupsize members with n observations
+#' Calculate the probability of observing observedX species from nGroups groups with groupsize members with n observations
+#'
+#' @param nGroups number of equally sized groups
+#' @param groupSize size of the equally sized groups
+#' @param n number of observations pulled from the individuals
+#' @param observedX number of species observed
+#' @return probability of observing observedX species from nGroups groups with groupsize members with n observations
 pRare<-function(nGroups,groupSize,n,observedX){
 	choose(nGroups,observedX)*chooseAtLeastOneFromEach(observedX,groupSize,n)/choose(nGroups*groupSize,n)
 }
 
-#calculate the number of combinations possible from nGroups groups with groupsize members and n observations
-#nGroups: number of equally sized groups
-#groupSize: size of the equally sized groups
-#n: number of observations pulled from the individuals
-#returns: number of combinations containing at least one individual from each group
+#' Calculate the number of combinations possible from nGroups groups with groupsize members and n observations
+#'
+#' @param nGroups number of equally sized groups
+#' @param groupSize size of the equally sized groups
+#' @param n number of observations pulled from the individuals
+#' @export
+#' @return number of combinations containing at least one individual from each group
 chooseAtLeastOneFromEach<-function(nGroups,groupSize,n){
 	if(nGroups<=0|nGroups>n)return(0)
 	if(nGroups>1){
