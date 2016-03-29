@@ -7,11 +7,11 @@
 blatFindGaps(qStarts, tStarts, blockSizes)
 }
 \arguments{
-\item{qStarts}{comma seperated starts for query seq}
+\item{qStarts}{comma separated starts for query seq}
 
-\item{tStarts}{comma seperated starts for target seq}
+\item{tStarts}{comma separated starts for target seq}
 
-\item{blockSizes}{comma seperated block sizes}
+\item{blockSizes}{comma separated block sizes}
 }
 \value{
 data.frame giving qGaps, tGaps, qGapStartAfter and tGapStartAfter

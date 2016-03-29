@@ -2,14 +2,17 @@
 % Please edit documentation in R/dna.R
 \name{bases2ambiguous}
 \alias{bases2ambiguous}
-\title{Convert set of single bases to ambigous code}
+\title{Convert set of single bases to ambiguous code}
 \usage{
 bases2ambiguous(bases)
 }
 \arguments{
-\item{bases}{vector of single character base strings}
+\item{bases}{vector of character sequences all the same number of characters}
+}
+\value{
+single character string with ambiguous nucleotide codes representing any differences between sequences
 }
 \description{
-Convert set of single bases to ambigous code
+Convert set of single bases to ambiguous code
 }
 

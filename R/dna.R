@@ -44,10 +44,12 @@ indexMatrix<-function(x,y,mat,returnIndex=FALSE){
 }
 
 
-#converts ambigous dna to an appropriate regular expression
-#input sequence with ambigous bases
-#returns: regular expression
-ambigous2regex<-function(dna){
+#' Converts ambiguous dna to an appropriate regular expression
+#'
+#' @param dna input sequence with ambiguous bases
+#' @export
+#' @return regular expression to match the ambiguous dna
+ambiguous2regex<-function(dna){
 	dna<-toupper(dna)
 	for (i in names(ambiguousBaseCodes)){
 		dna<-gsub(i,paste('[',ambiguousBaseCodes[i],']',sep=''),dna)
@@ -55,15 +57,15 @@ ambigous2regex<-function(dna){
 	return(dna)
 }
 
-#' Convert set of single bases to ambigous code
+#' Convert set of single bases to ambiguous code
 #'
-#' @param bases vector of single character base strings
+#' @param bases vector of character sequences all the same number of characters
 #' @export
-#' @return
-bases2ambiguous<-bases2ambigous<-function(bases){
+#' @return single character string with ambiguous nucleotide codes representing any differences between sequences 
+bases2ambiguous<-function(bases){
 	bases<-sort(unique(bases))
 	nBases<-nchar(bases[1])
-	if(any(nchar(bases)!=nBases))stop(simpleError('Convert bases to ambigous requires same length sequences'))
+	if(any(nchar(bases)!=nBases))stop(simpleError('Convert bases to ambiguous requires same length sequences'))
 	if(length(bases)==1)return(bases)
 	if(nBases>1)return(paste(sapply(1:nBases,function(x)bases2ambiguous(substring(bases,x,x))),collapse=''))
 	else return(reverseAmbiguous[paste(bases,collapse='')])
@@ -71,11 +73,11 @@ bases2ambiguous<-bases2ambigous<-function(bases){
 
 
 
-#convert ambigous dna to all possible sequences
-#dna: vector dna containing ambigous bases
+#convert ambiguous dna to all possible sequences
+#dna: vector dna containing ambiguous bases
 #unlist: return a unlisted vector instead of a list
 #returns: list with each entry containing all combinations for that entry of the vector
-expandAmbiguous<-expandAmbigous<-function(dna,delist=FALSE){
+expandAmbiguous<-function(dna,delist=FALSE){
 	dna<-toupper(dna)
 	ambigRegex<-sprintf('[%s]',paste(names(ambiguousBaseCodes),collapse=''))
 	out<-lapply(dna,function(x){
@@ -325,7 +327,7 @@ dnaPos2aa<-function(dna,pos,start=1,end=nchar(dna),frame=0,strand='+',refStart=1
 #' @param allCoverFuzz Extra overlap to consider on each end of target when using allCover
 #' @param sep Matches are pasted together separated by this
 #' @export
-#' @return '|' seperated vector of tNames within overlap or '' if no overlapping target
+#' @return '|' separated vector of tNames within overlap or '' if no overlapping target
 checkOverlap<-function(starts,ends,tStarts,tEnds,tNames,allCover=FALSE,allCoverFuzz=0,sep='|'){
 	overlapNames<-apply(cbind(as.numeric(starts),as.numeric(ends)),1,function(x,tStarts,tEnds,tNames){
 		if(!allCover)thisNames<-tNames[x[1]<=tEnds&x[2]>=tStarts]
@@ -336,6 +338,19 @@ checkOverlap<-function(starts,ends,tStarts,tEnds,tNames,allCover=FALSE,allCoverF
 	return(overlapNames)
 }
 
+#' Check overlap between two sets of coordinates (ranges package may be better/quicker option)
+#'
+#' @param starts Start coordinates of query
+#' @param ends End coordinates of query
+#' @param tStarts Start coordinates of target
+#' @param tEnds End coordinates of target
+#' @param tNames Target names 
+#' @param qChrom Chromosomes of the queries
+#' @param tChrom Chromosomes of the targets
+#' @param vocal If TRUE report working on each chromosome
+#' @param ... Additional arguments for checkOverlap
+#' @export
+#' @return '|' separated vector of tNames within overlap or '' if no overlapping target
 checkOverlapMulti<-function(starts,ends,tStarts,tEnds,tNames,qChrom,tChrom,vocal=FALSE,...){
 	results<-rep(NA,length(qChrom))
 	for(i in unique(qChrom)){
@@ -408,7 +423,7 @@ reverseString<-function(strings,faster=TRUE){
 complimentDna<-function(dnas,brackets=TRUE,ambigs=TRUE){
 	finds<-'TGAC'
 	replaces<-'ACTG'
-	#deal with ambigous
+	#deal with ambiguous
 	if(ambigs){
 		sortAmbig<-sapply(lapply(strsplit(ambiguousBaseCodes,''),sort),paste,collapse='')
 		revAmbig<-sapply(strsplit(complimentDna(sortAmbig,ambigs=FALSE),''),function(x)paste(sort(x),collapse=''))
@@ -632,8 +647,8 @@ trimEnd<-function(seqs,revCompPrimer,trimmed=rep(FALSE,length(seqs)),minSubstrin
 
 #' Take the output from blat and make continous reads out of it
 #'
-#' @param seqs comma seperated target sequences from blat
-#' @param starts comma seperated starting location for each piece of sequence 0 indexed
+#' @param seqs comma separated target sequences from blat
+#' @param starts comma separated starting location for each piece of sequence 0 indexed
 #' @param fillStarts start base for each output sequence 0 indexed
 #' @param fillEnds total length for each output sequence
 #' @param gaps list of matrices with columns tGaps and qGaps
@@ -680,9 +695,9 @@ cutBlatReads<-function(seqs,starts,fillStarts=NULL,fillEnds=NULL,gaps=NULL){
 
 #' Find gaps in blat coordinates
 #'
-#' @param qStarts comma seperated starts for query seq
-#' @param tStarts comma seperated starts for target seq
-#' @param blockSizes comma seperated block sizes
+#' @param qStarts comma separated starts for query seq
+#' @param tStarts comma separated starts for target seq
+#' @param blockSizes comma separated block sizes
 #' @export
 #' @return data.frame giving qGaps, tGaps, qGapStartAfter and tGapStartAfter
 #currently finds from start of both sequences. could add argument and make the c(0,XX) conditional
@@ -692,7 +707,7 @@ blatFindGaps<-function(qStarts,tStarts,blockSizes){
 	tStartList<-lapply(strsplit(tStarts,','),as.numeric)
 	blockSizeList<-lapply(strsplit(blockSizes,','),as.numeric)
 	blockNums<-sapply(qStartList,length)
-	if(any(blockNums!=sapply(tStartList,length))||any(blockNums!=sapply(blockSizeList,length)))stop(simpleError('Comma seperated lists of starts and blocksizes not equal length'))
+	if(any(blockNums!=sapply(tStartList,length))||any(blockNums!=sapply(blockSizeList,length)))stop(simpleError('Comma separated lists of starts and blocksizes not equal length'))
 
 	gaps<-mapply(function(qStarts,tStarts,blockSizes){
 		qStarts<-c(0,qStarts)

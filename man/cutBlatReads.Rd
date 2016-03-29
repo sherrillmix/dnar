@@ -8,9 +8,9 @@ cutBlatReads(seqs, starts, fillStarts = NULL, fillEnds = NULL,
   gaps = NULL)
 }
 \arguments{
-\item{seqs}{comma seperated target sequences from blat}
+\item{seqs}{comma separated target sequences from blat}
 
-\item{starts}{comma seperated starting location for each piece of sequence 0 indexed}
+\item{starts}{comma separated starting location for each piece of sequence 0 indexed}
 
 \item{fillStarts}{start base for each output sequence 0 indexed}
 
