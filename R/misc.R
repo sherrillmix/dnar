@@ -331,4 +331,14 @@ wilsonInt<-function(nTrue,nFalse,alpha=.05){
 }
 
 
+#' Convenience function for picking first most abundant of a set of values
+#'
+#' @param values A vector of items
+#' @export
+#' @return First most abundant item as a string
+mostAbundant<-function(values){
+	tmp<-table(values)
+	return(names(tmp)[which.max(tmp)])
+}
+
 

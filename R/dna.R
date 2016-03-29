@@ -16,22 +16,11 @@ ambiguousBaseCodes<-c(
 reverseAmbiguous<-structure(names(ambiguousBaseCodes),.Names=ambiguousBaseCodes)
 
 
-#' Convenience function for picking first most abundant of a set of values
+#' Convenience function to check for errors
 #'
-#' @param values A vector of items
+#' @param x vector or list to check for errors
 #' @export
-#' @return First most abundant item as a string
-mostAbundant<-function(values){
-	tmp<-table(values)
-	return(names(tmp)[tmp==max(tmp)][1])
-}
-
-#convenience function for stop(simpleError())
-stopError<-function(...){
-	stop(simpleError(paste(...,sep='')))
-}
-
-#convenience function to check for errors
+#' @return logical vector of length(x) specifying if each element of x was an error
 isError<-function(x){
     sapply(x,function(y)inherits(y,'simpleError')|inherits(y,'try-error'))
 }
@@ -65,8 +54,12 @@ ambigous2regex<-function(dna){
 	}
 	return(dna)
 }
-#convert set of single bases to ambigous code
-#bases: vector of single character base strings
+
+#' Convert set of single bases to ambigous code
+#'
+#' @param bases vector of single character base strings
+#' @export
+#' @return
 bases2ambiguous<-bases2ambigous<-function(bases){
 	bases<-sort(unique(bases))
 	nBases<-nchar(bases[1])
@@ -265,7 +258,7 @@ dna2aa<-Vectorize(function(dna,frame=0,debug=FALSE,...){
 #regex: if true return a (X|Y) regex of codons else return vector
 aa2codon<-Vectorize(function(aa,type='code',regex=TRUE){
 	selector<-aminoAcids[,type]==aa
-	if(!any(selector))stopError('Unknown amino acid',aa)
+	if(!any(selector))ntopError('Unknown amino acid',aa)
 	codons<-aminoAcids[selector,'codon']
 	codons<-sprintf('(%s)',paste(codons,collapse='|'))
 	return(codons)
@@ -637,13 +630,15 @@ trimEnd<-function(seqs,revCompPrimer,trimmed=rep(FALSE,length(seqs)),minSubstrin
 	return(list(trimSeq,trimmed))
 }
 
-#take the output from blat and make continous reads out of it
-#seqs: comma seperated target sequences from blat
-#starts: comma seperated starting location for each piece of sequence 0 indexed
-#fillStarts: start base for each output sequence 0 indexed
-#fillEnds: total length for each output sequence
-#gaps: list of matrices with columns tGaps and qGaps
-#returns: dataframe of sequence
+#' Take the output from blat and make continous reads out of it
+#'
+#' @param seqs comma seperated target sequences from blat
+#' @param starts comma seperated starting location for each piece of sequence 0 indexed
+#' @param fillStarts start base for each output sequence 0 indexed
+#' @param fillEnds total length for each output sequence
+#' @param gaps list of matrices with columns tGaps and qGaps
+#' @export
+#' @return vector of sequences
 cutBlatReads<-function(seqs,starts,fillStarts=NULL,fillEnds=NULL,gaps=NULL){
 	if(length(seqs)!=length(starts))stop(simpleError('Length of seqs and starts not equal'))
 	if(!is.null(fillEnds)){
@@ -683,9 +678,13 @@ cutBlatReads<-function(seqs,starts,fillStarts=NULL,fillEnds=NULL,gaps=NULL){
 	return(output)
 }
 
-#qStarts: comma seperated starts for query seq
-#tStarts: comma seperated starts for target seq
-#blockSizes: comma seperated block sizes
+#' Find gaps in blat coordinates
+#'
+#' @param qStarts comma seperated starts for query seq
+#' @param tStarts comma seperated starts for target seq
+#' @param blockSizes comma seperated block sizes
+#' @export
+#' @return data.frame giving qGaps, tGaps, qGapStartAfter and tGapStartAfter
 #currently finds from start of both sequences. could add argument and make the c(0,XX) conditional
 blatFindGaps<-function(qStarts,tStarts,blockSizes){
 	if(length(qStarts)!=length(tStarts)||length(blockSizes)!=length(qStarts))stop(simpleError('Lengths of starts and blocksizes not equal'))
@@ -710,17 +709,21 @@ blatFindGaps<-function(qStarts,tStarts,blockSizes){
 }
 
 
-#take coordinates of blat matches and split into a single for each exon
-#chroms: Chromosome or other identifier
-#names: Name of gene of other container of exons
-#starts: Start coordinates of exons
-#ends: End coordinates of exons if lengths is FALSE or length of exon if lengths is TRUE
-#strands: Strand (for numbering exons in reverse on - strand)
-#lengths: logical whether ends are end coordinates or lengths
-#extraCols: a dataframe of extra columns (1 per batch of starts) to be added to the output
-#extraSplits: a dataframe of extra comma-separated values (1 string of comma separated values per batch of starts, 1 value per start-stop pair) to be added to the output
-#introns: also output introns (the spaces between exons)
-#adjustStart: add adjustStart to starts (good for 0 index start, 1 index ends of UCSC)
+#' Take coordinates of blat matches and split into a single line for each exon
+#'
+#' @param chroms Chromosome or other identifier
+#' @param names Name of gene of other container of exons
+#' @param starts Start coordinates of exons
+#' @param ends End coordinates of exons if lengths is FALSE or length of exon if lengths is TRUE
+#' @param strands Strand (for numbering exons in reverse on - strand)
+#' @param lengths logical whether ends are end coordinates or lengths
+#' @param extraCols a dataframe of extra columns (1 per batch of starts) to be added to the output
+#' @param extraSplits a dataframe of extra comma-separated values (1 string of comma separated values per batch of starts, 1 value per start-stop pair) to be added to the output
+#' @param introns also output introns (the spaces between exons)
+#' @param prefix prefix to be added to exon names
+#' @param adjustStart add adjustStart to starts (good for 0 index start, 1 index ends of UCSC)
+#' @export
+#' @return data.frame with a row for each exon or piece of alignment and columns chrom, name, exonName, start, end and strand
 #example: with(blat,blat2exons(tName,qName,tStarts,blockSizes,strand))
 blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),lengths=TRUE,extraCols=NULL,extraSplits=NULL,introns=FALSE,prefix='ex',adjustStart=0){
 	if(any(c(length(chroms),length(names),length(strands),length(starts))!=length(ends)))stop(simpleError('Different lengths for chrom, strand, starts, lengths'))
@@ -793,44 +796,18 @@ blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),len
 
 
 
-#find and remove columns that are entirely gaps
-removeGapColumns<-function(seqs,gapChars=c('-','.')){
-	if(any(nchar(seqs)!=nchar(seqs[1])))stop(simpleError('All seqs not same length'))
-	regex<-sprintf('[%s]',paste(gapChars,collapse=''))
-	invRegex<-sprintf('[^%s]',paste(gapChars,collapse=''))
-	#nonGap<-#unique(unlist(gregexpr(invRegex,seqs[1:min(1000,length(seqs))])))
-	nonGap<-c()
-	nSeq<-length(seqs)
-	for(i in seq(1,length(seqs),500)){
-		#if(i %% 1000==1)message(i)
-		nonGap<-unique(c(nonGap,unlist(gregexpr(invRegex,seqs[i:min(i+499,nSeq)]))))
-	}
-	baseRanges<-index2range(nonGap)
-	out<-apply(apply(baseRanges,1,function(x)substring(seqs,x[1],x[2])),1,paste,collapse='')
-	if(any(nchar(out)!=nchar(out[1])))stop(simpleError('Output seqs not same length'))
-	return(out)
-}
-
-#noGapSeq: sequence to expand
-#seqLength: output sequence length
-#isNotGap: indexes of non gap positions (should be >= nchar(noGapSeq))
-addGaps<-function(noGapSeq,isNotGap,seqLength=max(isNotGap)){
-	if(is.logical(isNotGap))isNotGap<-which(isNotGap)
-	isNotGap<-isNotGap[isNotGap<=seqLength]
-	if(length(isNotGap)<nchar(noGapSeq))noGapSeq<-substring(noGapSeq,1,length(isNotGap))
-	outSeq<-paste(rep('-',seqLength),collapse='')
-	for(i in 1:length(isNotGap))substring(outSeq,isNotGap[i],isNotGap[i])<-substring(noGapSeq,i,i)
-	return(outSeq)
-}
-
-
-#chr: vector of chromosomes
-#start: vector of start coordinate 1-based
-#end: vector of end coordinate 1-based
-#strand: vector of strands
-#chainFile: location of chain file for liftover
-#liftoverBin: location of the liftOver executable
-#return: 4 column data frame of coordinates
+#' Run liftover to convert coordinates from one genome version to another
+#'
+#' @param chr vector of chromosomes
+#' @param start vector of start coordinate 1-based
+#' @param end vector of end coordinate 1-based
+#' @param strand vector of strands
+#' @param chainFile location of chain file for liftover
+#' @param liftoverBin location of the liftOver executable
+#' @param vocal if TRUE then message extra information
+#' @param removeNAs if TRUE then remove positions that did could not be lifted over
+#' @export
+#' @return four column data frame of chr, start, end and strand of coordinates
 liftCoords<-function(chr,start,end,strand,chainFile,liftoverBin='liftOver',vocal=FALSE,removeNAs=TRUE){
 	tmpFiles<-c(tempfile(),tempfile(),tempfile())
 	y<-data.frame('chr'=chr,'start'=start,'end'=end,'strand'=strand,stringsAsFactors=FALSE)
@@ -855,9 +832,13 @@ liftCoords<-function(chr,start,end,strand,chainFile,liftoverBin='liftOver',vocal
 	return(y)
 }
 
-#seqs: vector of strings, sequences to form a position weight matrix from (all same length)
-#chars: allowed characters
-#priors: additional counts to add to each column with (default is a lazy way to get a named 0 vector)
+#' Generate a PWM for a set of sequences
+#'
+#' @param seqs vector of strings, sequences to form a position weight matrix from (all same length)
+#' @param chars allowed characters
+#' @param priors additional counts to add to each column with (default is a lazy way to get a named 0 vector)
+#' @export
+#' @return position weight matrix with length(chars) rows and nchar(seqs) columns
 pwm<-function(seqs,chars=c('C','G','T','A'),priors=table(chars)-1){
 	nBases<-nchar(seqs[1])
 	if(any(nchar(seqs)!=nBases))stop(simpleError('All sequences not same length for PWM'))
@@ -872,8 +853,12 @@ pwm<-function(seqs,chars=c('C','G','T','A'),priors=table(chars)-1){
 	return(out)
 }
 
-#seqs: vector of strings, sequences to score
-#pwm: position weight matrix with uniqueBasesxseqLength dimensions
+#' Calculate PWM scores for sequences
+#'
+#' @param seqs vector of strings, sequences to score
+#' @param pwm position weight matrix with uniqueBases x seqLength dimensions
+#' @export
+#' @return vector with a score for each sequence
 scoreFromPWM<-function(seqs,pwm){
 	bases<-rownames(pwm)	
 	nBases<-length(bases)
@@ -896,34 +881,3 @@ scoreFromPWM<-function(seqs,pwm){
 }
 
 
-#data.frame of sam flags
-samFlags<-data.frame('short'=c('paired','properPair','unmapped','mateUnmapped','reverse','mateReverse','first','second','notPrimary','fail','dupe'),'desc'=c('read paired','read mapped in proper pair','read unmapped','mate unmapped','read reverse strand','mate reverse strand','first in pair','second in pair','not primary alignment','read fails platform/vendor quality checks','read is PCR or optical duplicate'),stringsAsFactors=FALSE)
-samFlags$bit<-2^(0:(nrow(samFlags)-1))
-rownames(samFlags)<-samFlags$short
-#data.frame of amino acids
-aminoAcids<-data.frame('codon'=c('UUU','UUC','UCU','UCC','UAU','UAC','UGU','UGC','UUA','UCA','UAA','UGA','UUG','UCG','UAG','UGG','CUU','CUC','CCU','CCC','CAU','CAC','CGU','CGC','CUA','CUG','CCA','CCG','CAA','CAG','CGA','CGG','AUU','AUC','ACU','ACC','AAU','AAC','AGU','AGC','AUA','ACA','AAA','AGA','AUG','ACG','AAG','AGG','GUU','GUC','GCU','GCC','GAU','GAC','GGU','GGC','GUA','GUG','GCA','GCG','GAA','GAG','GGA','GGG'),'abbr'=c('Phe','Phe','Ser','Ser','Tyr','Tyr','Cys','Cys','Leu','Ser','Ochre','Opal','Leu','Ser','Amber','Trp','Leu','Leu','Pro','Pro','His','His','Arg','Arg','Leu','Leu','Pro','Pro','Gln','Gln','Arg','Arg','Ile','Ile','Thr','Thr','Asn','Asn','Ser','Ser','Ile','Thr','Lys','Arg','Met','Thr','Lys','Arg','Val','Val','Ala','Ala','Asp','Asp','Gly','Gly','Val','Val','Ala','Ala','Glu','Glu','Gly','Gly'),'code'=c('F','F','S','S','Y','Y','C','C','L','S','X','X','L','S','X','W','L','L','P','P','H','H','R','R','L','L','P','P','Q','Q','R','R','I','I','T','T','N','N','S','S','I','T','K','R','M','T','K','R','V','V','A','A','D','D','G','G','V','V','A','A','E','E','G','G'),'name'=c('Phenylalanine','Phenylalanine','Serine','Serine','Tyrosine','Tyrosine','Cysteine','Cysteine','Leucine','Serine','Stop','Stop','Leucine','Serine','Stop','Tryptophan','Leucine','Leucine','Proline','Proline','Histidine','Histidine','Arginine','Arginine','Leucine','Leucine','Proline','Proline','Glutamine','Glutamine','Arginine','Arginine','Isoleucine','Isoleucine','Threonine','Threonine','Asparagine','Asparagine','Serine','Serine','Isoleucine','Threonine','Lysine','Arginine','Methionine','Threonine','Lysine','Arginine','Valine','Valine','Alanine','Alanine','Aspartic acid','Aspartic acid','Glycine','Glycine','Valine','Valine','Alanine','Alanine','Glutamic acid','Glutamic acid','Glycine','Glycine'),row.names=c('UUU','UUC','UCU','UCC','UAU','UAC','UGU','UGC','UUA','UCA','UAA','UGA','UUG','UCG','UAG','UGG','CUU','CUC','CCU','CCC','CAU','CAC','CGU','CGC','CUA','CUG','CCA','CCG','CAA','CAG','CGA','CGG','AUU','AUC','ACU','ACC','AAU','AAC','AGU','AGC','AUA','ACA','AAA','AGA','AUG','ACG','AAG','AGG','GUU','GUC','GCU','GCC','GAU','GAC','GGU','GGC','GUA','GUG','GCA','GCG','GAA','GAG','GGA','GGG'),stringsAsFactors=FALSE)
-
-
-
-#http://life.nthu.edu.tw/~fmhsu/rasframe/SHAPELY.HTM
-aminoColors<-data.frame('aa'=c("ASP","GLU","CYS","MET","LYS","ARG","SER","THR","PHE","TYR","ASN","GLN","GLY","LEU","VAL","ILE","ALA","TRP","HIS","PRO"),'col'=c("#E60A0A","#E60A0A","#E6E600","#E6E600","#145AFF","#145AFF","#FA9600","#FA9600","#3232AA","#3232AA","#00DCDC","#00DCDC","#EBEBEB","#0F820F","#0F820F","#0F820F","#C8C8C8","#B45AB4","#8282D2","#DC9682"),stringsAsFactors=FALSE)
-tmp<-with(aminoAcids[!duplicated(aminoAcids[,c('code')]),],data.frame('letter'=code,row.names=toupper(abbr),stringsAsFactors=FALSE))
-rownames(aminoColors)<-tmp[aminoColors$aa,'letter']
-tmpAngles1<-cos(1+1:nrow(aminoColors)/nrow(aminoColors)*pi)
-tmpAngles2<-sin(1:nrow(aminoColors)/nrow(aminoColors)*pi)
-tmpAngles1<-tapply(tmpAngles1,aminoColors$col,c)
-tmpAngles2<-tapply(tmpAngles2,aminoColors$col,c)
-aminoColors$spreadCol<-ave(aminoColors$col,aminoColors$col,FUN=function(x){
-	if(length(x)==1)return(x)
-	spacer<-20
-	angles1<-tmpAngles1[[x[1]]]
-	angles2<-tmpAngles2[[x[1]]]
-	spacing<-seq((length(x)-1)*-spacer,(length(x)-1)*spacer,length.out=length(x))
-	lab<-convertColor(t(col2rgb(x[1])),from='sRGB',to='Lab',scale.in=255)[rep(1,length(x)),]
-	lab[,'b']<-lab[,'b']-spacing*angles1
-	lab[,'a.x']<-lab[,'a.x']+spacing*angles2
-	rgbs<-convertColor(lab,from='Lab',to='sRGB')
-	return(rgb(rgbs))
-	#plot(1:nrow(aminoColors),col=aminoColors$col,lwd=30,xaxt='n');points(1:nrow(aminoColors),1:nrow(aminoColors)+1,col=aminoColors$spreadCol,lwd=20);axis(1,1:nrow(aminoColors),aminoColors$aa,las=2)
-})
-rm(tmpAngles1,tmpAngles2)
