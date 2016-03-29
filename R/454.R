@@ -1,7 +1,10 @@
-#seq: DNA sequence
-#flowOrder: order of nucleotide flows
-#outputLength: minimum output length
-#return: vector of flows
+#' Convert a DNA sequence into expected 454 flows
+#'
+#' @param seq DNA sequence
+#' @param flowOrder order of nucleotide flows
+#' @param outputLength minimum output length
+#' @export
+#' @return vector of flows
 seq2flow<-function(seq,flowOrder=c('T','A','C','G'),outputLength=NULL){
 	seqSplit<-strsplit(seq,'')[[1]]
 	dif<-seqSplit!=c(seqSplit[-1],'DUMMY')
@@ -25,15 +28,24 @@ seq2flow<-function(seq,flowOrder=c('T','A','C','G'),outputLength=NULL){
 	return(output)
 }
 
-#flow: vector of flowgram (e.g. produced by seq2flow)
-#coords: bp of desired flow position
-#return: flow number for each coord
+#' Find flow corresponding to a given base position
+#'
+#' @param flow vector of flow values (e.g. produced by seq2flow)
+#' @param coords bp coordinates of desired positions
+#' @export
+#' @return flow number for each coord
 indexFlow<-function(flow,coords){
-	indices<-cumsum(flow)	
-	output<-unlist(lapply(coords,function(x,y)return(min(which(y>=x))),indices))
+	indices<-cumsum(flow)
+	output<-sapply(coords,function(x,y)return(min(which(y>=x))),indices)
 	return(output)
 }
 
+#' Convert 454 flows to DNA sequences
+#'
+#' @param flow vector of flow values (e.g. produced by seq2flow)
+#' @param flowOrder order of nucleotide flows
+#' @export
+#' @return DNA sequence corresponding to the flowgram
 flow2seq<-function(flow,flowOrder=c('T','A','C','G')){
 	if(is.character(flow)&length(flow)==1)flow<-strsplit(flow,'\t')[[1]]
 	flow<-as.numeric(flow)
