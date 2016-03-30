@@ -72,11 +72,12 @@ bases2ambiguous<-function(bases){
 }
 
 
-
-#convert ambiguous dna to all possible sequences
-#dna: vector dna containing ambiguous bases
-#unlist: return a unlisted vector instead of a list
-#returns: list with each entry containing all combinations for that entry of the vector
+#' Convert ambiguous dna to all possible sequences
+#'
+#' @param dna vector dna containing ambiguous bases
+#' @param delist return an unlisted vector instead of a list
+#' @export
+#' @return list with each entry containing all combinations of ambiguous bases for that entry of the dna vector
 expandAmbiguous<-function(dna,delist=FALSE){
 	dna<-toupper(dna)
 	ambigRegex<-sprintf('[%s]',paste(names(ambiguousBaseCodes),collapse=''))
@@ -94,34 +95,14 @@ expandAmbiguous<-function(dna,delist=FALSE){
 	return(out)
 }
 
-#generate all possible splices
-#donors: data.frame of donors with columns name and start
-#acceptors: data.frame of acceptors with columns name and start
-#noSkips: donors that shouldn't be skipped (this is a bit dodgy)
-#returns: character vector with dash separated donor-acceptor e.g. D1-A2-D3-A4 or '' for unspliced
-possibleSpliceForms<-function(donors,acceptors,noSkips=c()){
-	if(nrow(donors)==0||nrow(acceptors)==0)return(NULL)
-	paths<-c('')#no splicing
-	if(donors$name[1] %in% noSkips) donorChoices<-1
-	else donorChoices<-1:nrow(donors)
-	for(i in donorChoices){
-		thisAcceptors<-acceptors[acceptors$start>donors$start[i],]
-		if(nrow(thisAcceptors)==0)break
-		for(j in 1:nrow(thisAcceptors)){
-			downstreamDonors<-donors[donors$start>thisAcceptors$start[j],]
-			path<-possibleSpliceForms(downstreamDonors,thisAcceptors[thisAcceptors$start>thisAcceptors$start[j],],noSkips=noSkips)
-			if(is.null(path)) paths<-c(paths,sprintf('%s-%s',donors$name[i],thisAcceptors$name[j]))
-			else paths<-c(paths,sprintf(ifelse(path=='','%s-%s%s','%s-%s-%s'),donors$name[i],thisAcceptors$name[j],path)) #should allocate ahead of time
-		if(any(grep('-$',paths)))browser()
-		}
-	}
-	return(paths)
-}
 
-#count nMers in a string
-#string: string to be searched for nmers
-#k: length of nmers
-#n: return the top n nmers
+#' Count nMers in a string
+#'
+#' @param string string to be searched for nmers
+#' @param k length of nmers
+#' @param n return the top n nmers
+#' @export
+#' @return a sorted table giving the identity and counts for nMers with the highest counts in string
 countNmers<-function(string,k=10,n=10){
 	if(nchar(string)<k){
 		warning('string shorter than k')
@@ -146,9 +127,12 @@ hashString<-function(string,hashSize,everyBase=1,start=1){
 	return(data.frame('forw'=hashes,'revComp'=revComp(hashes),'start'=cuts,'end'=cuts+hashSize-1,stringsAsFactors=FALSE))
 }
 
-#seqs: sequences to get GC content of
-#chars: characters to count (G,C by default)
-#returns: proportion of GC in sequence
+#' Calculate GC percentage for strings
+#'
+#' @param seqs sequences to get GC content of
+#' @param chars characters to count (G,C by default)
+#' @export
+#' @return proportion of GC in sequence
 gcPercent<-function(seqs,chars=c('C','G')){
 	regex<-sprintf('[%s]+',paste(chars,collapse=''))
 	gcs<-nchar(gsub(regex,'',seqs,perl=TRUE))
@@ -178,9 +162,12 @@ highlightString<-function(pattern,strings){
 	return(strings)
 }
 
-#switch the case of positions in seq1 that mismatch seq2
-#seq1: sequence to highlight differences in 
-#seq2: sequence to compare to
+#' Switch the case of positions in seq1 that mismatch seq2
+#'
+#' @param seq1 sequence to highlight differences in 
+#' @param seq2 sequence to compare to
+#' @export
+#' @return seq1 with bases that differ from seq2 having their case toggled (e.g. upper to lower case)
 highlightDifferences<-function(seq1,seq2){
 	if(nchar(seq1)!=nchar(seq2))stop(simpleError('Highlighting differences in different length sequences not supported'))
 	seqMat<-seqSplit(seq1,seq2)
@@ -255,9 +242,13 @@ dna2aa<-Vectorize(function(dna,frame=0,debug=FALSE,...){
 	return(output)
 })
 
-#aa: amino acid to convert to dna
-#type: code or abbr or name
-#regex: if true return a (X|Y) regex of codons else return vector
+#' Find the DNA to code for a given amino acid
+#'
+#' @param aa amino acid to convert to dna
+#' @param type code or abbr or name
+#' @param regex if true return a (X|Y) regex of codons else return vector
+#' @export
+#' @return A vector of codons if regex=FALSE else a regular expression matching the possible codons
 aa2codon<-Vectorize(function(aa,type='code',regex=TRUE){
 	selector<-aminoAcids[,type]==aa
 	if(!any(selector))ntopError('Unknown amino acid',aa)
