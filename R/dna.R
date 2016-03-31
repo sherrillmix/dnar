@@ -257,8 +257,11 @@ aa2codon<-Vectorize(function(aa,type='code',regex=TRUE){
 	return(codons)
 })
 
-#convert amino acids to dna regex
-#aas: vector of amino acids to turn to dna regex
+#' Convert amino acids to dna regex
+#'
+#' @param aas A vector of amino acids to turn to dna regex
+#' @export
+#' @return A vector with a regular expression for each element of aas
 aa2dna<-function(aas){
 	splitAas<-strsplit(aas,'')
 	out<-sapply(splitAas,function(x)paste(aa2codon(x),collapse=''))
@@ -402,16 +405,27 @@ index2range<-function(index){
 	return(data.frame('start'=index[starts],'end'=index[ends]))
 }
 
-#reverse strings
-#strings: vector of strings to be revered
-reverseString<-function(strings,faster=TRUE){
-	if(faster) output<-sapply(strings,function(x)intToUtf8(rev(utf8ToInt(x)))) #http://stackoverflow.com/questions/13612967/how-to-reverse-a-string-in-r
-	else output<-sapply(strsplit(strings,''),function(x)paste(rev(x),collapse=''))	
+#' Reverse strings
+#'
+#' @param strings vector of strings to be reversed
+#' @param brackets if TRUE then reverse brackets and parenthesis, [ goes to ]. keeps brackets in order after reversing
+#' @export
+#' @return vector with the reversed strings
+reverseString<-function(strings,brackets=TRUE){
+	output<-sapply(strings,function(x)intToUtf8(rev(utf8ToInt(x)))) #http://stackoverflow.com/questions/13612967/how-to-reverse-a-string-in-r
+	#slower
+	#output<-sapply(strsplit(strings,''),function(x)paste(rev(x),collapse=''))	
+	if(brackets)chartr('[]()','][)(',output)
 	return(output)
 }
-#compliment dna 
-#dnas: vector of sequences
-complimentDna<-function(dnas,brackets=TRUE,ambigs=TRUE){
+
+#' Compliment dna 
+#'
+#' @param dnas vector of sequences
+#' @param ambigs if TRUE compliment ambiguous bases
+#' @export
+#' @return vector with the DNA sequences complimented
+complimentDna<-function(dnas,ambigs=TRUE){
 	finds<-'TGAC'
 	replaces<-'ACTG'
 	#deal with ambiguous
@@ -422,29 +436,42 @@ complimentDna<-function(dnas,brackets=TRUE,ambigs=TRUE){
 		finds<-sprintf('%s%s',finds,paste(names(sortAmbig),collapse=''))
 		replaces<-sprintf('%s%s',replaces,paste(ambigComp,collapse=''))
 	}
-
-	if(brackets){finds<-paste(finds,'[]()',sep='');replaces<-paste(replaces,'][)(',sep='')}
 	return(chartr(finds,replaces,dnas))
 }
 
-#reverse compliment dna
-#dnas: vector of sequences
-#returns: reverse complimented dna
+#' Reverse compliment dna
+#'
+#' @param dnas vector of sequences
+#' @export
+#' @return vector of reverse complimented dna sequences
 revComp<-function(dnas){
 	return(complimentDna(reverseString(dnas),TRUE))
 }
 
-#trim leading and trailing space characters
-#x: vector of strings
+#' Trim leading and trailing space characters
+#'
+#' @param x vector of strings
+#' @export
+#' @return vector of trimmed strings
 trim<-function(x){
 	sub('\\s+$','',sub('^\\s+','',x),perl=TRUE)
 }
 
+#' Remove gap characters from DNA sequences
+#'
+#' @param seq vector of gapped DNA sequences
+#' @param gaps vector of characters to be considered gaps
+#' @export
+#' @return vector of DNA sequences with gaps removed
 degap<-function(seq,gaps=c('*','-','.')){
 	gsub(sprintf('[%s]+',paste(gaps,collapse='')),'',seq,perl=TRUE)
 }
 
-#reg: region in the format "chrX:123545-123324"
+#' Parse a region string into chr, start, end and strand
+#'
+#' @param reg vector of region strings in the format "chrX:123545-123324" or "chr12:1234-1236+"
+#' @export
+#' @return data.frame with one row per reg string and columns chr, start, end and strand
 parseRegion<-function(reg){
 	strand<-ifelse(substring(reg,nchar(reg)) %in% c('*','-','+'),substring(reg,nchar(reg)),'*')
 	reg<-sub('[-+*]$','',reg)
@@ -456,7 +483,14 @@ parseRegion<-function(reg){
 	return(out)
 }
 
-#make region from chr start end
+#' Make region from chr start end
+#'
+#' @param chrs vector of chromosomes
+#' @param starts vector of starts
+#' @param ends vector of ends
+#' @param strands optional vector of strands
+#' @export
+#' @return vector of region strings
 pasteRegion<-function(chrs,starts,ends,strands=''){
 	sprintf('%s:%s-%s%s',chrs,trim(format(starts,scientific=FALSE)),trim(format(ends,scientific=FALSE)),strands)
 }
