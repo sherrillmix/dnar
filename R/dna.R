@@ -495,12 +495,15 @@ pasteRegion<-function(chrs,starts,ends,strands=''){
 	sprintf('%s:%s-%s%s',chrs,trim(format(starts,scientific=FALSE)),trim(format(ends,scientific=FALSE)),strands)
 }
 
-#convert cigar and starts to qStarts, tStarts, blockSizes as in blat
-#cigars: vector of SAM cigar strings
-#starts: vector of starting positions in target
-#seqs: vector of query sequences (only if alignments desired)
-#tSeq: single target sequence (only if alignments desired)
-#returns: dataframe with qStarts,tStarts,sizes if !startEnds or dataframe with starts, ends and ids if startEnds or dataframe with pairwise query alignments, qAlign, and target alignments, tAlign if provided seqs and tSeq
+#' Convert cigar and starts to qStarts, tStarts, blockSizes as in blat
+#'
+#' @param cigars vector of SAM cigar strings
+#' @param starts vector of starting positions in target
+#' @param startEnds if FALSE single line with comma separated starts, if TRUE data.frame with single start, end and id column
+#' @param seqs vector of query sequences (only if alignments desired)
+#' @param tSeq single target sequence (only if alignments desired)
+#' @export
+#' @return dataframe with qStarts,tStarts,sizes if !startEnds or dataframe with starts, ends and ids if startEnds or dataframe with pairwise query alignments, qAlign, and target alignments, tAlign if provided seqs and tSeq
 cigarToBlock<-function(cigars,starts,startEnds=FALSE,seqs=NULL,tSeq=NULL){
 	#M=match, I=insertion in query, D=deletion in query, N="intron" deletion in query, S=soft clipping (clip sequence), H=hard clipping (sequence was already clipped)
 	nAligns<-length(starts)
@@ -565,11 +568,15 @@ cigarToBlock<-function(cigars,starts,startEnds=FALSE,seqs=NULL,tSeq=NULL){
 	else return(data.frame('qStarts'=qStarts,'tStarts'=tStarts,'sizes'=blockSizes,stringsAsFactors=FALSE))
 }
 
-#seqs: vector of sequences
-#tSeqs: vector of target sequences or a single target
-#qStarts: comma separated starts of query matches e.g. from blat or cigarToBlock (1 based)
-#tStarts: comma separated starts of target matches e.g. from blat or cigarToBlock (1 based)
-#sizes: comma separated lengths of matches e.g. from blat or cigarToBlock
+#' Convert blocks from blat into alignment
+#'
+#' @param seqs vector of sequences
+#' @param tSeqs vector of target sequences or a single target
+#' @param qStarts comma separated starts of query matches e.g. from blat or cigarToBlock (1 based)
+#' @param tStarts comma separated starts of target matches e.g. from blat or cigarToBlock (1 based)
+#' @param sizes comma separated lengths of matches e.g. from blat or cigarToBlock
+#' @export
+#' @return data.frame with sequences aligned in columns qSeq and tSeq
 blockToAlign<-function(seqs,tSeqs,qStarts,tStarts,sizes){
 	nSeqs<-length(seqs)
 	if(length(tSeqs)==1)tSeqs<-rep(tSeqs,length(seqs))
@@ -604,8 +611,12 @@ blockToAlign<-function(seqs,tSeqs,qStarts,tStarts,sizes){
 	return(data.frame('qSeq'=qSeqs,'tSeq'=tSeqs,stringsAsFactors=FALSE))
 }
 
-#flags: vector of integer flags from sam
-#test: either character vector of flag short names or integers
+#' Test sam flags for values
+#'
+#' @param flags vector of integer flags from sam
+#' @param test either character vector of flag short names or integers
+#' @export
+#' @return logical vector with element for each element in flags with TRUE if flag meets all tests and FALSE otherwise
 samFlag<-function(flags,test='paired'){
 	test<-unique(test)
 	if(!is.numeric(test)){
