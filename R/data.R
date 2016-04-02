@@ -1,4 +1,22 @@
 
+#' Base codes used to indicate ambiguous bases
+ambiguousBaseCodes<-c(
+	'R'='AG',
+	'Y'='CT',
+	'M'='AC',
+	'K'='GT',
+	'S'='CG',
+	'W'='AT',
+	'H'='ACT',
+	'B'='CGT',
+	'V'='ACG',
+	'D'='AGT',
+	'N'='ACGT'
+)
+reverseAmbiguous<-structure(names(ambiguousBaseCodes),.Names=ambiguousBaseCodes)
+
+
+
 #data.frame of sam flags
 samFlags<-data.frame('short'=c('paired','properPair','unmapped','mateUnmapped','reverse','mateReverse','first','second','notPrimary','fail','dupe'),'desc'=c('read paired','read mapped in proper pair','read unmapped','mate unmapped','read reverse strand','mate reverse strand','first in pair','second in pair','not primary alignment','read fails platform/vendor quality checks','read is PCR or optical duplicate'),stringsAsFactors=FALSE)
 samFlags$bit<-2^(0:(nrow(samFlags)-1))

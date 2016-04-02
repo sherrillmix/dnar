@@ -1,21 +1,3 @@
-
-#' Base codes used to indicate ambiguous bases
-ambiguousBaseCodes<-c(
-	'R'='AG',
-	'Y'='CT',
-	'M'='AC',
-	'K'='GT',
-	'S'='CG',
-	'W'='AT',
-	'H'='ACT',
-	'B'='CGT',
-	'V'='ACG',
-	'D'='AGT',
-	'N'='ACGT'
-)
-reverseAmbiguous<-structure(names(ambiguousBaseCodes),.Names=ambiguousBaseCodes)
-
-
 #' Convenience function to check for errors
 #'
 #' @param x vector or list to check for errors
@@ -191,8 +173,6 @@ seqSplit<-function(...,fill=NULL){
 	return(do.call(rbind,strsplit(seqs,'')))
 }
 
-
-
 #' Convert dna string into seperate codons
 #'
 #' @param dna Single string of DNA
@@ -268,7 +248,6 @@ aa2dna<-function(aas){
 	out<-gsub('U','T',out)
 	return(out)
 }
-
 
 #' Find a single codon at a given position in dna
 #'
@@ -631,11 +610,15 @@ samFlag<-function(flags,test='paired'){
 }
 
 
-#seqs:sequences to be trimmed
-#start: trim starts?
-#end: trim ends?
-#nonNStretch: number of nonNs required
-#nStretch: delete until no stretch of Ns greater than this
+#' Trim ambiguous sequence from ends of reads
+#'
+#' @param seqs sequences to be trimmed
+#' @param start trim starts?
+#' @param end trim ends?
+#' @param nonNStretch number of nonNs required
+#' @param nStretch delete until no stretch of Ns greater than this
+#' @export
+#' @return Vector sequences with ends trimmed
 trimNs<-function(seqs,start=TRUE,end=TRUE,nonNStretch=NULL,nStretch=10){
 	regex<-sprintf('[ACTG]{%d,}',nonNStretch)
 	if(start&!is.null(nonNStretch)){
@@ -661,24 +644,6 @@ trimNs<-function(seqs,start=TRUE,end=TRUE,nonNStretch=NULL,nStretch=10){
 		},nStretches,seqs)
 	}
 	return(seqs)
-}
-
-trimEnd<-function(seqs,revCompPrimer,trimmed=rep(FALSE,length(seqs)),minSubstring=8,location='end'){
-	if(length(seqs)!=length(trimmed)) stop(simpleError('Already trimmed vector and seqs vector not same length'))
-	if(!location %in% c('start','end'))stop(simpleError('Please specify location as start or end'))
-	trimSeq<-seqs
-	trimmedBak<-trimmed
-	nCharPrimer<-nchar(revCompPrimer)
-	for(i in nCharPrimer:minSubstring){
-			  if(location=='end')thisRegex<-paste(substr(revCompPrimer,1,i),'$',sep='')
-			  else thisRegex<-paste('^',substr(revCompPrimer,nCharPrimer-i+1,nCharPrimer),sep='')
-			  selector<-!trimmed & grepl(thisRegex,seqs)
-			  trimSeq[selector]<-gsub(thisRegex,'',trimSeq[selector])
-			  trimmed<-trimmed|selector
-			  message('Found ',sum(selector),' seqs matching ',thisRegex)
-	}
-	message('Trimmed ',sum(trimmed&!trimmedBak),' reads out of ',sum(!trimmedBak))
-	return(list(trimSeq,trimmed))
 }
 
 #' Take the output from blat and make continous reads out of it
