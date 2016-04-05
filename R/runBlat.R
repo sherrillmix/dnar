@@ -1,10 +1,14 @@
-#start a gfServer on an open port and return port
-#nibDir: directory containing nib files to align against
-#options: options to gfServer
-#gfServer: path to gfServer program
-#startPort: begin looking for open (no other R called gfServer using) ports on startPort and add 1 until finding one
-#nibSuffix: nib files end in nibSuffix
-#wait: number of 5 second intervals to wait for gfServer to finish starting before giving up
+#' Start a blat server
+#'
+#' @param nibDir directory containing nib files to align against
+#' @param options options to gfServer
+#' @param gfServer path to gfServer program
+#' @param bit2 a bit2 file alternative to nib directory
+#' @param startPort begin looking for open (no other R called gfServer using) ports on startPort and add 1 until finding one
+#' @param nibSuffix nib files end in nibSuffix
+#' @param wait number of 5 second intervals to wait for gfServer to finish starting before giving up
+#' @export
+#' @return port of blat server
 startBlat<-function(nibDir,options='',gfServer='gfServer',bit2=NULL,startPort=37900,nibSuffix='.nib',wait=120){
 	port<-startPort
 	counter<-1
@@ -30,18 +34,23 @@ startBlat<-function(nibDir,options='',gfServer='gfServer',bit2=NULL,startPort=37
 	return(port)
 }
 
-#check if blat is running on port port
-#port: port to check if blat is running on
+#' Check if blat is running on port
+#' 
+#' @param port port to check if blat is running on
+#' @export
+#' @return TRUE if blat running on port otherwise FALSE
 checkBlat<-function(port){
 	return(system(sprintf('pgrep -f "gfServer *start *localhost *%d">/dev/null',port))==0)
 }
 
-#run blat on port port
-#faFile: path to fasta file for alignment
-#port: port to run blat on
-#gfClient: path to gfClient program
-#gfClientOptions: arguments for gfClient
-#...: arguments for startBlat
+#' Start a blat server, run blat on file and kill blat server
+#' @param faFile path to fasta file for alignment
+#' @param outFile file to write blat results to
+#' @param gfClient path to gfClient program
+#' @param gfClientOptions arguments for gfClient
+#' @param ... arguments for startBlat
+#' @export
+#' @return NULL
 runBlat<-function(faFile,gfClientOptions='',outFile=gsub('\\.fn?a$','.blat',faFile),gfClient='gfClient',...){
 	port<-startBlat(...)
 	
@@ -57,6 +66,7 @@ runBlat<-function(faFile,gfClientOptions='',outFile=gsub('\\.fn?a$','.blat',faFi
 	message('Code: ',errorCode,' on port ',port)
 	message('Killing blat server on port ',port)
 	killBlat(port)
+	return(NULL)
 }
 
 
