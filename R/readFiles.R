@@ -612,18 +612,21 @@ pullRegion<-function(reg,files,bam2depthBinary='./bam2depth',fillMissingZeros=TR
 	return(cover)
 }
 
-#writes a fasta file
-#names: the > line
-#dna: the sequences
-#fileName: file to write to
-#addBracket: add > to start of names?
-write.fa<-function(names,dna,fileName,addBracket=FALSE,isGz=grepl('.gz$',fileName)){
-	if(addBracket|any(grep('^[^>]',names)))names<-paste('>',names,sep='')
+#' Writes sequences to a fasta file
+#' @param names names for the > lines
+#' @param dna the sequences
+#' @param fileName file to write to
+#' @param isGz if TRUE write to a gzipped file
+#' @export
+#' @return NULL
+write.fa<-function(names,dna,fileName,isGz=grepl('.gz$',fileName)){
+	if(any(grepl('^[^>]',names)))names<-paste('>',names,sep='')
 	dna<-sub(' +$','',dna,perl=TRUE)
 	output<-paste(names,dna,sep="\n")
 	if(isGz)fileName<-gzfile(fileName)
 	writeLines(output,sep="\n",con=fileName)
 	if(isGz)close(fileName)
+	return(NULL)
 }
 
 #writes a fastq file
