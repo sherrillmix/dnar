@@ -55,12 +55,13 @@ readFaDir<-function(dir='.',suffix='\\.(fn?a|fasta)$',recursive=FALSE,vocal=FALS
 }
 
 
-#read a fasta file
-#fileName:name of file
-#longNameTrim:trim off anything after a space for name column (preserve original in long name)
-#assumeSingleLine:don't process sequence lines. just assume they're one line per sequence
-#returns: dataframe with columns name (name between > and the first ' '), seq (sequence), and longName (the whole > line)
-read.fa<-function(fileName,longNameTrim=TRUE,assumeSingleLine=FALSE){
+#' Read a fasta file
+#' 
+#' @param fileName name of file
+#' @param assumeSingleLine don't process sequence lines. just assume they're one line per sequence
+#' @export
+#' @return dataframe with columns name and seq
+read.fa<-function(fileName,assumeSingleLine=FALSE){
 	x<-readLines(fileName)
 	if(assumeSingleLine){
 		output<-data.frame('longName'=x[seq(1,length(x),2)],'seq'=x[seq(2,length(x),2)],stringsAsFactors=FALSE)
@@ -78,12 +79,7 @@ read.fa<-function(fileName,longNameTrim=TRUE,assumeSingleLine=FALSE){
 		output<-as.data.frame(do.call(rbind,output),stringsAsFactors=FALSE)
 		colnames(output)<-c('longName','seq')
 	}
-	if(longNameTrim){
-		output$name<-unlist(lapply(strsplit(output$longName,' ',fixed=TRUE),function(x)x[1]))
-		output<-output[,3:1]
-	}else{
-		colnames(output)<-c('name','seq')	
-	}
+	colnames(output)<-c('name','seq')	
 	output$seq<-gsub(' +$','',output$seq,perl=TRUE)
 	return(output)
 }
