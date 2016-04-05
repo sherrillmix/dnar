@@ -46,7 +46,7 @@ jensenShannon<-function(x,y,base=2){
 	return(kullbackCalc)
 }
 
-#' Calculate Kullback–Leibler divergence between two probability distributions
+#' Calculate Kullback-Leibler divergence between two probability distributions
 #'
 #' @param x Vector of counts or proportions of N elements
 #' @param y Second vector of counts or proportions of N elements 

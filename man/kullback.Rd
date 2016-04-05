@@ -2,7 +2,7 @@
 % Please edit documentation in R/abundance.R
 \name{kullback}
 \alias{kullback}
-\title{Calculate Kullback<U+FFFD><U+FFFD><U+FFFD>Leibler divergence between two probability distributions}
+\title{Calculate Kullback-Leibler divergence between two probability distributions}
 \usage{
 kullback(x, y, base = 2, standardize = TRUE)
 }
@@ -19,6 +19,6 @@ kullback(x, y, base = 2, standardize = TRUE)
 Kullback-Leibler divergence
 }
 \description{
-Calculate Kullback<U+FFFD><U+FFFD><U+FFFD>Leibler divergence between two probability distributions
+Calculate Kullback-Leibler divergence between two probability distributions
 }
 
