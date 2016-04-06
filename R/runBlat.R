@@ -171,47 +171,46 @@ blatReadsVsRefs<-function(reads,refs,outFile,faToTwoBit='faToTwoBit',tmpDir=spri
 	file.remove(twobitFile,refFile,readFile,tmpDir)
 }
 
-#run blat parallel (requires parallel package included in R 2.4.1)
-#reads: vector of query reads with names
-#refs: vector of query refs with names
-#tmpDir: directory to store work files
-#...:arguments for blatReadsVsRefs
-multiBlatReadsVsRefs<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),isGz=grepl('.gz$',outFile),condense=TRUE,gzipPath='gzip',...){
+#' Run blatReadsVsRefs in parallel
+#' @param reads vector of query reads with names
+#' @param refs vector of query refs with names
+#' @param outFile file to write blat to (if ends in .gz then isGz defaults to true and writes to gzipped file)
+#' @param nCore number of cores to use
+#' @param tmpDir directory to store work files
+#' @param isGz if TRUE write to gz file else normal file
+#' @param ... additional arguments for blatReadsVsRefs
+#' @export
+#' @return NULL
+multiBlatReadsVsRefs<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),isGz=grepl('.gz$',outFile),...){
 	prefix<-paste(sample(c(letters,LETTERS),20,TRUE),collapse='')
 	if(!file.exists(tmpDir))dir.create(tmpDir)
 	bigRun<-parallel::mclapply(mapply(function(x,y)list(x,y),split(reads,sort(rep(1:nCore,length.out=length(reads)))),1:nCore,SIMPLIFY=FALSE),function(x){
 		tmpFile<-sprintf('%s__%d.blat',sub('\\.blat(\\.gz)?$','',outFile),x[[2]])
 		thisTmpDir<-sprintf('%s/work__%s__%d',tmpDir,prefix,x[[2]])
 		blatReadsVsRefs(x[[1]],refs,tmpFile,startPort=37900+x[[2]]*10,tmpDir=thisTmpDir,...) #likes to start on same port apparently
-		if(isGz){
-			system(sprintf('%s %s',gzipPath,tmpFile))
-			tmpFile<-sprintf('%s.gz',tmpFile)
-		}
-		#print((tmpFile))
 		return(tmpFile)
 	},mc.cores=nCore)
 	if(any(!sapply(bigRun,file.exists)))stop(simpleError('Blat file missing'))
-	if(condense){
-		if(isGz)outFile<-gzfile(outFile,open='w+')
-		else outFile<-file(outFile,open='w+')
-		counter<-0
-		for(i in 1:length(bigRun)){
-			blat<-readLines(bigRun[[i]])
-			#take off header in later files
-			if(i!=1){
-				blat<-blat[-1:-5]
-				append<-TRUE
-			}else{
-				append<-FALSE
-			}
-			writeLines(blat,sep="\n",con=outFile)
-			file.remove(bigRun[[i]])
-			counter<-counter+length(blat)
+	#condense files
+	if(isGz)outFile<-gzfile(outFile,open='w+')
+	else outFile<-file(outFile,open='w+')
+	counter<-0
+	for(i in 1:length(bigRun)){
+		blat<-readLines(bigRun[[i]])
+		#take off header in later files
+		if(i!=1){
+			blat<-blat[-1:-5]
+			append<-TRUE
+		}else{
+			append<-FALSE
 		}
-		message('Wrote ',counter,' blat lines')
-		close(outFile)
+		writeLines(blat,sep="\n",con=outFile)
+		file.remove(bigRun[[i]])
+		counter<-counter+length(blat)
 	}
-	return(bigRun)
+	message('Wrote ',counter,' blat lines')
+	close(outFile)
+	return(NULL)
 }
 
 #' Kill blat running on a given port

@@ -511,8 +511,12 @@ parseGff<-function(gffFile,individuals=NULL,contig=individuals[1]){
 	return(gff)
 }
 
-#reads bed file
-#returns list with a dataframe (columns chr,start,end) for each track
+#' Read a bed file
+#'
+#' @param fileName .bed file to be read in
+#' @param startAddOne if TRUE add 1 to starts to adjust for 0-based start, 1-based ends in UCSC formats
+#' @export
+#' @return list with a dataframe with columns chr, start and end for each track
 read.bed<-function(fileName,startAddOne=FALSE){
 	x<-readLines(fileName)
 	tracks<-grep('track',x)
