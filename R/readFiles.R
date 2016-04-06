@@ -1,8 +1,10 @@
-#read fastq file
-#fileName: name of fastq file
-#convert: convert condensed quals to numeric quals?
-#returns: dataframe with name, seq, qual
-read.fastq<-function(fileName,convert=TRUE){
+#' Read fastq file
+#'
+#' @param fileName name of fastq file
+#' @param convert if TRUE convert condensed quals to space separated numeric quals
+#' @export
+#' @return dataframe with name, seq, qual
+read.fastq<-function(fileName,convert=FALSE){
 	#assuming no comments and seq and qual on a single line each
 	#assuming any line starting with @ 2 lines later by + is the block and no extra chars (who designed this format?)
 	#as.integer(charToRaw())
@@ -20,18 +22,18 @@ read.fastq<-function(fileName,convert=TRUE){
 	return(output)
 }
 
-#read a sanger phred .phd file
-#fileName:name of file
-#trimEnds:trim off low quality bases and quals at start and end?
-#trimQual:trim bases with quality lower than trimQual from start and end
-#returns: vector of sequence and space seperated qualities
-read.phd<-function(fileName,trimEnds=TRUE,trimQual=30){
+#' Read a sanger phred .phd file
+#'
+#' @param fileName name of file
+#' @param trimQual trim bases with quality lower than trimQual from start and end
+#' @export
+#' @return vector of sequence and space seperated qualities
+read.phd<-function(fileName,trimQual=-Inf){
 	tmp<-readLines(fileName)
 	skip<-grep('BEGIN_DNA',tmp)[1]
 	lastLine<-grep('END_DNA',tmp)[1]
 	thisData<-do.call(rbind,strsplit(tmp[(skip+1):(lastLine-1)],'[ \t]'))
-	if(trimEnds) lims<-range(which(as.numeric(thisData[,2])>trimQual))
-	else lims<-c(1,nrow(thisData))
+	lims<-range(which(as.numeric(thisData[,2])>trimQual))
 	return(c('seq'=paste(thisData[lims[1]:lims[2],1],collapse=''),'qual'=paste(thisData[lims[1]:lims[2],2],collapse=' ')))
 }
 
