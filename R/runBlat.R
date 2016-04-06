@@ -70,45 +70,48 @@ runBlat<-function(faFile,gfClientOptions='',outFile=gsub('\\.fn?a$','.blat',faFi
 }
 
 
-#run blat from blat executable instead of gfserver/clien
-#reads: named vector of sequences
-#refs: named vector of references
-#blat: path to blat program
-#blatArgs: string of arguments for blat
-#tmpDir: a directory to write tempfiles to
-#outfile: file to write blat to 
-#readFile: file to use instead of reads (will be deleted)
-runBlatNoServer<-function(reads=NULL,refs,blatArgs='',outFile='out.blat',blat='blat',tmpDir=tempfile(),readFile=NULL,deleteFiles=!is.null(reads),gzFile=grepl('\\.gz$',outFile)){
+#' Run blat from blat executable instead of gfserver/client
+#'
+#' @param reads named vector of sequences
+#' @param refs named vector of references
+#' @param blat path to blat program
+#' @param blatArgs string of arguments for blat
+#' @param tmpDir a directory to write tempfiles to
+#' @param outFile file to write blat to
+#' @param readFile file to use instead of reads (will be deleted)
+#' @export
+#' @return NULL
+runBlatNoServer<-function(reads=NULL,refs,blatArgs='',outFile='out.blat',blat='blat',tmpDir=tempdir(),readFile=NULL){
 	if(!file.exists(tmpDir))dir.create(tmpDir,recursive=TRUE)
 	if(is.null(reads)&is.null(readFile))stop(simpleError('Please provide reads or readFile'))
+	tmpReadFile<-sprintf('%s/read.fa',tmpDir)
 	if(is.null(readFile)){
-		readFile<-sprintf('%s/read.fa',tmpDir)
-		write.fa(names(reads),reads,readFile)
+		write.fa(names(reads),reads,tmpReadFile)
+	}else{
+		file.symlink(readFile,tmpReadFile)
 	}
 	refFile<-sprintf('%s/refs.fa',tmpDir)
 	write.fa(names(refs),refs,refFile)
-	if(gzFile)outFile<-sub('\\.gz$','',outFile)
-	cmd<-sprintf('%s %s %s %s %s',blat,refFile,readFile,blatArgs,outFile)
+	cmd<-sprintf('%s %s %s %s %s',blat,refFile,tmpReadFile,blatArgs,outFile)
 	message(cmd)
 	errorCode<-system(cmd)
 	if(errorCode!=0)stop(simpleError('Problem running blat'))
-	if(deleteFiles)file.remove(refFile,readFile,tmpDir)
-	if(gzFile){
-		system(sprintf('gzip %s',outFile))
-		if(!file.exists(sprintf('%s.gz',outFile)))stop(simpleError('Problem gzipping file'))
-	}
-	return(TRUE)
-}	
+	file.remove(refFile,tmpReadFile,tmpDir)
+	return(NULL)
+}
 
-#run blat from blat executable instead of gfserver/clien
-#reads: named vector of sequences
-#refs: named vector of references
-#blat: path to blat program
-#blatArgs: string of arguments for blat
-#tmpDir: a directory to write tempfiles to
-#nCore: number of cores to use
-#outfile: file to write blat to (if ends in .gz then isGz defaults to true and writes to gzipped file)
-multiRunBlatNoServer<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),condense=TRUE,isGz=grepl('.gz$',outFile),sleepIncrement=1,runFilter=NULL,...){
+#' Run blat from parallel blat executables
+#'
+#' @param reads named vector of sequences
+#' @param refs named vector of references
+#' @param nCore number of cores to use
+#' @param tmpDir a directory to write tempfiles to
+#' @param outFile file to write blat to (if ends in .gz then isGz defaults to true and writes to gzipped file)
+#' @param isGz if TRUE write to gz file else normal file
+#' @param ... additional arguments to runBlatNoServer
+#' @export
+#' @return NULL
+multiRunBlatNoServer<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),isGz=grepl('.gz$',outFile),...){
 	prefix<-paste(sample(c(letters,LETTERS),20,TRUE),collapse='')
 	if(!file.exists(tmpDir))dir.create(tmpDir)
 	message('Preparing files')
@@ -123,7 +126,7 @@ multiRunBlatNoServer<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),conde
 	message('Running blats')
 	bigRun<-parallel::mclapply(runFiles,function(x){
 		message('Starting ',x[2])
-		runBlatNoServer(readFile=x[3],refs=refs,outFile=x[2],tmpDir=x[1],deleteFiles=TRUE,...)
+		runBlatNoServer(readFile=x[3],refs=refs,outFile=x[2],tmpDir=x[1],...)
 		return(x[2])
 	},mc.cores=nCore)
     if(any(isError(bigRun))){
@@ -131,19 +134,6 @@ multiRunBlatNoServer<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),conde
         stop(simpleError("Error in running blat"))
     }
 	if(any(!sapply(bigRun,file.exists)))stop(simpleError('Blat file missing'))
-	if(!is.null(runFilter)){
-		bigRun<-parallel::mclapply(bigRun,function(x,runFilter){
-			newFile<-sprintf('%s__2',x)
-			message('Filtering ',x)
-			system(sprintf('cat %s|%s>%s',x,runFilter,newFile))
-			file.remove(x)
-			return(newFile)
-		},runFilter,mc.cores=nCore)
-        if(any(isError(bigRun))){
-            print(bigRun)
-            stop(simpleError("Error in filtering blat"))
-        }
-	}
 	if(isGz)outFile<-gzfile(outFile,open='w+')
 	else outFile<-file(outFile,open='w+')
 	counter<-0
@@ -151,7 +141,7 @@ multiRunBlatNoServer<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),conde
 		message('Reading blat file ',i)
 		blat<-readLines(bigRun[[i]])
 		#take off header in later files
-		if(i!=1&is.null(runFilter)){
+		if(i!=1){
 			blat<-blat[-1:-5]
 		}
 		writeLines(blat,sep="\n",con=outFile)
@@ -160,7 +150,7 @@ multiRunBlatNoServer<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),conde
 	}
 	message('Wrote ',counter,' blat lines')
 	close(outFile)
-	return(outFile)
+	return(NULL)
 }
 
 #make a 2bit file from one set of reads and blat another set against it
@@ -233,5 +223,5 @@ killBlat<-function(port){
 	code<-system(sprintf('pkill -f "gfServer *start *localhost *%d">/dev/null',port))
 	if(checkBlat(port)){
 		stopError('Could not kill blat on port ',port)
-	}	
+	}
 }
