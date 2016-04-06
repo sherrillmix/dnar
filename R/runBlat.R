@@ -214,8 +214,11 @@ multiBlatReadsVsRefs<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),isGz=
 	return(bigRun)
 }
 
-#kill blat running on port port
-#port: pkill blat running on port port
+#' Kill blat running on a given port
+#'
+#' @param port pkill blat running on port port
+#' @export
+#' @return NULL
 killBlat<-function(port){
 	if(!checkBlat(port)){
 		stopError('Blat does not appear to be running on port ',port)
@@ -224,4 +227,5 @@ killBlat<-function(port){
 	if(checkBlat(port)){
 		stopError('Could not kill blat on port ',port)
 	}
+	return(NULL)
 }
