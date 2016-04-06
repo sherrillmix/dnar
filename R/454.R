@@ -55,4 +55,54 @@ flow2seq<-function(flow,flowOrder=c('T','A','C','G')){
 	return(output)
 }
 
+#' Break 454 file(s) into separate files for each sample
+#'
+#' @param names names of reads e.g. >DRDR12A125
+#' @param samples sample ID for each above read
+#' @param barcodes list of vectors of barcodes or barcode/primers with each entry indexed by sample
+#' @param outDir directory to put seperate sffs
+#' @param sffDir directory to look for sffs
+#' @param baseName prepend to sample names 
+#' @param sffBinDir location of sfffile binary
+#' @param vocal if TRUE output status messages
+#' @export
+#' @return NULL
+makeSeperateSffs<-function(names,samples,barcodes,outDir,sffDir,baseName='reads',sffBinDir='',vocal=TRUE){
+	if(length(names)!=length(samples))stop(simpleError('Length of names and sample assignments differ'))
+	if(sffBinDir!='')sffBinDir<-sprintf('%s/',sffBinDir)
+	#apparently sfffile can't find sff files in a directory even though it says it can so we'll just feed it every sff
+	sffFiles<-paste(list.files(sffDir,'\\.sff$',full.names=TRUE),collapse=' ')
 
+	#can't let sfffile break this up for us because some people have overlapping barcodes among samples
+	if(!all(unique(samples) %in% names(barcodes)))stop(simpleError('Please give barcodes for every sample'))
+	for(i in unique(samples)){
+		#outFile<-sprintf('%s/%s%s.sff',outDir,baseName,i)
+		#don't need to include sample since sfffile will do it automatically from the barcode file
+		outFile<-sprintf('%s/%s.sff',outDir,baseName)
+		finalOutFile<-sprintf('%s/%s.%s.sff',outDir,baseName,i)
+		capsOutFile<-sprintf('%s/%s.%s.sff',outDir,baseName,toupper(i))
+		nameFile<-tempfile()
+		selector<-samples==i
+		writeLines(names[selector],nameFile)
+		barcodeFile<-tempfile()
+		thisBarcodes<-barcodes[[i]]
+		barLines<-paste(sprintf('mid = "%s", "%s",2;',i,thisBarcodes),collapse='\n')
+		writeLines(c('GSMIDs','{',barLines,'}'),barcodeFile)
+		cmd<-sprintf('%ssfffile -i %s -o %s -mcf %s -s %s',sffBinDir,nameFile,outFile,barcodeFile,sffFiles)
+		if(vocal)message(cmd)
+		returnCode<-system(cmd,intern=TRUE)
+		if(length(grep('reads written into the SFF file',returnCode))==0)stop(simpleError('Some error in sfffile'))
+		if(length(grep('reads written into the SFF file',returnCode))!=1)stop(simpleError('Too many sff files made'))
+		thisRegex<-sprintf(' *%s: *([0-9]+) reads written into the SFF file\\.',toupper(i))
+		numberWritten<-returnCode[grep(thisRegex,returnCode)]
+		numberWritten<-gsub(thisRegex,'\\1',numberWritten)
+		if(sum(selector)!=numberWritten)browser()#stop(simpleError('Reads written do not match selected reads'))
+		cmd<-sprintf('%ssffinfo -a %s',sffBinDir,capsOutFile)
+		if(vocal)message(' ',cmd)
+		if(length(system(cmd,intern=TRUE))!=sum(selector))stop(simpleError('sffinfo gives different number of reads from selected'))
+		file.rename(capsOutFile,finalOutFile)
+		unlink(barcodeFile)
+		unlink(nameFile)
+	}
+	return(NULL)
+}
