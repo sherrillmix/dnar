@@ -89,19 +89,32 @@ read.fa<-function(fileName,assumeSingleLine=FALSE){
 #' Read a fasta file alternative
 #' 
 #' @param fileName name of file
+#' @param assumeSingleLine if TRUE don't process sequence lines. just assume they're one line per sequence
 #' @param ... additional arguments to readLines
 #' @export
 #' @return  data.frame with columns name and seq
-read.fa2<-function(fileName,...){
+#' @examples
+#' file<-tempfile()
+#' x<-generateFakeFasta(100,bases=c('A','C','T','G','\n','-'))
+#' write.fa(x$name,x$seq,file)
+#' system.time(y<-read.fa2(file))
+#' system.time(y<-read.fa(file))
+read.fa2<-function(fileName,assumeSingleLine=FALSE,...){
 	x<-readLines(fileName,warn=FALSE,...)
 	if(length(x)==0)return(NULL)
-	x<-x[!grepl('^[;#]',x,perl=TRUE)&x!='']
-	nameLines<-grep('^>',x,perl=TRUE)
-	thisNames<-sub('^>','',x[nameLines],perl=TRUE)
-	seqs<-apply(cbind(nameLines+1,c(nameLines[-1]-1,length(x))),1,function(coords){
-		if(coords[1]<=coords[2])return(paste(x[coords[1]:coords[2]],collapse=''))
-		else return('')
-	})
+	if(assumeSingleLine){
+		output<-data.frame('name'=x[seq(1,length(x),2)],'seq'=x[seq(2,length(x),2)],stringsAsFactors=FALSE)
+		if(any(grepl('^>',output$seq,perl=TRUE)|!grepl('^>',output$name,perl=TRUE)))stop(simpleError('Problem reading single line fasta'))
+		output$name<-substring(output$name,2)
+	}else{
+		x<-x[!grepl('^[;#]',x,perl=TRUE)&x!='']
+		nameLines<-grep('^>',x,perl=TRUE)
+		thisNames<-sub('^>','',x[nameLines],perl=TRUE)
+		seqs<-apply(cbind(nameLines+1,c(nameLines[-1]-1,length(x))),1,function(coords){
+			if(coords[1]<=coords[2])return(paste(x[coords[1]:coords[2]],collapse=''))
+			else return('')
+		})
+	}
 	seqs<-sub(' +$','',seqs,perl=TRUE)
 	output<-data.frame('name'=thisNames,'seq'=seqs,stringsAsFactors=FALSE)
 	return(output)
@@ -118,7 +131,7 @@ read.fa2<-function(fileName,...){
 #' @return data.frame with nSeq rows and columns name and seq
 generateFakeFasta<-function(nSeq=10000,nChar=100:1000,bases=c('A','C','T','G','-','N')){
 	nChars<-sample(nChar,nSeq,TRUE)
-	names<-sprintf('>%d_%s',1:nSeq,replicate(nSeq,paste(sample(c(letters,LETTERS),30,TRUE),collapse=TRUE)))
+	names<-sprintf('>%d_%s',1:nSeq,replicate(nSeq,paste(sample(c(letters,LETTERS),30,TRUE),collapse='')))
 	seqs<-sapply(nChars,function(x)paste(sample(bases,x,TRUE),collapse=''))
 	return(data.frame('name'=names,'seq'=seqs))
 }
