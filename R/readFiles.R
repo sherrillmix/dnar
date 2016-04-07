@@ -210,7 +210,7 @@ read.sam<-function(fileName,nrows=-1,skips=-1,condense=TRUE){
 #' @param cover output from pullRegion with missing zero positions
 #' @param posCol name of position column
 #' @param countCols vector of column names for columns containing counts
-#' internal 
+#' @keywords internal 
 #' @return filled in data.frame
 fillZeros<-function(cover,posCol='pos',countCols=colnames(cover)[grep('counts',colnames(cover))]){
 	repeatedCols<-!colnames(cover) %in% c(posCol,countCols)
@@ -229,12 +229,14 @@ fillZeros<-function(cover,posCol='pos',countCols=colnames(cover)[grep('counts',c
 }
 
 
-#read a tab-delimited blast file
-#fileName: name of file
-#skips: number of lines to skip (0 for a normal blast file)
-#nrows: number of rows to read in (-1 for all)
-#calcScore: calculate score column?
-#returns: dataframe of blat data
+#' Read a tab-delimited blast file
+#'
+#' @param fileName name of file
+#' @param skips number of lines to skip (0 for a normal blast file)
+#' @param nrows number of rows to read in (-1 for all)
+#' @param calcScore if TRUE, calculate score column
+#' @export
+#' @return dataframe of blat data
 readBlast<-function(fileName,skips=0,nrows=-1,calcScore=TRUE){
 	x<-read.table(fileName,skip=skips,sep="\t",stringsAsFactors=FALSE,colClasses=c(rep('character',2),rep('numeric',10)),nrows=nrows)
 	colnames(x)<-c('qName','tName','percID','alignLength','mismatch','nGap','qStart','qEnd','tStart','tEnd','eValue','hspBit')
@@ -243,22 +245,19 @@ readBlast<-function(fileName,skips=0,nrows=-1,calcScore=TRUE){
 	return(x)
 }
 
-readBlast2<-function(fileName,excludeUnculture=TRUE){
-	x<-readLines(fileName)
-	queries<-grep('Query=',x)
-	queryData<-gsub('Query= *','',x[queries])
-	datas<-grep('\\|.*[0-9]+  +[0-9]',x)
-	if(excludeUnculture)datas<-datas[!grepl('(Uncultured)|(Unidentified)',x[datas])]
-	queryVec<-queryData[sapply(datas,function(x)max(which(queries<x)))]
-	dataData<-gsub('  +','\t',x[datas])
-	dataMat<-do.call(rbind,strsplit(dataData,'\t'))
-	out<-data.frame(queryVec,dataMat,stringsAsFactors=FALSE)
-	colnames(out)<-c('query','gNum','descr','score','eval')
-	return(out)
-}
-
-
-#read a large blat file piece by piece NOTE: assumes blat files is sorted by qName
+#' Read a large blat file piece by piece 
+#'
+#' @section Warning:
+#' Assumes blat files is sorted by qName
+#'
+#' @param fileName name of file
+#' @param nHeader number of lines to skip at start of file
+#' @param nrows number of lines ot read in per shot
+#' @param isGz if TRUE then file is assumed to be gzipped
+#' @param filterFunc a function taking a data.frame of blat data and returning a TRUE/FALSE vector specifying rows to keep 
+#' @param ... additional arguments to readBlat
+#' @export
+#' @return data.frame of blat data
 readLargeBlat<-function(fileName,nHeader=5,nrows=1e6,isGz=grepl('.gz$',fileName),filterFunc=function(x)rep(TRUE,nrow(x)),...){
 	#R complains about seek and gzipped files. should work but...
 	#openFile<-gzfile(fileName,'r')
@@ -298,19 +297,20 @@ readLargeBlat<-function(fileName,nHeader=5,nrows=1e6,isGz=grepl('.gz$',fileName)
 			out<-rbind(out,thisData[selector,])
 		}
 	}
-
 	return(out)
 }
 
-#read a blat file
-#fileName: name of file
-#skips: number of lines to skip (5 for a normal blat file)
-#nCols: 21 (no alignments) or 23 columns (alignments)
-#calcScore: calculate score column?
-#fixStarts: convert start to 1-based?
-#filterFunction: if not NULL then pass the output data.frame to this function and filter by logical value returned
-#...: additional arguments to read.table
-#returns: dataframe of blat data
+#' Read a blat file
+#'
+#' @param fileName name of file
+#' @param skips number of lines to skip (5 for a normal blat file)
+#' @param nCols 21 (no alignments) or 23 columns (alignments)
+#' @param calcScore calculate score column?
+#' @param fixStarts convert start to 1-based?
+#' @param filterFunction if not NULL then pass the output data.frame to this function and filter by logical value returned
+#' @param ... additional arguments to read.table
+#' @export
+#' @return dataframe of blat data
 readBlat<-function(fileName,skips=5,calcScore=TRUE,fixStarts=TRUE,nCols=21,filterFunction=NULL,...){
 	#if we don't read in all lines at once it becomes a pain to deal with open/closed connections when we want to peak 
 	
@@ -351,7 +351,11 @@ readBlat<-function(fileName,skips=5,calcScore=TRUE,fixStarts=TRUE,nCols=21,filte
 	return(x)
 }
 
-#fileName: wiggle file to read
+#' Read a UCSC wiggle file
+#'
+#' @param fileName wiggle file to read
+#' @export
+#' @return data.frame with columns start, value, end and chr
 readWiggle<-function(fileName){
 	x<-readLines(fileName)
 	trackLines<-grep('chrom=',x)

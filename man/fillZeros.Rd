@@ -12,8 +12,7 @@ fillZeros(cover, posCol = "pos", countCols = colnames(cover)[grep("counts",
 
 \item{posCol}{name of position column}
 
-\item{countCols}{vector of column names for columns containing counts
-internal}
+\item{countCols}{vector of column names for columns containing counts}
 }
 \value{
 filled in data.frame
@@ -21,4 +20,5 @@ filled in data.frame
 \description{
 Fill zeros in cover data
 }
+\keyword{internal}
 
