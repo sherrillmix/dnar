@@ -37,19 +37,22 @@ read.phd<-function(fileName,trimQual=-Inf){
 	return(c('seq'=paste(thisData[lims[1]:lims[2],1],collapse=''),'qual'=paste(thisData[lims[1]:lims[2],2],collapse=' ')))
 }
 
-#read in a bunch of fasta files in a target directory
-#dir: target directory
-#suffix: regex to select file names
-#recursive: recurse through data directory?
-#vocal: status message for each file loading
-#...: extra arguments to read.fa
+#' Read in a bunch of fasta files in a target directory
+#'
+#' @param dir target directory
+#' @param suffix regex to select file names
+#' @param recursive if TRUE recurse through data directory
+#' @param vocal status message for each file loading
+#' @param ... additional arguments to read.fa
+#' @export
+#' @return data.frame with columns name, seq and file
 readFaDir<-function(dir='.',suffix='\\.(fn?a|fasta)$',recursive=FALSE,vocal=FALSE,...){
 	faFiles<-list.files(dir,suffix,recursive=recursive)
 	if(length(faFiles)<1)stop(simpleError('No fa files found'))
-	for(i in faFiles){
-		if(vocal)message('Working on ',i)
-		tmp<-read.fa(sprintf('%s/%s',dir,i),...)
-		tmp$file<-i
+	for(ii in faFiles){
+		if(vocal)message('Working on ',ii)
+		tmp<-read.fa(sprintf('%s/%s',dir,ii),...)
+		tmp$file<-ii
 		if(exists('allFa'))allFa<-rbind(allFa,tmp)
 		else allFa<-tmp
 	}
