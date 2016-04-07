@@ -38,8 +38,8 @@ rao<-function(x,dist){
 #' @export
 #' @return Jensen-Shannon divergence
 jensenShannon<-function(x,y,base=2){
-	propX<-x/sum(x)
-	propY<-y/sum(y)
+	propX<-x/ifelse(sum(x)==0,1,sum(x))
+	propY<-y/ifelse(sum(y)==0,1,sum(y))
 	shannonCalc<-shannon((propX+propY)/2,base,FALSE)-shannon(propX,base,FALSE)/2-shannon(propY,base,FALSE)/2
 	kullbackCalc<-.5*kullback(propX,(propY+propX)/2,base,FALSE)+.5*kullback(propY,(propY+propX)/2,base,FALSE)
 	if(round(shannonCalc,5)!=round(kullbackCalc,5))stop(simpleError('Problem calculating shannon jensen'))
