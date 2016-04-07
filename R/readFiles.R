@@ -69,12 +69,10 @@ readFaDir<-function(dir='.',suffix='\\.(fn?a|fasta)$',recursive=FALSE,vocal=FALS
 read.fa<-function(fileName,assumeSingleLine=FALSE){
 	x<-readLines(fileName)
 	if(assumeSingleLine){
-		output<-data.frame('longName'=x[seq(1,length(x),2)],'seq'=x[seq(2,length(x),2)],stringsAsFactors=FALSE)
-		if(any(grepl('^>',output$seq,perl=TRUE)|!grepl('^>',output$longName,perl=TRUE)))stop(simpleError('Problem reading single line fasta'))
-		output$longName<-substring(output$longName,2)
+		output<-data.frame('name'=x[seq(1,length(x),2)],'seq'=x[seq(2,length(x),2)],stringsAsFactors=FALSE)
+		if(any(grepl('^>',output$seq,perl=TRUE)|!grepl('^>',output$name,perl=TRUE)))stop(simpleError('Problem reading single line fasta'))
+		output$name<-substring(output$name,2)
 	}else{
-		selector<-grep('^[^>].* .*[^ ]$',x,perl=TRUE)
-		x[selector]<-paste(x[selector],' ',sep='')
 		if(length(x)==0)return(NULL)
 		x<-x[!grepl('^[#;]',x,perl=TRUE)&x!='']
 		y<-paste(x,collapse="\n")
@@ -82,37 +80,49 @@ read.fa<-function(fileName,assumeSingleLine=FALSE){
 		splits2<-strsplit(splits,"\n",fixed=TRUE)
 		output<-lapply(splits2,function(x){return(c(x[1],paste(x[-1],collapse='')))})
 		output<-as.data.frame(do.call(rbind,output),stringsAsFactors=FALSE)
-		colnames(output)<-c('longName','seq')
+		colnames(output)<-c('name','seq')
 	}
-	colnames(output)<-c('name','seq')	
 	output$seq<-gsub(' +$','',output$seq,perl=TRUE)
 	return(output)
 }
-#alternative version of the above (a bit quicker)
-read.fa2<-function(fileName=NULL,longNameTrim=TRUE,x=NULL,...){
-	if(is.null(fileName)&is.null(x))stop(simpleError('Please specify fileName or string vector x'))
-	if(is.null(x))x<-readLines(fileName,warn=FALSE,...)
+
+#' Read a fasta file alternative
+#' 
+#' @param fileName name of file
+#' @param ... additional arguments to readLines
+#' @export
+#' @return  data.frame with columns name and seq
+read.fa2<-function(fileName,...){
+	x<-readLines(fileName,warn=FALSE,...)
 	if(length(x)==0)return(NULL)
 	x<-x[!grepl('^[;#]',x,perl=TRUE)&x!='']
 	nameLines<-grep('^>',x,perl=TRUE)
 	thisNames<-sub('^>','',x[nameLines],perl=TRUE)
-	hasSpaces<-any(grep(' [^ ]',x[-nameLines],perl=TRUE))
 	seqs<-apply(cbind(nameLines+1,c(nameLines[-1]-1,length(x))),1,function(coords){
 		if(coords[1]<=coords[2])return(paste(x[coords[1]:coords[2]],collapse=''))
 		else return('')
 	})
-	#seqs<-gsub('  +',' ',seqs,perl=TRUE)
 	seqs<-sub(' +$','',seqs,perl=TRUE)
-
-	output<-data.frame('longName'=thisNames,'seq'=seqs,stringsAsFactors=FALSE)
-	if(longNameTrim){
-		output$name<-unlist(lapply(strsplit(output$longName,' ',fixed=TRUE),function(x)x[1]))
-		output<-output[,3:1]
-	}else{
-		colnames(output)<-c('name','seq')	
-	}
+	output<-data.frame('name'=thisNames,'seq'=seqs,stringsAsFactors=FALSE)
 	return(output)
 }
+
+
+
+#' Generate fake name and sequence data
+#'
+#' @param nSeq number of sequences to generate
+#' @param nChar possible lengths of sequences
+#' @param bases possible bases
+#' @export
+#' @return data.frame with nSeq rows and columns name and seq
+generateFakeFasta<-function(nSeq=10000,nChar=100:1000,bases=c('A','C','T','G','-','N')){
+	nChars<-sample(nChar,nSeq,TRUE)
+	names<-sprintf('>%d_%s',1:nSeq,replicate(nSeq,paste(sample(c(letters,LETTERS),30,TRUE),collapse=TRUE)))
+	seqs<-sapply(nChars,function(x)paste(sample(bases,x,TRUE),collapse=''))
+	return(data.frame('name'=names,'seq'=seqs))
+}
+
 
 #call samtools view on a sam/bam file
 #fileName: sam/bam file to read

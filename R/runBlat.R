@@ -153,13 +153,17 @@ multiRunBlatNoServer<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),isGz=
 	return(NULL)
 }
 
-#make a 2bit file from one set of reads and blat another set against it
-#reads: vector of query reads with names
-#refs: vector of reference reads with names
-#faToTwoBit: path to faToTwoBit program from blat
-#tmpDir: directory to store work files
-#...: additional arguments to run blat
-blatReadsVsRefs<-function(reads,refs,outFile,faToTwoBit='faToTwoBit',tmpDir=sprintf('%s/%s',tempdir(),paste(sample(c(letters,LETTERS),20),collapse='')),...){
+#' Make a 2bit file from one set of reads and blat another set against it
+#'
+#' @param reads vector of query reads with names
+#' @param refs vector of reference reads with names
+#' @param outFile file to write blat to (if ends in .gz then isGz defaults to true and writes to gzipped file)
+#' @param faToTwoBit path to faToTwoBit program from blat
+#' @param tmpDir directory to store working files
+#' @param ... additional arguments to run blat
+#' @export
+#' @return NULL
+blatReadsVsRefs<-function(reads,refs,outFile,faToTwoBit='faToTwoBit',tmpDir=tempfile('dir'),...){
 	dir.create(tmpDir)
 	readFile<-sprintf('%s/read.fa',tmpDir)
 	write.fa(names(reads),reads,readFile)
@@ -169,6 +173,7 @@ blatReadsVsRefs<-function(reads,refs,outFile,faToTwoBit='faToTwoBit',tmpDir=spri
 	system(sprintf('%s %s %s',faToTwoBit,refFile,twobitFile))
 	runBlat(readFile,outFile=outFile,bit2=twobitFile,...)
 	file.remove(twobitFile,refFile,readFile,tmpDir)
+	return(NULL)
 }
 
 #' Run blatReadsVsRefs in parallel
