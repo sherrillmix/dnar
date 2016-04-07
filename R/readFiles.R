@@ -137,14 +137,16 @@ generateFakeFasta<-function(nSeq=10000,nChar=100:1000,bases=c('A','C','T','G','-
 }
 
 
-#call samtools view on a sam/bam file
-#fileName: sam/bam file to read
-#samArgs: 1 element character vector of args to pass to samtools
-#samtoolsBinary: location of samtools
-#vocal: print status messages?
-#samCommand: which samtools tool to run
-#...: additional arguments for read.sam
-#samtoolsBinary: location of samtools
+#' Call samtools view on a sam/bam file
+#'
+#' @param fileName vector of sam/bam files to read
+#' @param samArgs 1 element character vector of args to pass to samtools
+#' @param samtoolsBinary location of samtools
+#' @param vocal if TRUE print status messages
+#' @param samCommand which samtools tool to run
+#' @param ... additional arguments for read.sam
+#' @export
+#' @return data.frame with columns as read.sam
 samView<-function(fileName,samArgs='',...,samtoolsBinary='samtools',vocal=FALSE,samCommand='view'){
 	if(length(fileName)>1){ #recurse
 		allOut<-do.call(rbind,lapply(fileName,function(x){
@@ -171,12 +173,14 @@ samView<-function(fileName,samArgs='',...,samtoolsBinary='samtools',vocal=FALSE,
 }
 
 
-#read a sam file
-#fileName: name of file
-#nrows: number of rows to return
-#skips: number of lines to skip (if negative find @ headers automtically)
-#condense: throw out a bunch of columns for smaller file size?
-#returns: dataframe with columns 
+#' Read a sam file
+#'
+#' @param fileName name of file
+#' @param nrows number of rows to return. -1 for all rows
+#' @param skips number of lines to skip (if negative find @ headers automtically)
+#' @param condense throw out a bunch of columns for smaller file size?
+#' @export
+#' @return dataframe with columns qName, flag, tName, pos, cigar, seq
 read.sam<-function(fileName,nrows=-1,skips=-1,condense=TRUE){
 	colNames<-c('qName','flag','tName','pos','mapq','cigar','mrnm','mpos','isize','seq','qual','tags')
 	if(condense)colClasses<-c('character','numeric','character','numeric','null','character','null','null','null','character','null')
@@ -201,7 +205,13 @@ read.sam<-function(fileName,nrows=-1,skips=-1,condense=TRUE){
 }
 
 
-#cover: output from pullRegion with missing zero positions
+#' Fill zeros in cover data
+#'
+#' @param cover output from pullRegion with missing zero positions
+#' @param posCol name of position column
+#' @param countCols vector of column names for columns containing counts
+#' internal 
+#' @return filled in data.frame
 fillZeros<-function(cover,posCol='pos',countCols=colnames(cover)[grep('counts',colnames(cover))]){
 	repeatedCols<-!colnames(cover) %in% c(posCol,countCols)
 	if(any(apply(cover[,repeatedCols,drop=FALSE],2,function(x)length(unique(x)))>1))stop(simpleError('Found nonunique extra columns in fillZeros'))
