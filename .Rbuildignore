@@ -1,3 +1,4 @@
 ^makefile$
 ^README.md$
 ^.travis.yml$
+^data-raw/

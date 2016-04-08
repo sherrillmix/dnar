@@ -3,13 +3,19 @@
 \docType{data}
 \name{ambiguousBaseCodes}
 \alias{ambiguousBaseCodes}
-\title{Base codes used to indicate ambiguous bases}
-\format{An object of class \code{character} of length 11.}
+\title{Ambiguous base codes}
+\format{A vector with names corresponding to ambiguous base codes and items giving concatenated strings of corresponding bases}
+\source{
+system.file("data-raw", "makeData.R", package = "dnar")
+}
 \usage{
 ambiguousBaseCodes
 }
 \description{
-Base codes used to indicate ambiguous bases
+Ambiguous base codes
+}
+\references{
+\url{https://en.wikipedia.org/wiki/Nucleic_acid_notation}
 }
 \keyword{datasets}
 

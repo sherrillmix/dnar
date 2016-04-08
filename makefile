@@ -16,6 +16,11 @@ man: R/*.R
 	R -e 'devtools::document()'
 	touch man
 
+
+data: data-raw/makeData.R
+	R -e 'source("data-raw/makeData.R")'
+	touch data
+
 #README.md: README.Rmd
 #	R -e 'knitr::opts_chunk$$set(fig.path="README_files/");knitr::knit("README.Rmd")'
 
@@ -28,7 +33,7 @@ man: R/*.R
 	#Rscript data-raw/makeAminoColors.R
 	#touch data
 
-#data tests/testthat/*.R inst/doc 
-../$(PACKAGEFILE): man R/*.R DESCRIPTION
+#inst/doc 
+../$(PACKAGEFILE): man R/*.R DESCRIPTION tests/testthat/*.R data
 	sed -i "s/^Date:.*$$/Date: `date +%Y-%m-%d`/" DESCRIPTION
 	R -e 'devtools::check();devtools::build()'

@@ -33,8 +33,8 @@ indexMatrix<-function(x,y,mat,returnIndex=FALSE){
 #' @return regular expression to match the ambiguous dna
 ambiguous2regex<-function(dna){
 	dna<-toupper(dna)
-	for (i in names(ambiguousBaseCodes)){
-		dna<-gsub(i,paste('[',ambiguousBaseCodes[i],']',sep=''),dna)
+	for (i in names(dnar::ambiguousBaseCodes)){
+		dna<-gsub(i,paste('[',dnar::ambiguousBaseCodes[i],']',sep=''),dna)
 	}
 	return(dna)
 }
@@ -50,7 +50,7 @@ bases2ambiguous<-function(bases){
 	if(any(nchar(bases)!=nBases))stop(simpleError('Convert bases to ambiguous requires same length sequences'))
 	if(length(bases)==1)return(bases)
 	if(nBases>1)return(paste(sapply(1:nBases,function(x)bases2ambiguous(substring(bases,x,x))),collapse=''))
-	else return(reverseAmbiguous[paste(bases,collapse='')])
+	else return(dnar::reverseAmbiguous[paste(bases,collapse='')])
 }
 
 
@@ -62,11 +62,11 @@ bases2ambiguous<-function(bases){
 #' @return list with each entry containing all combinations of ambiguous bases for that entry of the dna vector
 expandAmbiguous<-function(dna,delist=FALSE){
 	dna<-toupper(dna)
-	ambigRegex<-sprintf('[%s]',paste(names(ambiguousBaseCodes),collapse=''))
+	ambigRegex<-sprintf('[%s]',paste(names(dnar::ambiguousBaseCodes),collapse=''))
 	out<-lapply(dna,function(x){
 		pos<-regexpr(ambigRegex,x)	
 		if(pos!=-1){
-			replaces<-strsplit(ambiguousBaseCodes[substring(x,pos,pos)],'')[[1]]
+			replaces<-strsplit(dnar::ambiguousBaseCodes[substring(x,pos,pos)],'')[[1]]
 			new<-rep(x,length(replaces))
 			for(i in 1:length(replaces))substring(new[i],pos,pos)<-replaces[i]
 			out<-expandAmbiguous(new,TRUE)
@@ -201,7 +201,7 @@ dna2codons<-function(dna,frame=0){
 codon2aa<-function(codons,type='code',naReplace='z',warn=TRUE){
 	if(!type %in% c('code','name','abbr'))stop(simpleError('Invalid amino acid type'))
 	codons<-gsub('T','U',toupper(codons))
-	aas<-aminoAcids[,type,drop=FALSE][codons,1]
+	aas<-dnar::aminoAcids[,type,drop=FALSE][codons,1]
 	if(warn&any(is.na(aas)))warning('Unknown codons')
 	aas[is.na(aas)]<-naReplace
 	return(aas)
@@ -230,9 +230,9 @@ dna2aa<-Vectorize(function(dna,frame=0,debug=FALSE,...){
 #' @export
 #' @return A vector of codons if regex=FALSE else a regular expression matching the possible codons
 aa2codon<-Vectorize(function(aa,type='code',regex=TRUE){
-	selector<-aminoAcids[,type]==aa
+	selector<-dnar::aminoAcids[,type]==aa
 	if(!any(selector))ntopError('Unknown amino acid',aa)
-	codons<-aminoAcids[selector,'codon']
+	codons<-dnar::aminoAcids[selector,'codon']
 	codons<-sprintf('(%s)',paste(codons,collapse='|'))
 	return(codons)
 })
@@ -391,7 +391,7 @@ index2range<-function(index){
 #' @export
 #' @return vector with the reversed strings
 reverseString<-function(strings,brackets=TRUE){
-	output<-sapply(strings,function(x)intToUtf8(rev(utf8ToInt(x)))) #http://stackoverflow.com/questions/13612967/how-to-reverse-a-string-in-r
+	output<-sapply(strings,function(x)intToUtf8(rev(utf8ToInt(x))),USE.NAMES=FALSE) #http://stackoverflow.com/questions/13612967/how-to-reverse-a-string-in-r
 	#slower
 	#output<-sapply(strsplit(strings,''),function(x)paste(rev(x),collapse=''))	
 	if(brackets)chartr('[]()','][)(',output)
@@ -409,8 +409,8 @@ complimentDna<-function(dnas,ambigs=TRUE){
 	replaces<-'ACTG'
 	#deal with ambiguous
 	if(ambigs){
-		sortAmbig<-sapply(lapply(strsplit(ambiguousBaseCodes,''),sort),paste,collapse='')
-		revAmbig<-sapply(strsplit(complimentDna(sortAmbig,ambigs=FALSE),''),function(x)paste(sort(x),collapse=''))
+		sortAmbig<-sapply(lapply(strsplit(dnar::ambiguousBaseCodes,''),sort),paste,collapse='',USE.NAMES=FALSE)
+		revAmbig<-sapply(strsplit(complimentDna(sortAmbig,ambigs=FALSE),''),function(x)paste(sort(x),collapse=''),USE.NAMES=FALSE)
 		ambigComp<-names(sortAmbig)[sapply(revAmbig,function(x)which(x==sortAmbig))]
 		finds<-sprintf('%s%s',finds,paste(names(sortAmbig),collapse=''))
 		replaces<-sprintf('%s%s',replaces,paste(ambigComp,collapse=''))
@@ -599,8 +599,8 @@ blockToAlign<-function(seqs,tSeqs,qStarts,tStarts,sizes){
 samFlag<-function(flags,test='paired'){
 	test<-unique(test)
 	if(!is.numeric(test)){
-		if(!all(test %in% samFlags$short))stop(simpleError(sprintf('Unknown flag please select from %s',paste(samFlags$short,collapse=', '))))
-		test<-samFlags[samFlags$short %in% test,'bit']
+		if(!all(test %in% dnar::samFlags$short))stop(simpleError(sprintf('Unknown flag please select from %s',paste(dnar::samFlags$short,collapse=', '))))
+		test<-dnar::samFlags[dnar::samFlags$short %in% test,'bit']
 	}else{
 		test<-as.integer(test)
 	}
