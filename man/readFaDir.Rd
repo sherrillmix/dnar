@@ -14,7 +14,7 @@ readFaDir(dir = ".", suffix = "\\\\.(fn?a|fasta)$", recursive = FALSE,
 
 \item{recursive}{if TRUE recurse through data directory}
 
-\item{vocal}{status message for each file loading}
+\item{vocal}{if TRUE display status message for each file loading}
 
 \item{...}{additional arguments to read.fa}
 }

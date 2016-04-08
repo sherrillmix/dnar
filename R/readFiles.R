@@ -42,7 +42,7 @@ read.phd<-function(fileName,trimQual=-Inf){
 #' @param dir target directory
 #' @param suffix regex to select file names
 #' @param recursive if TRUE recurse through data directory
-#' @param vocal status message for each file loading
+#' @param vocal if TRUE display status message for each file loading
 #' @param ... additional arguments to read.fa
 #' @export
 #' @return data.frame with columns name, seq and file
@@ -378,12 +378,17 @@ readWiggle<-function(fileName){
 	return(out)
 }
 
-#read an ace file
-#LIMITATION: only reads 1 contig
-#aceFile: string of file name or file handle
-#dropMosaik: Remove extraneous line from Mosaik labelled either .MosaikAnchor.C1 or MosaikReference
-#checkSnps: Find SNPs from pyroBayes
-#returns: list of reference sequence in [[1]], aligned reads in [[2]] (note reads are not globally aligned still need to use start coordinate to place globally), snps in [[3]]
+#' Read an ace file
+#'
+#' @section Warning:
+#' Only reads 1 contig
+#'
+#' @param aceFile string of file name or file handle
+#' @param dropMosaik Remove extraneous line from Mosaik labelled either .MosaikAnchor.C1 or MosaikReference
+#' @param checkSnps Find SNPs from pyroBayes
+#' @param vocal if TRUE print status messages
+#' @export
+#' @return list of reference sequence in [[1]], aligned reads in [[2]] (note reads are not globally aligned still need to use start coordinate to place globally), snps in [[3]]
 readAce<-function(aceFile,dropMosaik=TRUE,checkSnps=TRUE,vocal=TRUE){
 	#debug<-FALSE
 	#if(!exists(x)|!debug)x<-readLines(aceFile)
@@ -447,110 +452,6 @@ readAce<-function(aceFile,dropMosaik=TRUE,checkSnps=TRUE,vocal=TRUE){
 		if(vocal)message('Removing .MosaikAnchor.C1')
 	}
 	return(list('contig'=contigSeq,'reads'=reads,'notes'=notes))
-	#readDir<-lapply(afLine,function(x)return(x[3]))
-	#readStart<-lapply(afLine,function(x)return(x[4]))
-	#reads<-data.frame('name'=readNames,'dir'=readDir,'start'=readStart)
-}
-
-#take the output from an ace file and fill in the starts and ends of sequences with gaps to make a global alignment
-#seqs: sequences from ace file
-#starts: starting location for each sequence 
-#low: start point for global alignment
-#high: end point for global alignment
-#lengths: lengths of seqs (probably can go with default in 99% of cases)
-#filter: filter out reads falling outside range?
-#returns: list of aligned seqs in [[1]], logical vector of whether read fell within cut region in [[2]]
-cutReads<-function(seqs,starts,low=min(starts),high=max(starts+nchar(seqs)-1),lengths=nchar(seqs),filter=TRUE){
-	#make a string of dots for cutting
-	dots<-paste(rep('.',max(high-low+1)),collapse='')
-	debug<-TRUE
-	goodReads<-findReads(low,starts,lengths,high)
-	if(!any(goodReads)){
-		if(filter)return(FALSE)
-		else return(rep(dots,length(seqs)))
-	}
-	thisSeqs<-seqs[goodReads];	starts<-starts[goodReads];	lengths<-lengths[goodReads]
-	cutlow<-low-starts+1
-	startDash<-0-cutlow+1
-	startDash[startDash<0]<-0
-	cutlow[cutlow<1]<-1
-	cuthigh<-high-starts+1
-	endDash<-high-starts-lengths+1
-	endDash[endDash<0]<-0
-	cuts<-substr(thisSeqs,cutlow,cuthigh)
-	predots<-substring(dots,1,startDash)
-	postdots<-substring(dots,1,endDash)
-	cuts<-paste(predots,cuts,postdots,sep='')
-	if(filter){
-		return(list(cuts,goodReads))
-	}else{
-		out<-rep(NA,length(seqs))
-		out[goodReads]<-cuts
-		out[!goodReads]<-dots
-		return(out)
-	}
-}
-
-findReads<-function(low,starts,lengths,high=low){
-	if(length(starts)!=length(lengths))stopError('Length of starts and lengths not equal')
-	output<-rep(TRUE,length(starts))
-	output[starts>high]<-FALSE
-	output[starts+lengths<low]<-FALSE
-	return(output)
-}
-
-parseGff<-function(gffFile,individuals=NULL,contig=individuals[1]){
-	message('Using ',contig,' as main contig')
-	gff<-tryCatch(read.table(gffFile,stringsAsFactors=FALSE),error=function(e)return(data.frame('contig'=1,'program'=1,'type'=1,'start'=1,'stop'=1,'psnp'=1,'dummy1'=1,'dummy2'=1,'extra'=1)[0,]))
-	colnames(gff)<-c('contig','program','type','start','stop','psnp','dummy1','dummy2','extra')
-	gff<-gff[,!colnames(gff) %in% c('dummy1','dummy2')]
-	if(nrow(gff)>0){
-	details<-strsplit(gff$extra,'\\;')
-	details<-do.call(rbind,details)
-	gff$alleles<-gsub('^alleles=','',details[,1])
-	gff$genos<-gsub('^individualGenotypes=','',details[,2])
-	gff$genoProbs<-gsub('^individualGenotypeProbabilities=','',details[,3])
-	gff$alleleCounts<-gsub('^individualAlleleCounts=','',details[,4])
-	if(!is.null(individuals)){
-		alleleCounts<-strsplit(gff$alleleCounts,',')
-		alleleData<-lapply(alleleCounts,function(x){
-			output<-c()
-			for(i in individuals){
-				countLabel<-paste('coverage_',i,sep='');alleleLabel<-paste('allele_',i,sep='');maxAlleleLabel<-paste('max_',i,sep='');pLabel<-paste('pMax_',i,sep='')
-				thisIndex<-grep(i,x)
-				if(length(thisIndex)==1){
-					splits<-strsplit(sub('^[^:]+:','',x[thisIndex]),'&')[[1]]	
-					alleles<-gsub('^([ACTG-]+)\\|.*$','\\1',splits)
-					counts<-as.numeric(gsub('^[ACTG-]+\\|([0-9]+).*$','\\1',splits))
-					if(!is.null(contig) & i!=contig){
-						contigAllele<-output[paste('max_',contig,sep='')]
-						diffCounts<-counts[alleles!=contigAllele]
-						diffAlleles<-alleles[alleles!=contigAllele]
-					}else{
-						diffCounts<-counts
-						diffAlleles<-alleles
-					}
-					maxCount<-max(diffCounts)
-					output[countLabel] <- sumCount <- sum(counts)
-					output[maxAlleleLabel]<-ifelse(maxCount==0,'',diffAlleles[diffCounts==maxCount][1])
-					output[alleleLabel]<-paste(alleles,counts,sep='=',collapse='|')
-					output[pLabel]<-maxCount/sumCount
-				}else{
-					if(length(thisIndex)>1)warning('Found multiple matches for allele counts for individual ',i)
-					output[countLabel]<-0
-					output[maxAlleleLabel]<-''
-					output[alleleLabel]<-''
-					output[pLabel]<-NA
-				}
-			}
-			return(output)
-		})
-		alleleData<-do.call(rbind,alleleData)
-		gff[,colnames(alleleData)]<-alleleData
-		for(i in grep('coverage_',colnames(gff)))gff[,i]<-as.numeric(gff[,i])
-	}
-	}
-	return(gff)
 }
 
 #' Read a bed file
@@ -582,9 +483,14 @@ read.bed<-function(fileName,startAddOne=FALSE){
 	return(output)
 }
 
-#reg: region in the format "chrX:123545-123324"
-#files: bam files to pull the counts from
-#bam2depthBinary: bam2depth executable file
+#' Pull counts from a bam file for target region
+#'
+#' @param reg region in the format "chrX:123545-123324"
+#' @param files bam files to pull the counts from
+#' @param bam2depthBinary bam2depth executable file
+#' @param fillMissingZeros if TRUE fill in uncovered positions with zeros otherwise may be left out of output by bam2depth
+#' @export
+#' @return data.frame with columns chr, pos and counts 
 pullRegion<-function(reg,files,bam2depthBinary='./bam2depth',fillMissingZeros=TRUE){
 	region<-parseRegion(reg)
 	region$start<-region$start+1 #bam2depth using ucsc 0-start, 1-ends
@@ -596,7 +502,7 @@ pullRegion<-function(reg,files,bam2depthBinary='./bam2depth',fillMissingZeros=TR
 	colnames(cover)<-c('chr','pos',countCols)
 	if(fillMissingZeros){
 		#deal with missing start or ends
-		filler<-cover[rep(1,2),]
+		filler<-cover[c(1,1),]
 		filler$chr<-region$chr
 		filler[,countCols]<-0
 		filler$pos<-unlist(region[,c('start','end')])
