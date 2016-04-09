@@ -15,4 +15,8 @@ vector of reverse complimented dna sequences
 \description{
 Reverse compliment dna
 }
+\examples{
+revComp(c('CTAG','ATCCAC'))
+revComp(c('CT[AC]G','ATNRY'))
+}
 

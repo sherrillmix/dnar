@@ -15,4 +15,8 @@ regular expression to match the ambiguous dna
 \description{
 Converts ambiguous dna to an appropriate regular expression
 }
+\examples{
+dnaRegex<-ambiguous2regex('ANRT')
+grepl(dnaRegex,c('ATGT','ACAT','AGTT'))
+}
 

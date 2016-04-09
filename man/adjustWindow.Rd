@@ -2,11 +2,13 @@
 % Please edit documentation in R/misc.R
 \name{adjustWindow}
 \alias{adjustWindow}
-\title{convenience function to resize R console window}
+\title{Convenience function for selecting multiple elements from a matrix by x,y position
+convenience function to resize R console window}
 \usage{
 adjustWindow()
 }
 \description{
+Convenience function for selecting multiple elements from a matrix by x,y position
 convenience function to resize R console window
 }
 

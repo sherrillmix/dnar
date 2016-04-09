@@ -17,4 +17,7 @@ vector with the reversed strings
 \description{
 Reverse strings
 }
+\examples{
+reverseString(c("ABCDEFG","Reverse"))
+}
 

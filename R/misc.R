@@ -1,3 +1,35 @@
+#' Convenience function to check for errors
+#'
+#' @param x vector or list to check for errors
+#' @export
+#' @return logical vector of length(x) specifying if each element of x was an error
+isError<-function(x){
+    sapply(x,function(y)inherits(y,'simpleError')|inherits(y,'try-error'))
+}
+
+#' Convenience function for selecting multiple elements from a matrix by rows and columns position
+#' 
+#' @param rows row coordinate of matrix
+#' @param cols col coorinate of matrix
+#' @param mat Matrix of interest
+#' @param returnIndex If TRUE return the one dimensional index for the items otherwise return the selected elements of the matrix
+#' @export
+#' @return A vector of indices if returnIndex is TRUE or a vector of the selected matrix elements
+#' @examples
+#' indexMatrix(c(1,2,3),c(1,2,1),matrix(1:9,nrow=3,byrow=TRUE))
+indexMatrix<-function(rows,cols,mat,returnIndex=FALSE){
+	mat<-as.matrix(mat)
+	if(!is.integer(rows)){tmp<-1:nrow(mat);names(tmp)<-rownames(mat);rows<-tmp[rows]}
+	if(!is.integer(cols)){tmp<-1:ncol(mat);names(tmp)<-colnames(mat);cols<-tmp[cols]}
+	if(length(rows)!=length(cols))stop(simpleError("rows and cols different lengths"))
+	if(min(rows)<1|max(rows)>nrow(mat))stop(simpleError("rows outside matrix bounds"))
+	if(min(cols)<1|max(cols)>ncol(mat))stop(simpleError("cols outside matrix bounds"))
+	index<-(cols-1)*nrow(mat)+rows
+	if(returnIndex)return(index)
+	else return(mat[index])
+}
+
+#' Convenience function for selecting multiple elements from a matrix by x,y position
 #' convenience function to resize R console window
 #'
 #' @export

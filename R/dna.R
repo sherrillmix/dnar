@@ -1,36 +1,11 @@
-#' Convenience function to check for errors
-#'
-#' @param x vector or list to check for errors
-#' @export
-#' @return logical vector of length(x) specifying if each element of x was an error
-isError<-function(x){
-    sapply(x,function(y)inherits(y,'simpleError')|inherits(y,'try-error'))
-}
-
-#' Convenience function for selecting multiple elements from a matrix by x,y position
-#' 
-#' @param x X coordinate of matrix
-#' @param y Y coorinate of matrix
-#' @param mat Matrix of interest
-#' @param returnIndex If TRUE return the one dimensional index for the items otherwise return the selected elements of the matrix
-#' @export
-#' @return A vector of indices if returnIndex is TRUE or a vector of the selected matrix elements
-indexMatrix<-function(x,y,mat,returnIndex=FALSE){
-	mat<-as.matrix(mat)
-	if(!is.integer(x)){tmp<-1:nrow(mat);names(tmp)<-rownames(mat);x<-tmp[x]}
-	if(!is.integer(y)){tmp<-1:ncol(mat);names(tmp)<-colnames(mat);y<-tmp[y]}
-	if(length(x)!=length(y)|max(x)>nrow(mat)|max(y)>ncol(mat))stop(simpleError("Dimensions don't match up"))
-	index<-(y-1)*nrow(mat)+x
-	if(returnIndex)return(index)
-	else return(mat[index])
-}
-
-
 #' Converts ambiguous dna to an appropriate regular expression
 #'
 #' @param dna input sequence with ambiguous bases
 #' @export
 #' @return regular expression to match the ambiguous dna
+#' @examples
+#' dnaRegex<-ambiguous2regex('ANRT')
+#' grepl(dnaRegex,c('ATGT','ACAT','AGTT'))
 ambiguous2regex<-function(dna){
 	dna<-toupper(dna)
 	for (i in names(dnar::ambiguousBaseCodes)){
@@ -390,20 +365,25 @@ index2range<-function(index){
 #' @param brackets if TRUE then reverse brackets and parenthesis, [ goes to ]. keeps brackets in order after reversing
 #' @export
 #' @return vector with the reversed strings
+#' @examples
+#' reverseString(c("ABCDEFG","Reverse"))
 reverseString<-function(strings,brackets=TRUE){
 	output<-sapply(strings,function(x)intToUtf8(rev(utf8ToInt(x))),USE.NAMES=FALSE) #http://stackoverflow.com/questions/13612967/how-to-reverse-a-string-in-r
 	#slower
 	#output<-sapply(strsplit(strings,''),function(x)paste(rev(x),collapse=''))	
-	if(brackets)chartr('[]()','][)(',output)
+	if(brackets)output<-chartr('[]()','][)(',output)
 	return(output)
 }
 
-#' Compliment dna 
+#' Compliment DNA 
 #'
 #' @param dnas vector of sequences
 #' @param ambigs if TRUE compliment ambiguous bases
 #' @export
 #' @return vector with the DNA sequences complimented
+#' @examples
+#' complimentDna(c('CTAG','ATCCAC'))
+#' complimentDna(c('CT[AC]G','ATNRY'))
 complimentDna<-function(dnas,ambigs=TRUE){
 	finds<-'TGAC'
 	replaces<-'ACTG'
@@ -423,6 +403,9 @@ complimentDna<-function(dnas,ambigs=TRUE){
 #' @param dnas vector of sequences
 #' @export
 #' @return vector of reverse complimented dna sequences
+#' @examples
+#' revComp(c('CTAG','ATCCAC'))
+#' revComp(c('CT[AC]G','ATNRY'))
 revComp<-function(dnas){
 	return(complimentDna(reverseString(dnas),TRUE))
 }

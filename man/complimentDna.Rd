@@ -2,7 +2,7 @@
 % Please edit documentation in R/dna.R
 \name{complimentDna}
 \alias{complimentDna}
-\title{Compliment dna}
+\title{Compliment DNA}
 \usage{
 complimentDna(dnas, ambigs = TRUE)
 }
@@ -15,6 +15,10 @@ complimentDna(dnas, ambigs = TRUE)
 vector with the DNA sequences complimented
 }
 \description{
-Compliment dna
+Compliment DNA
+}
+\examples{
+complimentDna(c('CTAG','ATCCAC'))
+complimentDna(c('CT[AC]G','ATNRY'))
 }
 
