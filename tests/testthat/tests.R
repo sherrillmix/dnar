@@ -17,6 +17,15 @@ test_that("Test ambiguous2regex",{
 	expect_that(grep(ambiguous2regex('ANRT'),c('ATGT','ACAT','AGTT')), equals(1:2))
 })
 
+test_that("Test bases2ambiguous",{
+	expect_that(bases2ambiguous(c("AATTCCTG",'AAATCTAG','AGCTCACG','AAGTCCGT')), equals(c("ARNTCHNK")))
+	expect_that(bases2ambiguous(c("AATTCCTG",'AAATCTAG','AGCTCACG','AAGT1CGT')), throws_error("[ACTG]{4}"))
+	expect_that(bases2ambiguous(c("AATTCCGG",'AAACCGG','AACTCCGG','AAGTCCGG')), throws_error("length"))
+	expect_that(bases2ambiguous(c("AATTCCGGTTATT")), equals(c("AATTCCGGTTATT")))
+	seqs<-c("ATTTCCGG",'AGACCGGT','AACTCCGG','AAGTCCGG')
+	expect_that(grep(ambiguous2regex(bases2ambiguous(seqs)),seqs),equals(1:4))
+})
+
 test_that("Test reverseString",{
 	expect_that(reverseString("1234\nabc_"), equals("_cba\n4321"))
 	expect_that(reverseString(reverseString("1234\nabc_")), equals("1234\nabc_"))

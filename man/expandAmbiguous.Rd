@@ -17,4 +17,7 @@ list with each entry containing all combinations of ambiguous bases for that ent
 \description{
 Convert ambiguous dna to all possible sequences
 }
+\references{
+\url{https://en.wikipedia.org/wiki/Nucleic_acid_notation}
+}
 

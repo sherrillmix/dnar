@@ -19,4 +19,7 @@ Converts ambiguous dna to an appropriate regular expression
 dnaRegex<-ambiguous2regex('ANRT')
 grepl(dnaRegex,c('ATGT','ACAT','AGTT'))
 }
+\references{
+\url{https://en.wikipedia.org/wiki/Nucleic_acid_notation}
+}
 

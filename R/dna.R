@@ -3,6 +3,7 @@
 #' @param dna input sequence with ambiguous bases
 #' @export
 #' @return regular expression to match the ambiguous dna
+#' @references \url{https://en.wikipedia.org/wiki/Nucleic_acid_notation}
 #' @examples
 #' dnaRegex<-ambiguous2regex('ANRT')
 #' grepl(dnaRegex,c('ATGT','ACAT','AGTT'))
@@ -19,10 +20,17 @@ ambiguous2regex<-function(dna){
 #' @param bases vector of character sequences all the same number of characters
 #' @export
 #' @return single character string with ambiguous nucleotide codes representing any differences between sequences 
+#' @references \url{https://en.wikipedia.org/wiki/Nucleic_acid_notation}
+#' @examples
+#' seqs<-c('ACTAGG','ACGTGG','ACCTGG','ACATGG')
+#' ambig<-bases2ambiguous(seqs)
+#' pattern<-ambiguous2regex(ambig)
+#' grepl(pattern,seqs)
 bases2ambiguous<-function(bases){
+	if(any(grepl('[^ACTG]',bases)))stop(simpleError('Non ACTG characters found in bases2ambiguous'))
 	bases<-sort(unique(bases))
 	nBases<-nchar(bases[1])
-	if(any(nchar(bases)!=nBases))stop(simpleError('Convert bases to ambiguous requires same length sequences'))
+	if(any(nchar(bases)!=nBases))stop(simpleError('Different length strings found in bases2ambiguous'))
 	if(length(bases)==1)return(bases)
 	if(nBases>1)return(paste(sapply(1:nBases,function(x)bases2ambiguous(substring(bases,x,x))),collapse=''))
 	else return(dnar::reverseAmbiguous[paste(bases,collapse='')])
@@ -35,6 +43,7 @@ bases2ambiguous<-function(bases){
 #' @param delist return an unlisted vector instead of a list
 #' @export
 #' @return list with each entry containing all combinations of ambiguous bases for that entry of the dna vector
+#' @references \url{https://en.wikipedia.org/wiki/Nucleic_acid_notation}
 expandAmbiguous<-function(dna,delist=FALSE){
 	dna<-toupper(dna)
 	ambigRegex<-sprintf('[%s]',paste(names(dnar::ambiguousBaseCodes),collapse=''))

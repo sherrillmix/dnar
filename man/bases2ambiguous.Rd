@@ -15,4 +15,13 @@ single character string with ambiguous nucleotide codes representing any differe
 \description{
 Convert set of single bases to ambiguous code
 }
+\examples{
+seqs<-c('ACTAGG','ACGTGG','ACCTGG','ACATGG')
+ambig<-bases2ambiguous(seqs)
+pattern<-ambiguous2regex(ambig)
+grepl(pattern,seqs)
+}
+\references{
+\url{https://en.wikipedia.org/wiki/Nucleic_acid_notation}
+}
 
