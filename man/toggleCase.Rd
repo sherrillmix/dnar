@@ -15,4 +15,7 @@ String with lowercase and uppercase swapped
 \description{
 Swap case of a string
 }
+\examples{
+toggleCase(c('AGTCcccT','AbCdEfG'))
+}
 

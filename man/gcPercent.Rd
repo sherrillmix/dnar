@@ -17,4 +17,8 @@ proportion of GC in sequence
 \description{
 Calculate GC percentage for strings
 }
+\examples{
+gcPercent(c('AAATA','AATTC','GCGCTT'))
+gcPercent(c('12345','22234','01011101'),'1')
+}
 

@@ -87,10 +87,13 @@ countNmers<-function(string,k=10){
 #' @param chars characters to count (G,C by default)
 #' @export
 #' @return proportion of GC in sequence
+#' @examples
+#' gcPercent(c('AAATA','AATTC','GCGCTT'))
+#' gcPercent(c('12345','22234','01011101'),'1')
 gcPercent<-function(seqs,chars=c('C','G')){
 	regex<-sprintf('[%s]+',paste(chars,collapse=''))
 	gcs<-nchar(gsub(regex,'',seqs,perl=TRUE))
-	return(gcs/nchar(seqs))
+	return(1-gcs/nchar(seqs))
 }
 
 
@@ -99,16 +102,23 @@ gcPercent<-function(seqs,chars=c('C','G')){
 #' @param string String to have case toggled
 #' @export
 #' @return String with lowercase and uppercase swapped
+#' @examples
+#' toggleCase(c('AGTCcccT','AbCdEfG'))
 toggleCase<-function(string){
 	chartr(paste(letters,LETTERS,collapse='',sep=''),paste(LETTERS,letters,collapse='',sep=''),string)
 }
 
 #' Find pattern in strings and flip case
 #'
+#' Use the case of a string to highlight a pattern. For example, highlighting AC in TTTTGTACAAATC as TTTTGTacAAATC. Note that it will not find overlapping patterns e.g. looking for AGA in AGAGA will only find the first AGA. Non-letter characters can be included in the pattern but their case will remain unchanged.
+#'
 #' @param pattern Pattern to look for in strings
 #' @param strings Strings in which to look for pattern
 #' @export
 #' @return Strings with case of any occurences of pattern swapped
+#' @examples
+#' highlightString('AGA',c('TTAGATTAGA','AGAGA'))
+#' highlightString('aga',tolower(c('TTAGATTAGA','AGAGA')))
 highlightString<-function(pattern,strings){
 	locs<-gregexpr(pattern,strings)
 	nLetter<-nchar(pattern)

@@ -13,7 +13,7 @@ test_that("Test index matrix",{
 
 context("Simple DNA string manipulation")
 test_that("Test ambiguous2regex",{
-	expect_that(ambiguous2regex(c("AATTCCGG",'GN@!','RYHB')), equals(c("AATTCCGG",'G[ACGT]@!','[AG][CT][ACT][CGT]')))
+	expect_that(ambiguous2regex(c("AATTCCGG",'GN@!','RYHB','')), equals(c("AATTCCGG",'G[ACGT]@!','[AG][CT][ACT][CGT]','')))
 	expect_that(grep(ambiguous2regex('ANRT'),c('ATGT','ACAT','AGTT')), equals(1:2))
 })
 
@@ -28,7 +28,7 @@ test_that("Test bases2ambiguous",{
 
 test_that("Test expandAmbiguous",{
 	expect_that(expandAmbiguous(c("AATTCCTG",'AAATCTAG','AGCTCACG','AAGTCCGT12!@')), equals(list("AATTCCTG",'AAATCTAG','AGCTCACG','AAGTCCGT12!@')))
-	expect_that(lapply(expandAmbiguous(c("AAGN",'ARV')),sort), equals(list(c("AAGA","AAGC","AAGG","AAGT"),c("AAA","AAC","AAG","AGA","AGC","AGG"))))
+	expect_that(lapply(expandAmbiguous(c("AAGN",'ARV','')),sort), equals(list(c("AAGA","AAGC","AAGG","AAGT"),c("AAA","AAC","AAG","AGA","AGC","AGG"),'')))
 	expect_that(sapply(expandAmbiguous(c("AAN",'AAANN','NANAN',"HBVD","RYMKSWHBVD")),length), equals(c(4,16,64,81,2^6*3^4)))
 })
 
@@ -38,6 +38,25 @@ test_that("Test countNmers",{
 	expect_that(countNmers(c('GTTTT'),2),equals(c('GT'=1,'TT'=3)))
 	expect_that(countNmers(c('GTTTT'),3),equals(c('GTT'=1,'TTT'=2)))
 	expect_that(countNmers(c('GTTTT'),100),gives_warning('shorter'))
+})
+
+test_that("Test gcPercent",{
+	expect_that(gcPercent(c('AATT','AATTGGCC','AGAGAG','GGCCCC','ATGCGC')),equals(c(0,.5,.5,1,4/6)))
+	expect_that(gcPercent(c('AATT','AATTGGCC','AGAGAG','GGCCCC','ATGCGC'),'A'),equals(c(.5,.25,.5,0,1/6)))
+	expect_that(gcPercent(c('AATT','AATTGGCC','AGAGAG','GGCCCC','ATGCGC'),c('A','T')),equals(c(1,.5,.5,0,2/6)))
+	expect_that(gcPercent(paste(rep('ATGC',1000),collapse='')),equals(.5))
+	expect_that(gcPercent(''),equals(NaN))
+})
+
+test_that("Test toggleCase",{
+	expect_that(toggleCase(c("1234\nabc_","AbCdE",'12345!@','')), equals(c("1234\nABC_","aBcDe",'12345!@','')))
+	expect_that(toggleCase(paste(letters,LETTERS,collapse='\n',sep='_@!$%^')), equals(paste(LETTERS,letters,collapse='\n',sep='_@!$%^')))
+})
+
+test_that("Test highlightString",{
+	expect_that(highlightString('AGA',c('TTTAGATTTAGAT','','!@#@$AGATTT123','TAIQWEUQOWIEUO','AGAGA')), equals(c('TTTagaTTTagaT','','!@#@$agaTTT123','TAIQWEUQOWIEUO','agaGA')))
+	expect_that(highlightString('aga',tolower(c('TTTAGATTTAGAT','','!@#@$AGATTT123','TAIQWEUQOWIEUO','AGAGA'))), equals(toggleCase(c('TTTagaTTTagaT','','!@#@$agaTTT123','TAIQWEUQOWIEUO','agaGA'))))
+	expect_that(highlightString('AG1A',c('TTTAG1ATTTAG1AT')), equals(c('TTTag1aTTTag1aT')))
 })
 
 test_that("Test reverseString",{

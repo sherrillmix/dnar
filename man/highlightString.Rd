@@ -15,6 +15,10 @@ highlightString(pattern, strings)
 Strings with case of any occurences of pattern swapped
 }
 \description{
-Find pattern in strings and flip case
+Use the case of a string to highlight a pattern. For example, highlighting AC in TTTTGTACAAATC as TTTTGTacAAATC. Note that it will not find overlapping patterns e.g. looking for AGA in AGAGA will only find the first AGA. Non-letter characters can be included in the pattern but their case will remain unchanged.
+}
+\examples{
+highlightString('AGA',c('TTAGATTAGA','AGAGA'))
+highlightString('aga',tolower(c('TTAGATTAGA','AGAGA')))
 }
 
