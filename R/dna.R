@@ -40,11 +40,12 @@ bases2ambiguous<-function(bases){
 #' Convert ambiguous dna to all possible sequences
 #'
 #' @param dna vector dna containing ambiguous bases
-#' @param delist return an unlisted vector instead of a list
 #' @export
 #' @return list with each entry containing all combinations of ambiguous bases for that entry of the dna vector
 #' @references \url{https://en.wikipedia.org/wiki/Nucleic_acid_notation}
-expandAmbiguous<-function(dna,delist=FALSE){
+#' @examples
+#' expandAmbiguous(c('AACACANAT',"ACCHB"))
+expandAmbiguous<-function(dna){
 	dna<-toupper(dna)
 	ambigRegex<-sprintf('[%s]',paste(names(dnar::ambiguousBaseCodes),collapse=''))
 	out<-lapply(dna,function(x){
@@ -53,11 +54,10 @@ expandAmbiguous<-function(dna,delist=FALSE){
 			replaces<-strsplit(dnar::ambiguousBaseCodes[substring(x,pos,pos)],'')[[1]]
 			new<-rep(x,length(replaces))
 			for(i in 1:length(replaces))substring(new[i],pos,pos)<-replaces[i]
-			out<-expandAmbiguous(new,TRUE)
+			out<-unlist(expandAmbiguous(new))
 		}else{out<-x}
 		return(out)
 	})
-	if(delist)out<-unlist(out)
 	return(out)
 }
 
@@ -66,31 +66,19 @@ expandAmbiguous<-function(dna,delist=FALSE){
 #'
 #' @param string string to be searched for nmers
 #' @param k length of nmers
-#' @param n return the top n nmers
 #' @export
-#' @return a sorted table giving the identity and counts for nMers with the highest counts in string
-countNmers<-function(string,k=10,n=10){
+#' @return a sorted named vector giving the identity and counts for nMers
+#' @examples
+#' countNmers('AATTAATT',2)
+#' countNmers('AATTAATT',3)
+countNmers<-function(string,k=10){
 	if(nchar(string)<k){
 		warning('string shorter than k')
 		return(0)
 	}
 	indices<-1:(nchar(string)-k+1)
 	substrings<-substring(string,indices,indices+k-1)
-	return(tail(sort(table(substrings)),n))
-}
-
-#' Generate hases from a string
-#'
-#' @param string String to be hashed
-#' @param hashSize Size of hashed strings
-#' @param everyBase Generate a hash every X strings
-#' @param start Output labels start from e.g. label starting from 1000
-#' @export
-#' @return Output from operation function with ... arguments
-hashString<-function(string,hashSize,everyBase=1,start=1){
-	cuts<-seq(1,nchar(string)-hashSize+1,everyBase)
-	hashes<-substring(string,cuts,cuts+hashSize-1)
-	return(data.frame('forw'=hashes,'revComp'=revComp(hashes),'start'=cuts,'end'=cuts+hashSize-1,stringsAsFactors=FALSE))
+	return(table2vector(sort(table(substrings))))
 }
 
 #' Calculate GC percentage for strings

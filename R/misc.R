@@ -373,4 +373,13 @@ mostAbundant<-function(values){
 	return(names(tmp)[which.max(tmp)])
 }
 
+#' Convenience function for converting 1-d table to named vector
+#'
+#' @param tab A one-dimensional table e.g. the output from \code{table}
+#' @export
+#' @return a named vector with elements corresponding to the counts in table
+table2vector<-function(tab){
+	if(length(dim(tab))>1)stop(simpleError('table2vector only works with 1-d tables'))
+	return(structure(as.vector(tab),.Names=names(tab)))
+}
 

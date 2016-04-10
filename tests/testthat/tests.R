@@ -26,6 +26,20 @@ test_that("Test bases2ambiguous",{
 	expect_that(grep(ambiguous2regex(bases2ambiguous(seqs)),seqs),equals(1:4))
 })
 
+test_that("Test expandAmbiguous",{
+	expect_that(expandAmbiguous(c("AATTCCTG",'AAATCTAG','AGCTCACG','AAGTCCGT12!@')), equals(list("AATTCCTG",'AAATCTAG','AGCTCACG','AAGTCCGT12!@')))
+	expect_that(lapply(expandAmbiguous(c("AAGN",'ARV')),sort), equals(list(c("AAGA","AAGC","AAGG","AAGT"),c("AAA","AAC","AAG","AGA","AGC","AGG"))))
+	expect_that(sapply(expandAmbiguous(c("AAN",'AAANN','NANAN',"HBVD","RYMKSWHBVD")),length), equals(c(4,16,64,81,2^6*3^4)))
+})
+
+test_that("Test countNmers",{
+	expect_that(countNmers(c('AATT'),2),equals(c('AA'=1,'AT'=1,'TT'=1)))
+	expect_that(countNmers(c('AATTT'),2),equals(c('AA'=1,'AT'=1,'TT'=2)))
+	expect_that(countNmers(c('GTTTT'),2),equals(c('GT'=1,'TT'=3)))
+	expect_that(countNmers(c('GTTTT'),3),equals(c('GTT'=1,'TTT'=2)))
+	expect_that(countNmers(c('GTTTT'),100),gives_warning('shorter'))
+})
+
 test_that("Test reverseString",{
 	expect_that(reverseString("1234\nabc_"), equals("_cba\n4321"))
 	expect_that(reverseString(reverseString("1234\nabc_")), equals("1234\nabc_"))

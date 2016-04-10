@@ -4,19 +4,21 @@
 \alias{countNmers}
 \title{Count nMers in a string}
 \usage{
-countNmers(string, k = 10, n = 10)
+countNmers(string, k = 10)
 }
 \arguments{
 \item{string}{string to be searched for nmers}
 
 \item{k}{length of nmers}
-
-\item{n}{return the top n nmers}
 }
 \value{
-a sorted table giving the identity and counts for nMers with the highest counts in string
+a sorted named vector giving the identity and counts for nMers
 }
 \description{
 Count nMers in a string
+}
+\examples{
+countNmers('AATTAATT',2)
+countNmers('AATTAATT',3)
 }
 

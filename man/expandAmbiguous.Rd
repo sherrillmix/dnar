@@ -4,18 +4,19 @@
 \alias{expandAmbiguous}
 \title{Convert ambiguous dna to all possible sequences}
 \usage{
-expandAmbiguous(dna, delist = FALSE)
+expandAmbiguous(dna)
 }
 \arguments{
 \item{dna}{vector dna containing ambiguous bases}
-
-\item{delist}{return an unlisted vector instead of a list}
 }
 \value{
 list with each entry containing all combinations of ambiguous bases for that entry of the dna vector
 }
 \description{
 Convert ambiguous dna to all possible sequences
+}
+\examples{
+expandAmbiguous(c('AACACANAT',"ACCHB"))
 }
 \references{
 \url{https://en.wikipedia.org/wiki/Nucleic_acid_notation}
