@@ -132,6 +132,8 @@ highlightString<-function(pattern,strings){
 #' @param seq2 sequence to compare to
 #' @export
 #' @return seq1 with bases that differ from seq2 having their case toggled (e.g. upper to lower case)
+#' highlightDifferences('aaccat','aacgat')
+#' highlightDifferences('TATATTCTTT','TATATCCTTT')
 highlightDifferences<-function(seq1,seq2){
 	if(nchar(seq1)!=nchar(seq2))stop(simpleError('Highlighting differences in different length sequences not supported'))
 	seqMat<-seqSplit(seq1,seq2)
@@ -143,33 +145,44 @@ highlightDifferences<-function(seq1,seq2){
 #' Convenience function for splitting a bunch of sequences into a matrix
 #'
 #' @param ... Various sequences to split into a matrix
-#' @param fill A character to pad ends of sequences. Sequences are left uneven lengths if NULL
+#' @param fill A character to pad ends of sequences. An error is generated if any sequence differs in length if NULL
 #' @export
 #' @return A matrix of single characters each row corresponding to a read
-seqSplit<-function(...,fill=NULL){
+#' @examples
+#' seqSplit('ACACA','ACA')
+#' seqSplit('ACACA','ACA',fill='-')
+#' seqSplit(c('ACACA','ACA'),'TCACA')
+seqSplit<-function(...,fill='.'){
 	seqs<-c(...)
 	seqN<-nchar(seqs)
 	maxN<-max(seqN)
 	if(is.null(fill)&&any(seqN!=maxN))stop(simpleError('All sequences not same length'))
-	else seqs<-paste(seqs,sapply(maxN-seqN,function(x)paste(rep(fill,x),collapse='')),sep='')
+	seqs<-paste(seqs,sapply(maxN-seqN,function(x)paste(rep(fill,x),collapse='')),sep='')
 	return(do.call(rbind,strsplit(seqs,'')))
 }
 
-#' Convert dna string into seperate codons
+#' Convert DNA string into seperate codons
 #'
-#' @param dna Single string of DNA
+#' @param dna Vector of DNA strings
 #' @param frame Starting frame for codons (0=start on first base, 1=on second, 2=on third)
 #' @export
-#' @return Vector of 3 base codons
+#' @return List with a vector of 3 base codons for each input DNA string
+#' @examples
+#' dna2codons('ACATTTGGG')
+#' dna2codons('ACATTTGGG',1)
+#' dna2codons(c('ACATTTGGG','AAATTAGGC'))
+#' dna2codons(c('ACATTTGGG','AAATTAGGC'),c(1,2))
 dna2codons<-function(dna,frame=0){
-	if(nchar(dna)<3){
-		warning('DNA less than 3 bases long')
-		return(NULL)
-	}
 	frame<-frame+1
-	starts<-seq(frame,nchar(dna)-2,3)
-	##############WORK HERE
-	return(substring(dna,starts,starts+2))
+	out<-mapply(function(seq,start){
+		if(nchar(seq)-start+1<3){
+			warning('DNA shorter than 3 bases in dna2codons')
+			return(NULL)
+		}
+		starts<-seq(start,nchar(seq)-2,3)
+		return(substring(seq,starts,starts+2))
+	},dna,frame,SIMPLIFY=FALSE,USE.NAMES=FALSE)
+	return(out)
 }
 
 #' Convert codon to amino acid
@@ -193,16 +206,14 @@ codon2aa<-function(codons,type='code',naReplace='z',warn=TRUE){
 #'
 #' @param dna A string of DNA/RNA
 #' @param frame Starting frame (0=start on first base, 1=on second, 2=on third)
-#' @param debug If TRUE print debug info
 #' @param ... Additional arguments to codon2aa
 #' @export
 #' @return A string of amino acids
-dna2aa<-Vectorize(function(dna,frame=0,debug=FALSE,...){
+dna2aa<-function(dna,frame=0,...){
 	codons<-dna2codons(dna,frame)	
-	if(debug)print(codons)
-	output<-paste(codon2aa(codons,...),collapse='')
+	output<-sapply(codons,function(xx)paste(codon2aa(xx,...),collapse=''))
 	return(output)
-})
+}
 
 #' Find the DNA to code for a given amino acid
 #'

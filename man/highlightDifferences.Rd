@@ -13,6 +13,8 @@ highlightDifferences(seq1, seq2)
 }
 \value{
 seq1 with bases that differ from seq2 having their case toggled (e.g. upper to lower case)
+highlightDifferences('aaccat','aacgat')
+highlightDifferences('TATATTCTTT','TATATCCTTT')
 }
 \description{
 Switch the case of positions in seq1 that mismatch seq2

@@ -59,6 +59,32 @@ test_that("Test highlightString",{
 	expect_that(highlightString('AG1A',c('TTTAG1ATTTAG1AT')), equals(c('TTTag1aTTTag1aT')))
 })
 
+test_that("Test highlightDifferences",{
+	expect_that(highlightDifferences('AGA1123','AGA1123'), equals('AGA1123'))
+	expect_that(highlightDifferences('AGAAAT','AGACAT'), equals('AGAaAT'))
+	expect_that(highlightDifferences('agaaat','agacat'), equals('agaAat'))
+	expect_that(highlightDifferences('',''), equals(''))
+	expect_that(highlightDifferences("ACA","ACAA"), throws_error("length"))
+})
+
+test_that("Test seqSplit",{
+	expect_that(seqSplit('ATA','ACA','A'), equals(matrix(c('A','T','A','A','C','A','A','.','.'),nrow=3,byrow=TRUE)))
+	expect_that(seqSplit('ATA',c('ACA','A'),fill='Z'), equals(matrix(c('A','T','A','A','C','A','A','Z','Z'),nrow=3,byrow=TRUE)))
+	expect_that(dim(seqSplit('','','')), equals(c(3,0)))
+	expect_that(dim(seqSplit(replicate(100,paste(sample(letters,1000,TRUE),collapse='')))), equals(c(100,1000)))
+	expect_that(seqSplit("ACA","ACAA",fill=NULL), throws_error("length"))
+})
+
+test_that("Test dna2codons",{
+	expect_that(dna2codons(c('GTTGAA','ACGTTT123','GTAAA')),equals(list(c('GTT','GAA'),c('ACG','TTT','123'),c('GTA'))))
+	expect_that(dna2codons(c('GTTGAA','ACGTTT123','GTAAA'),frame=0:2),equals(list(c('GTT','GAA'),c('CGT','TT1'),c('AAA'))))
+	expect_that(dna2codons(c('GTTGAA','ACGTTT123','GTAAA'),frame=2),equals(list(c('TGA'),c('GTT','T12'),c('AAA'))))
+	expect_that(dna2codons(c('GT')),gives_warning('shorter'))
+	expect_that(dna2codons(c('GTT','GT')),gives_warning('shorter'))
+	expect_that(dna2codons(c('GTT'),frame=1),gives_warning('shorter'))
+	expect_that(dna2codons(c('GTTA'),frame=2),gives_warning('shorter'))
+})
+
 test_that("Test reverseString",{
 	expect_that(reverseString("1234\nabc_"), equals("_cba\n4321"))
 	expect_that(reverseString(reverseString("1234\nabc_")), equals("1234\nabc_"))

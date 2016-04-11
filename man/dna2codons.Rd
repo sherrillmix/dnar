@@ -2,19 +2,25 @@
 % Please edit documentation in R/dna.R
 \name{dna2codons}
 \alias{dna2codons}
-\title{Convert dna string into seperate codons}
+\title{Convert DNA string into seperate codons}
 \usage{
 dna2codons(dna, frame = 0)
 }
 \arguments{
-\item{dna}{Single string of DNA}
+\item{dna}{Vector of DNA strings}
 
 \item{frame}{Starting frame for codons (0=start on first base, 1=on second, 2=on third)}
 }
 \value{
-Vector of 3 base codons
+List with a vector of 3 base codons for each input DNA string
 }
 \description{
-Convert dna string into seperate codons
+Convert DNA string into seperate codons
+}
+\examples{
+dna2codons('ACATTTGGG')
+dna2codons('ACATTTGGG',1)
+dna2codons(c('ACATTTGGG','AAATTAGGC'))
+dna2codons(c('ACATTTGGG','AAATTAGGC'),c(1,2))
 }
 
