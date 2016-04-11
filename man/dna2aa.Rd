@@ -11,7 +11,7 @@ dna2aa(dna, frame = 0, ...)
 
 \item{frame}{Starting frame (0=start on first base, 1=on second, 2=on third)}
 
-\item{...}{Additional arguments to codon2aa}
+\item{...}{Additional arguments to codons2aa}
 }
 \value{
 A string of amino acids

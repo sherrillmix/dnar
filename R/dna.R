@@ -193,11 +193,14 @@ dna2codons<-function(dna,frame=0){
 #' @param warn Warn if any unknown codons are found. Usually due to ACTG characters
 #' @export
 #' @return Vector of amino acids
-codon2aa<-function(codons,type='code',naReplace='z',warn=TRUE){
+#' @examples
+#' codons2aa(c('AUG','GTT','AGG','GTA'))
+#' codons2aa(dna2codons('ATGTTTATTGGG')[[1]])
+codons2aa<-function(codons,type='code',naReplace='z',warn=TRUE){
 	if(!type %in% c('code','name','abbr'))stop(simpleError('Invalid amino acid type'))
 	codons<-gsub('T','U',toupper(codons))
 	aas<-dnar::aminoAcids[,type,drop=FALSE][codons,1]
-	if(warn&any(is.na(aas)))warning('Unknown codons')
+	if(warn&any(is.na(aas)))warning('Unknown codons in codons2aa')
 	aas[is.na(aas)]<-naReplace
 	return(aas)
 }
@@ -206,12 +209,12 @@ codon2aa<-function(codons,type='code',naReplace='z',warn=TRUE){
 #'
 #' @param dna A string of DNA/RNA
 #' @param frame Starting frame (0=start on first base, 1=on second, 2=on third)
-#' @param ... Additional arguments to codon2aa
+#' @param ... Additional arguments to codons2aa
 #' @export
 #' @return A string of amino acids
 dna2aa<-function(dna,frame=0,...){
 	codons<-dna2codons(dna,frame)	
-	output<-sapply(codons,function(xx)paste(codon2aa(xx,...),collapse=''))
+	output<-sapply(codons,function(xx)paste(codons2aa(xx,...),collapse=''))
 	return(output)
 }
 
@@ -279,7 +282,7 @@ dnaPos2aa<-function(dna,pos,start=1,end=nchar(dna),frame=0,strand='+',refStart=1
 	startPos<-floor((pos-1)/3)*3+1
 	if(debug)message(paste('StartPos: ',startPos,' EndPos:',startPos+2,' Cut:',substring(dna,startPos,startPos+2),sep='',collapse='\n'))
 	if(debug)message(paste('DNA: ',dna,' pos: ',pos,' start: ',start,' end: ',end,' strand-:',strand=='-',sep='',collapse='\n'))
-	return(codon2aa(substring(dna,startPos,startPos+2)))
+	return(codons2aa(substring(dna,startPos,startPos+2)))
 }
 
 #' Check overlap between two sets of coordinates (ranges package may be better/quicker option)

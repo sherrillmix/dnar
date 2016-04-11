@@ -85,6 +85,13 @@ test_that("Test dna2codons",{
 	expect_that(dna2codons(c('GTTA'),frame=2),gives_warning('shorter'))
 })
 
+test_that("Test codons2aa",{
+	expect_that(codons2aa(c('AUG','GTT','ACG','GTA')),equals(c('M','V','T','V')))
+	expect_that(codons2aa(c('AUG','GTT','A1G','GTA'),naReplace='@',warn=FALSE),equals(c('M','V','@','V')))
+	expect_that(codons2aa(c('AUG','GTT','A1G','GTA'),'abbr',naReplace='@',warn=FALSE),equals(c('Met','Val','@','Val')))
+	expect_that(codons2aa(c('123')),gives_warning('Unknown'))
+})
+
 test_that("Test reverseString",{
 	expect_that(reverseString("1234\nabc_"), equals("_cba\n4321"))
 	expect_that(reverseString(reverseString("1234\nabc_")), equals("1234\nabc_"))
