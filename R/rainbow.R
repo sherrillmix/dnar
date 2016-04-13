@@ -1,8 +1,14 @@
-#rainbow based on circle of lab color space (to equalize intensity I hope)
-#n: number of colors desired
-#start: start angle (in proportion of circle) in lab space
-#end: end angle (in proportion of circle) in lab space
-rainbow.lab<-function(n,start=1.5,end=-3,alpha=1,lightScale=.5,lightMultiple=1){
+#' Rainbow based on circle of lab color space
+#'
+#' @param n number of colors desired
+#' @param start start angle (in proportion of circle) in lab space
+#' @param end end angle (in proportion of circle) in lab space
+#' @param alpha transparency (0 for transparent, 1 for opaque)
+#' @param lightScale exponent to scale lightness by 
+#' @param lightMultiple multiple to scale lightness by
+#' @export 
+#' @return vector of color strings
+rainbow.lab<-function(n,start=1.5,end=-3,alpha=1,lightScale=0,lightMultiple=.7){
 	#something is going crazy with R's implementation of lab
 	#angles<-seq(start*2*pi,end*2*pi,length.out=n)
 	#a<-sin(angles)*radius
