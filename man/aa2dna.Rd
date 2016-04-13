@@ -15,4 +15,7 @@ A vector with a regular expression for each element of aas
 \description{
 Convert amino acids to dna regex
 }
+\examples{
+aa2dna(c('MATX','MGCATKRVX'))
+}
 

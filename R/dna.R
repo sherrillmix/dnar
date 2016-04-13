@@ -212,6 +212,8 @@ codons2aa<-function(codons,type='code',naReplace='z',warn=TRUE){
 #' @param ... Additional arguments to codons2aa
 #' @export
 #' @return A string of amino acids
+#' @examples
+#' dna2aa(c('ATGAGATGCAGTTAA','AATTTA'))
 dna2aa<-function(dna,frame=0,...){
 	codons<-dna2codons(dna,frame)	
 	output<-sapply(codons,function(xx)paste(codons2aa(xx,...),collapse=''))
@@ -220,27 +222,34 @@ dna2aa<-function(dna,frame=0,...){
 
 #' Find the DNA to code for a given amino acid
 #'
-#' @param aa amino acid to convert to dna
+#' @param aa single amino acids to convert to dna
 #' @param type code or abbr or name
 #' @param regex if true return a (X|Y) regex of codons else return vector
 #' @export
-#' @return A vector of codons if regex=FALSE else a regular expression matching the possible codons
-aa2codon<-Vectorize(function(aa,type='code',regex=TRUE){
-	selector<-dnar::aminoAcids[,type]==aa
-	if(!any(selector))ntopError('Unknown amino acid',aa)
-	codons<-dnar::aminoAcids[selector,'codon']
-	codons<-sprintf('(%s)',paste(codons,collapse='|'))
+#' @return A list of vectors of codons if regex=FALSE else a regular expression matching the possible codons
+#' @examples
+#' aa2codons(c('A','T','X'))
+#' aa2codons(c('A','T','X'),regex=FALSE)
+#' aa2codons(c('Glu','Ala','Xxx'),type='abbr')
+aa2codons<-function(aas,type='code',regex=TRUE){
+	selectors<-lapply(aas,function(aa)dnar::aminoAcids[,type]==aa)
+	aaFound<-sapply(selectors,any)
+	if(any(!aaFound))stopError('Unknown amino acid ',paste(aas[!aaFound],collapse=', '))
+	codons<-lapply(selectors,function(selector)dnar::aminoAcids[selector,'codon'])
+	if(regex)codons<-sapply(codons,function(codon)sprintf('(%s)',paste(codon,collapse='|')))
 	return(codons)
-})
+}
 
 #' Convert amino acids to dna regex
 #'
 #' @param aas A vector of amino acids to turn to dna regex
 #' @export
 #' @return A vector with a regular expression for each element of aas
+#' @examples
+#' aa2dna(c('MATX','MGCATKRVX'))
 aa2dna<-function(aas){
 	splitAas<-strsplit(aas,'')
-	out<-sapply(splitAas,function(x)paste(aa2codon(x),collapse=''))
+	out<-sapply(splitAas,function(x)paste(aa2codons(x),collapse=''))
 	out<-gsub('U','T',out)
 	return(out)
 }

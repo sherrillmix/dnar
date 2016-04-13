@@ -92,6 +92,23 @@ test_that("Test codons2aa",{
 	expect_that(codons2aa(c('123')),gives_warning('Unknown'))
 })
 
+test_that("Test dna2aa",{
+	expect_that(dna2aa(c('AA1')),gives_warning('Unknown'))
+	expect_that(dna2aa(c('AA1'),warn=FALSE,naReplace='@'),equals('@'))
+	expect_that(dna2aa(c('ATGAA1'),warn=FALSE,naReplace='z'),equals('Mz'))
+	expect_that(dna2aa(c('ATGAA')),equals('M'))
+	expect_that(dna2aa(c('ATGAAT','ATGGATGATTAGGAG')),equals(c('MN','MDDXE')))
+})
+
+test_that("Test aa2codons",{
+	expect_that(aa2codons(c('1','G')),throws_error('Unknown'))
+	expect_that(lapply(aa2codons(c('M','A','A','X')),function(x)sort(strsplit(gsub('[()]','',x),'\\|')[[1]])),equals(list(c('AUG'),c('GCA','GCC','GCG','GCU'),c('GCA','GCC','GCG','GCU'),c('UAA','UAG','UGA')))) 
+	expect_that(lapply(aa2codons(c('M','A','A','X'),regex=FALSE),sort),equals(list(c('AUG'),c('GCA','GCC','GCG','GCU'),c('GCA','GCC','GCG','GCU'),c('UAA','UAG','UGA')))) 
+	expect_that(lapply(aa2codons(c('M','A','A','X')),function(x)sort(strsplit(gsub('[()]','',x),'\\|')[[1]])),equals(lapply(aa2codons(c('M','A','A','X'),regex=FALSE),sort))) 
+	expect_that(lapply(aa2codons(c('Met','Ala','Ala','Xxx',"Glu"),type='abbr',regex=FALSE),sort),equals(lapply(aa2codons(c('M','A','A','X','E'),regex=FALSE),sort))) 
+	expect_that(lapply(aa2codons(c('Methionine','Alanine','Alanine'),type='name',regex=FALSE),sort),equals(lapply(aa2codons(c('M','A','A'),regex=FALSE),sort))) 
+})
+
 test_that("Test reverseString",{
 	expect_that(reverseString("1234\nabc_"), equals("_cba\n4321"))
 	expect_that(reverseString(reverseString("1234\nabc_")), equals("1234\nabc_"))

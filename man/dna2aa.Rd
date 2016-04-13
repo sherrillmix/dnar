@@ -19,4 +19,7 @@ A string of amino acids
 \description{
 Convert dna/rna to amino acids
 }
+\examples{
+dna2aa(c('ATGAGATGCAGTTAA','AATTTA'))
+}
 
