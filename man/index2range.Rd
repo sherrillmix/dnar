@@ -15,4 +15,8 @@ data.frame with rows for each contiguous region of interest with columns start a
 \description{
 Find covered ranges with numerical index data
 }
+\examples{
+index2range(c(1:100,300:450))
+index2range(c(1:100,2:110))
+}
 

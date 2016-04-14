@@ -15,4 +15,7 @@ data.frame with rows for each contiguous region of interest with columns start a
 \description{
 Find covered ranges in binary data
 }
+\examples{
+binary2range(c(FALSE,TRUE,FALSE,TRUE,TRUE,TRUE))
+}
 

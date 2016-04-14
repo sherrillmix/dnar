@@ -127,6 +127,23 @@ test_that("Test noGap2Gap",{
 	expect_that(gap2NoGap(seq,noGap2Gap(seq,1:5)), equals(1:5))
 })
 
+test_that("Test binary2range",{
+	expect_that(binary2range(c(TRUE,TRUE,FALSE,FALSE,FALSE)), equals(data.frame('start'=1,'end'=2)))
+	expect_that(binary2range(c(FALSE,FALSE,FALSE,TRUE,TRUE)), equals(data.frame('start'=4,'end'=5)))
+	expect_that(binary2range(c(TRUE,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE,TRUE)), equals(data.frame('start'=c(1,3,8),'end'=c(1,4,9))))
+	expect_that(binary2range(c(rep(TRUE,100),rep(FALSE,200),rep(TRUE,300),FALSE,rep(TRUE,20))), equals(data.frame('start'=c(1,301,602),'end'=c(100,600,621))))
+	expect_that(binary2range(rep(FALSE,100)), equals(data.frame('start'=NA,'end'=NA)[0,]))
+})
+
+test_that("Test index2range",{
+	expect_that(index2range(c(1:100,200:250)), equals(data.frame('start'=c(1,200),'end'=c(100,250))))
+	expect_that(index2range(c(1:100,2:110)), equals(data.frame('start'=c(1),'end'=c(110))))
+	seq<-c(rep(TRUE,100),rep(FALSE,200),rep(TRUE,300),FALSE,rep(TRUE,20))
+	expect_that(index2range(which(seq)), equals(data.frame('start'=c(1,301,602),'end'=c(100,600,621))))
+	expect_that(index2range(which(seq)), equals(binary2range(seq)))
+	expect_that(index2range(c()), equals(data.frame('start'=NA,'end'=NA)[0,]))
+})
+
 test_that("Test reverseString",{
 	expect_that(reverseString("1234\nabc_"), equals("_cba\n4321"))
 	expect_that(reverseString(reverseString("1234\nabc_")), equals("1234\nabc_"))

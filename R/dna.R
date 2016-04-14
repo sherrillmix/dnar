@@ -254,46 +254,6 @@ aa2dna<-function(aas){
 	return(out)
 }
 
-#' Find a single codon at a given position in dna
-#'
-#' @param dna A string of DNA/RNA
-#' @param pos Position of interest
-#' @param start Start coordinate of exon
-#' @param end End coordinate of exon
-#' @param frame Starting frame (0=start on first base, 1=on second, 2=on third)
-#' @param strand Strand of dna (i.e. revcomp the dna first if '-')
-#' @param refStart Start coordinate of string
-#' @param debug If TRUE print debug info
-#' @export
-#' @return Amino acid code or NA if outside exon or outside string
-dnaPos2aa<-function(dna,pos,start=1,end=nchar(dna),frame=0,strand='+',refStart=1,debug=FALSE){
-	if(length(pos)==1&length(start)>1)pos<-rep(pos,length(start))
-	pos[pos>end|pos<start|frame==-1]<--99999999
-	start<-start-refStart+1
-	end<-end-refStart+1
-	pos<-pos-refStart+1
-	#adjust for frame
-	end[strand=='-']<-end[strand=='-']-(3-frame[strand=='-'])%%3
-	start[strand!='-']<-start[strand!='-']+(3-frame[strand!='-'])%%3
-	#adjust end and start for outisde dna 
-	#print(c(start,end))
-	start[strand=='-'&start<1]<-1
-	end[strand!='-'&end>nchar(dna)]<-nchar(dna[strand!='-'&end>nchar(dna)])
-	start[strand!='-'&start<1]<-1+(3-(1-start[strand!='-'&start<1]))%%3
-	selector<-strand=='-'&end>nchar(dna)
-	end[selector]<-nchar(dna[selector])-(3-(end[selector]-nchar(dna[selector])))%%3
-
-	dna<-substring(dna,start,end)
-	if(any(nchar(dna)!=end-start+1&nchar(dna)!=0))stop(simpleError("Missing DNA"))
-	dna[strand=='-']<-revComp(dna[strand=='-'])
-	pos[strand=='-']<-end[strand=='-']-pos[strand=='-']+1
-	pos[strand!='-']<-pos[strand!='-']-start[strand!='-']+1
-	startPos<-floor((pos-1)/3)*3+1
-	if(debug)message(paste('StartPos: ',startPos,' EndPos:',startPos+2,' Cut:',substring(dna,startPos,startPos+2),sep='',collapse='\n'))
-	if(debug)message(paste('DNA: ',dna,' pos: ',pos,' start: ',start,' end: ',end,' strand-:',strand=='-',sep='',collapse='\n'))
-	return(codons2aa(substring(dna,startPos,startPos+2)))
-}
-
 #' Check overlap between two sets of coordinates (ranges package may be better/quicker option)
 #'
 #' @param starts Start coordinates of query
@@ -378,6 +338,8 @@ noGap2Gap<-function(gapSeq,coords){
 #' @param index logical vector containing TRUE in the regions of interest
 #' @export
 #' @return data.frame with rows for each contiguous region of interest with columns start and end of regions
+#' @examples
+#' binary2range(c(FALSE,TRUE,FALSE,TRUE,TRUE,TRUE))
 binary2range<-function(index){
 	return(index2range(which(index)))
 }
@@ -387,7 +349,11 @@ binary2range<-function(index){
 #' @param index numeric indices indicating positions of interest
 #' @export
 #' @return data.frame with rows for each contiguous region of interest with columns start and end of regions
+#' @examples
+#' index2range(c(1:100,300:450))
+#' index2range(c(1:100,2:110))
 index2range<-function(index){
+	if(length(index)==0)return(data.frame('start'=NA,'end'=NA)[0,])
 	index<-sort(unique(index))
 	diffs<-c(diff(index),1)
 	ends<-c(which(diffs>1),length(index))
