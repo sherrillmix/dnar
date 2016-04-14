@@ -19,14 +19,15 @@ isError<-function(x){
 #' indexMatrix(c(1,2,3),c(1,2,1),matrix(1:9,nrow=3,byrow=TRUE))
 indexMatrix<-function(rows,cols,mat,returnIndex=FALSE){
 	mat<-as.matrix(mat)
-	if(!is.integer(rows)){tmp<-1:nrow(mat);names(tmp)<-rownames(mat);rows<-tmp[rows]}
-	if(!is.integer(cols)){tmp<-1:ncol(mat);names(tmp)<-colnames(mat);cols<-tmp[cols]}
+	if(is.character(rows)){tmp<-1:nrow(mat);names(tmp)<-rownames(mat);rows<-tmp[rows]}
+	if(is.character(cols)){tmp<-1:ncol(mat);names(tmp)<-colnames(mat);cols<-tmp[cols]}
+	if(any(is.na(rows))||any(is.na(cols)))stop(simpleError('NAs in indices'))
 	if(length(rows)!=length(cols))stop(simpleError("rows and cols different lengths"))
 	if(min(rows)<1|max(rows)>nrow(mat))stop(simpleError("rows outside matrix bounds"))
 	if(min(cols)<1|max(cols)>ncol(mat))stop(simpleError("cols outside matrix bounds"))
 	index<-(cols-1)*nrow(mat)+rows
-	if(returnIndex)return(index)
-	else return(mat[index])
+	if(returnIndex)return(as.vector(index)) #as.vector to remove names
+	else return(as.vector(mat[index]))
 }
 
 #' Convenience function for selecting multiple elements from a matrix by x,y position
