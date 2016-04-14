@@ -109,6 +109,24 @@ test_that("Test aa2codons",{
 	expect_that(lapply(aa2codons(c('Methionine','Alanine','Alanine'),type='name',regex=FALSE),sort),equals(lapply(aa2codons(c('M','A','A'),regex=FALSE),sort))) 
 })
 
+
+
+test_that("Test gap2NoGap",{
+	expect_that(gap2NoGap("AA--CC--TT",1:10), equals(c(1,2,2,2,3,4,4,4,5,6)))
+	expect_that(gap2NoGap("AA**CC..TT",1:10), equals(c(1,2,2,2,3,4,4,4,5,6)))
+	expect_that(is.na(gap2NoGap("AA**CC..TT",11)), equals(TRUE))
+	expect_that(gap2NoGap(sprintf("A%sT",paste(rep('-',1000),collapse='')),1:1002), equals(c(rep(1,1001),2)))
+})
+
+test_that("Test noGap2Gap",{
+	expect_that(noGap2Gap("AA--CC--TT",1:6), equals(c(1,2,5,6,9,10)))
+	expect_that(noGap2Gap("AA**CC..TT",1:6), equals(c(1,2,5,6,9,10)))
+	expect_that(is.na(noGap2Gap("AA**CC..TT",7)), equals(TRUE))
+	seq<-sprintf("A%sT-A--T---T",paste(rep('-',1000),collapse=''))
+	expect_that(noGap2Gap(seq,1:2), equals(c(1,1002)))
+	expect_that(gap2NoGap(seq,noGap2Gap(seq,1:5)), equals(1:5))
+})
+
 test_that("Test reverseString",{
 	expect_that(reverseString("1234\nabc_"), equals("_cba\n4321"))
 	expect_that(reverseString(reverseString("1234\nabc_")), equals("1234\nabc_"))
@@ -118,7 +136,6 @@ test_that("Test reverseString",{
 	expect_that(reverseString("(0)1[23]4"), equals("4[32]1(0)"))
 	expect_that(reverseString("(0)1[23]4",brackets=FALSE), equals("4]32[1)0("))
 })
-
 
 test_that("Test compliment",{
 	expect_that(complimentDna(c("ACTG",'A')), equals(c("TGAC",'T')))

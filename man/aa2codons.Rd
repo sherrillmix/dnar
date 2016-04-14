@@ -7,11 +7,11 @@
 aa2codons(aas, type = "code", regex = TRUE)
 }
 \arguments{
+\item{aas}{single amino acids to convert to dna}
+
 \item{type}{code or abbr or name}
 
 \item{regex}{if true return a (X|Y) regex of codons else return vector}
-
-\item{aa}{single amino acids to convert to dna}
 }
 \value{
 A list of vectors of codons if regex=FALSE else a regular expression matching the possible codons

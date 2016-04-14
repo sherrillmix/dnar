@@ -222,7 +222,7 @@ dna2aa<-function(dna,frame=0,...){
 
 #' Find the DNA to code for a given amino acid
 #'
-#' @param aa single amino acids to convert to dna
+#' @param aas single amino acids to convert to dna
 #' @param type code or abbr or name
 #' @param regex if true return a (X|Y) regex of codons else return vector
 #' @export
@@ -346,6 +346,9 @@ checkOverlapMulti<-function(starts,ends,tStarts,tEnds,tNames,qChrom,tChrom,vocal
 #' @param coords coordinates on the gapped gapSeq to be converted into equivalent nongap coordinatess
 #' @export
 #' @return equivalent gapped coordinates
+#' @examples
+#' gap2NoGap('AA-TT-GG',7)
+#' gap2NoGap('AAA----TT-GG',1:10)
 gap2NoGap<-function(gapSeq,coords){
 	gapSeqSplit<-strsplit(gapSeq,'')[[1]]
 	nonDash<-!gapSeqSplit %in% c('*','.','-')
@@ -360,6 +363,9 @@ gap2NoGap<-function(gapSeq,coords){
 #' @param coords coordinates on the ungapped gapSeq to be converted into equivalent gap coordinates
 #' @export
 #' @return equivalent ungapped coordinates
+#' @examples
+#' noGap2Gap('AA-TT-GG',5)
+#' noGap2Gap('AAA----TT-GG',1:7)
 noGap2Gap<-function(gapSeq,coords){
 	gapSeqSplit<-strsplit(gapSeq,'')[[1]]
 	nonDash<-which(!gapSeqSplit %in% c('.','*','-'))
