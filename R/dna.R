@@ -412,15 +412,6 @@ revComp<-function(dnas){
 	return(complimentDna(reverseString(dnas),TRUE))
 }
 
-#' Trim leading and trailing space characters
-#'
-#' @param x vector of strings
-#' @export
-#' @return vector of trimmed strings
-trim<-function(x){
-	sub('\\s+$','',sub('^\\s+','',x),perl=TRUE)
-}
-
 #' Remove gap characters from DNA sequences
 #'
 #' @param seq vector of gapped DNA sequences
@@ -456,7 +447,7 @@ parseRegion<-function(reg){
 #' @export
 #' @return vector of region strings
 pasteRegion<-function(chrs,starts,ends,strands=''){
-	sprintf('%s:%s-%s%s',chrs,trim(format(starts,scientific=FALSE)),trim(format(ends,scientific=FALSE)),strands)
+	sprintf('%s:%s-%s%s',chrs,trimws(format(starts,scientific=FALSE)),trimws(format(ends,scientific=FALSE)),strands)
 }
 
 #' Convert cigar and starts to qStarts, tStarts, blockSizes as in blat
