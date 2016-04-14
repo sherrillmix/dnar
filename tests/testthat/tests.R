@@ -114,6 +114,11 @@ test_that("Test aa2codons",{
 })
 
 
+test_that("Test aa2dna",{
+	expect_error(aa2dna(c('1','G')),'Unknown')
+	expect_equal(grep(aa2dna(c('MAAX')),c('ATGGCTGCTTAG','ATGGCTGCTTAA','GTGGCTGCTTAA','ATGGCTGCTTAC','TTTTTATGGCTGCTTAGTTTT')),c(1,2,5)) 
+	expect_equal(sapply(strsplit(aa2dna(c('MAAX','MMFFYYS',paste(sample(dnar::aminoAcids$code,50,TRUE),collapse=''))),'[()]+'),length),c(4,7,50)+1)
+})
 
 test_that("Test gap2NoGap",{
 	expect_equal(gap2NoGap("AA--CC--TT",1:10), c(1,2,2,2,3,4,4,4,5,6))
