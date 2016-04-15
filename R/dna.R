@@ -399,7 +399,6 @@ complimentDna<-function(dnas,ambigs=TRUE){
 	}
 	return(chartr(finds,replaces,dnas))
 }
-
 #' Reverse compliment dna
 #'
 #' @param dnas vector of sequences
@@ -418,8 +417,12 @@ revComp<-function(dnas){
 #' @param gaps vector of characters to be considered gaps
 #' @export
 #' @return vector of DNA sequences with gaps removed
+#' @examples
+#' degap(c('...ACTATATA----ACATG--G..','ATTAT--T'))
+#' degap(c('1000111011'),'0')
 degap<-function(seq,gaps=c('*','-','.')){
-	gsub(sprintf('[%s]+',paste(gaps,collapse='')),'',seq,perl=TRUE)
+	escapedGaps<-sprintf('%s%s',ifelse(gaps %in% c('^','-','[',']','\\'),'\\',''),gaps)
+	gsub(sprintf('[%s]+',paste(escapedGaps,collapse='')),'',seq,perl=TRUE)
 }
 
 #' Parse a region string into chr, start, end and strand

@@ -178,3 +178,11 @@ test_that("Test reverse compliment",{
 	expect_equal(revComp(c("AATTGGCCA",'','A')), complimentDna(reverseString(c("AATTGGCCA",'','A'))))
 	expect_equal(revComp(c("A[CT]G",'HDMNK')), c("C[AG]T",'MNKHD'))
 })
+
+test_that("Test degap",{
+	expect_equal(degap(c("...A---CT--G!@#$%^&(),,...",'A...')), c("ACTG!@#$%^&(),,",'A'))
+	expect_equal(degap(c("^^^A--CT^^G...",'A%%%'),c('^','%')), c("A--CTG...",'A'))
+	expect_equal(degap(c("^^^A--CT^^G...",'A%%%'),c('^')), c("A--CTG...",'A%%%'))
+	expect_equal(degap(c("A--CT\\\\^^G",'A%%%'),c('\\')), c("A--CT^^G",'A%%%'))
+	expect_equal(degap(c("A--CT[][]G",'A%%%'),c('[',']')), c("A--CTG",'A%%%'))
+})

@@ -17,4 +17,8 @@ vector of DNA sequences with gaps removed
 \description{
 Remove gap characters from DNA sequences
 }
+\examples{
+degap(c('...ACTATATA----ACATG--G..','ATTAT--T'))
+degap(c('1000111011'),'0')
+}
 
