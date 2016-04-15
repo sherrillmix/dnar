@@ -186,3 +186,18 @@ test_that("Test degap",{
 	expect_equal(degap(c("A--CT\\\\^^G",'A%%%'),c('\\')), c("A--CT^^G",'A%%%'))
 	expect_equal(degap(c("A--CT[][]G",'A%%%'),c('[',']')), c("A--CTG",'A%%%'))
 })
+
+test_that("Test parseRegion",{
+	expect_equal(parseRegion('chr1:1234-2345'), data.frame('chr'='chr1','start'=1234,'end'=2345,'strand'='*',stringsAsFactors=FALSE))
+	expect_equal(parseRegion(c('chr1:1234-2345','chrX:435-567-','chr!@#@$!:435-567+')), data.frame('chr'=c('chr1','chrX','chr!@#@$!'),'start'=c(1234,435,435),'end'=c(2345,567,567),'strand'=c('*','-','+'),stringsAsFactors=FALSE))
+	expect_warning(parseRegion(c('chr1:1234-2345','chrX:435-567-','chrY:43a5-567+')), 'NA')
+	expect_error(parseRegion(c('asdfea','asd')), 'asdfea, asd.*parsed')
+})
+
+test_that("Test pasteRegion",{
+	expect_equal(pasteRegion('chr1',1234,2345), 'chr1:1234-2345')
+	expect_equal(pasteRegion(c('chr1','chrX'),c(1234,1e9+1),c(2345,1e11+10)), c('chr1:1234-2345','chrX:1000000001-100000000010'))
+	expect_equal(pasteRegion(c('chr1','chrX','chrZaasd'),c(1234,1e9+1,10),c(2345,1e11+10,20),c('-','*','+')), c('chr1:1234-2345-','chrX:1000000001-100000000010*','chrZaasd:10-20+'))
+	expect_error(pasteRegion(c('chr1','chrX'),c(1234,1e9+1,10),c(2345,1e11+10,20),c('-','*','+')), 'length')
+})
+

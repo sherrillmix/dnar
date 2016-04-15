@@ -430,11 +430,14 @@ degap<-function(seq,gaps=c('*','-','.')){
 #' @param reg vector of region strings in the format "chrX:123545-123324" or "chr12:1234-1236+"
 #' @export
 #' @return data.frame with one row per reg string and columns chr, start, end and strand
+#' @examples
+#' parseRegion(c('chr1:12345-23456','chrX:2222:3333'))
+#' parseRegion(c('chr1:12345-23456+','chrX:2222:3333-','chrX:2222:3333*'))
 parseRegion<-function(reg){
 	strand<-ifelse(substring(reg,nchar(reg)) %in% c('*','-','+'),substring(reg,nchar(reg)),'*')
 	reg<-sub('[-+*]$','',reg)
 	splits<-strsplit(reg,'[:-]')
-	if(any(sapply(splits,length)!=3))stop(simpleError('Region not parsed'))
+	if(any(sapply(splits,length)!=3))stop(simpleError(sprintf('Region %s not parsed',paste(reg[sapply(splits,length)!=3],collapse=', '))))
 	out<-data.frame('chr'=sapply(splits,'[[',1),stringsAsFactors=FALSE)
 	out[,c('start','end')]<-as.numeric(do.call(rbind,lapply(splits,'[',2:3)))
 	out$strand<-strand
@@ -449,6 +452,9 @@ parseRegion<-function(reg){
 #' @param strands optional vector of strands
 #' @export
 #' @return vector of region strings
+#' @examples
+#' pasteRegion(c('chr1','chr2'),c(100,1235),c(200,2346))
+#' pasteRegion(c('chr1','chr2'),c(100,1235),c(200,2346),c('*','-'))
 pasteRegion<-function(chrs,starts,ends,strands=''){
 	sprintf('%s:%s-%s%s',chrs,trimws(format(starts,scientific=FALSE)),trimws(format(ends,scientific=FALSE)),strands)
 }

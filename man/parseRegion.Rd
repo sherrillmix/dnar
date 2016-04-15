@@ -15,4 +15,8 @@ data.frame with one row per reg string and columns chr, start, end and strand
 \description{
 Parse a region string into chr, start, end and strand
 }
+\examples{
+parseRegion(c('chr1:12345-23456','chrX:2222:3333'))
+parseRegion(c('chr1:12345-23456+','chrX:2222:3333-','chrX:2222:3333*'))
+}
 
