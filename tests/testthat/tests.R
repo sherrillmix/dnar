@@ -201,3 +201,8 @@ test_that("Test pasteRegion",{
 	expect_error(pasteRegion(c('chr1','chrX'),c(1234,1e9+1,10),c(2345,1e11+10,20),c('-','*','+')), 'length')
 })
 
+
+test_that("Test pwm",{
+	expect_equal(pwm(c('ACA','ACA','ACT')), matrix(c(1,0,0,0,0,1,0,0,2/3,0,0,1/3),nrow=4,ncol=3,dimnames=list(c('A','C','G','T'))))
+})
+
