@@ -19,4 +19,8 @@ position weight matrix with length(chars) rows and nchar(seqs) columns
 \description{
 Generate a PWM for a set of sequences
 }
+\examples{
+pwm(c('ACTG','ACTT','ACTT','ACGT'))
+pwm(c('ACTG','ACTT','ACTT','ACGT'),priors=c('C'=1,'G'=1,'T'=1,'A'=1))
+}
 

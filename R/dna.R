@@ -840,6 +840,9 @@ liftCoords<-function(chr,start,end,strand,chainFile,liftoverBin='liftOver',vocal
 #' @param priors additional counts to add to each column with (default is a lazy way to get a named 0 vector)
 #' @export
 #' @return position weight matrix with length(chars) rows and nchar(seqs) columns
+#' @examples
+#' pwm(c('ACTG','ACTT','ACTT','ACGT'))
+#' pwm(c('ACTG','ACTT','ACTT','ACGT'),priors=c('C'=1,'G'=1,'T'=1,'A'=1))
 pwm<-function(seqs,chars=c('C','G','T','A'),priors=table(chars)-1){
 	nBases<-nchar(seqs[1])
 	if(any(nchar(seqs)!=nBases))stop(simpleError('All sequences not same length for PWM'))
