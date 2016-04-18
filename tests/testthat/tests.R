@@ -204,5 +204,8 @@ test_that("Test pasteRegion",{
 
 test_that("Test pwm",{
 	expect_equal(pwm(c('ACA','ACA','ACT')), matrix(c(1,0,0,0,0,1,0,0,2/3,0,0,1/3),nrow=4,ncol=3,dimnames=list(c('A','C','G','T'))))
+	expect_equal(pwm(c('ACAT','ACAC','ACTG','ACTz')), matrix(c(1,0,0,0,0,1,0,0,.5,0,0,.5,0,1/3,1/3,1/3),nrow=4,ncol=4,dimnames=list(c('A','C','G','T'))))
+	expect_equal(pwm(c('ACAT','ACAC','ACTG','ACTz'),chars=c('A','C','G')), matrix(c(1,0,0,0,1,0,1,0,0,0,1/2,1/2),nrow=3,ncol=4,dimnames=list(c('A','C','G'))))
+	expect_equal(pwm(c('ACAT','ACAC','ACTG','ACTz'),chars=c('A','C','G'),priors=c('A'=1,'C'=1,'G'=1)), matrix(c(5/7,1/7,1/7,1/7,5/7,1/7,3/5,1/5,1/5,1/5,2/5,2/5),nrow=3,ncol=4,dimnames=list(c('A','C','G'))))
 })
 
