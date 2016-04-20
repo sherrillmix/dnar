@@ -459,6 +459,66 @@ pasteRegion<-function(chrs,starts,ends,strands=''){
 	sprintf('%s:%s-%s%s',chrs,trimws(format(starts,scientific=FALSE)),trimws(format(ends,scientific=FALSE)),strands)
 }
 
+#' Test sam flags for values
+#'
+#' @param flags vector of integer flags from sam
+#' @param test either character vector of flag short names or integers
+#' @export
+#' @return logical vector with element for each element in flags with TRUE if flag meets all tests and FALSE otherwise
+#' @examples
+#' print(samFlags)
+#' samFlag(1:10,'paired')
+#' samFlag(1:10,'unmapped')
+samFlag<-function(flags,test='paired'){
+	test<-unique(test)
+	if(!is.numeric(test)){
+		if(!all(test %in% dnar::samFlags$short))stop(simpleError(sprintf('Unknown flag please select from %s',paste(dnar::samFlags$short,collapse=', '))))
+		test<-dnar::samFlags[dnar::samFlags$short %in% test,'bit']
+	}else{
+		test<-as.integer(test)
+	}
+	testInt<-0
+	for(i in test)testInt<-bitops::bitOr(testInt,i)
+	return(bitops::bitAnd(flags,testInt)==testInt)
+}
+
+
+#' Trim ambiguous sequence from ends of reads
+#'
+#' @param seqs sequences to be trimmed
+#' @param start trim starts?
+#' @param end trim ends?
+#' @param nonNStretch number of nonNs required
+#' @param nStretch delete until no stretch of Ns greater than this
+#' @export
+#' @return Vector sequences with ends trimmed
+trimNs<-function(seqs,start=TRUE,end=TRUE,nonNStretch=NULL,nStretch=10){
+	regex<-sprintf('[ACTG]{%d,}',nonNStretch)
+	if(start&!is.null(nonNStretch)){
+		starts<-regexpr(sprintf('%s',regex),seqs)
+		seqs[starts==-1]<-''
+		seqs<-substring(seqs,starts)
+	}
+	if(end&!is.null(nonNStretch)){
+		starts<-sapply(gregexpr(sprintf('%s',regex),seqs),tail,1)
+		lengths<-sapply(gregexpr(sprintf('%s',regex),seqs),function(x)tail(attr(x,'match.length'),1))
+		seqs[starts==-1]<-''
+		seqs<-substring(seqs,1,starts+lengths-1)
+	}
+	if(!is.null(nStretch)){
+		regex<-sprintf('N{%d,}',nStretch)		
+		nStretches<-gregexpr(regex,seqs)
+		seqs<-mapply(function(reg,seq){
+			starts<-unique(c(reg,nchar(seq)+1))
+			ends<-c(0,reg+attr(reg,'match.length')-1)
+			diffs<-starts-ends-1
+			select<-which.max(diffs)
+			return(substring(seq,ends[select]+1,starts[select]-1))
+		},nStretches,seqs)
+	}
+	return(seqs)
+}
+
 #' Convert cigar and starts to qStarts, tStarts, blockSizes as in blat
 #'
 #' @param cigars vector of SAM cigar strings
@@ -573,62 +633,6 @@ blockToAlign<-function(seqs,tSeqs,qStarts,tStarts,sizes){
 		return(paste(c(x$seq,thisGaps$tSeq)[order(c(x$start,thisGaps$tGapStartAfter+.5))],collapse=''))
 	})
 	return(data.frame('qSeq'=qSeqs,'tSeq'=tSeqs,stringsAsFactors=FALSE))
-}
-
-#' Test sam flags for values
-#'
-#' @param flags vector of integer flags from sam
-#' @param test either character vector of flag short names or integers
-#' @export
-#' @return logical vector with element for each element in flags with TRUE if flag meets all tests and FALSE otherwise
-samFlag<-function(flags,test='paired'){
-	test<-unique(test)
-	if(!is.numeric(test)){
-		if(!all(test %in% dnar::samFlags$short))stop(simpleError(sprintf('Unknown flag please select from %s',paste(dnar::samFlags$short,collapse=', '))))
-		test<-dnar::samFlags[dnar::samFlags$short %in% test,'bit']
-	}else{
-		test<-as.integer(test)
-	}
-	testInt<-0
-	for(i in test)testInt<-bitops::bitOr(testInt,i)
-	return(bitops::bitAnd(flags,testInt)==testInt)
-}
-
-
-#' Trim ambiguous sequence from ends of reads
-#'
-#' @param seqs sequences to be trimmed
-#' @param start trim starts?
-#' @param end trim ends?
-#' @param nonNStretch number of nonNs required
-#' @param nStretch delete until no stretch of Ns greater than this
-#' @export
-#' @return Vector sequences with ends trimmed
-trimNs<-function(seqs,start=TRUE,end=TRUE,nonNStretch=NULL,nStretch=10){
-	regex<-sprintf('[ACTG]{%d,}',nonNStretch)
-	if(start&!is.null(nonNStretch)){
-		starts<-regexpr(sprintf('%s',regex),seqs)
-		seqs[starts==-1]<-''
-		seqs<-substring(seqs,starts)
-	}
-	if(end&!is.null(nonNStretch)){
-		starts<-sapply(gregexpr(sprintf('%s',regex),seqs),tail,1)
-		lengths<-sapply(gregexpr(sprintf('%s',regex),seqs),function(x)tail(attr(x,'match.length'),1))
-		seqs[starts==-1]<-''
-		seqs<-substring(seqs,1,starts+lengths-1)
-	}
-	if(!is.null(nStretch)){
-		regex<-sprintf('N{%d,}',nStretch)		
-		nStretches<-gregexpr(regex,seqs)
-		seqs<-mapply(function(reg,seq){
-			starts<-unique(c(reg,nchar(seq)+1))
-			ends<-c(0,reg+attr(reg,'match.length')-1)
-			diffs<-starts-ends-1
-			select<-which.max(diffs)
-			return(substring(seq,ends[select]+1,starts[select]-1))
-		},nStretches,seqs)
-	}
-	return(seqs)
 }
 
 #' Take the output from blat and make continous reads out of it
@@ -863,6 +867,11 @@ pwm<-function(seqs,chars=c('C','G','T','A'),priors=table(chars)-1){
 #' @param pwm position weight matrix with uniqueBases x seqLength dimensions
 #' @export
 #' @return vector with a score for each sequence
+#' @examples
+#' seqs<-c('ACA','ACA','ACA','ACT','ACT','ACC')
+#' seqPwm<-pwm(seqs)
+#' scoreFromPWM(seqs,seqPwm)
+
 scoreFromPWM<-function(seqs,pwm){
 	bases<-rownames(pwm)	
 	nBases<-length(bases)

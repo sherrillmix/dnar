@@ -201,6 +201,13 @@ test_that("Test pasteRegion",{
 	expect_error(pasteRegion(c('chr1','chrX'),c(1234,1e9+1,10),c(2345,1e11+10,20),c('-','*','+')), 'length')
 })
 
+test_that("Test samFlag",{
+	expect_equal(samFlag(c(1+2^(1:8),2^(1:8)),'paired'), rep(c(TRUE,FALSE),each=8))
+	expect_equal(samFlag(as.character(c(1+2^(1:8),2^(1:8))),'paired'), rep(c(TRUE,FALSE),each=8))
+	expect_equal(samFlag(c(64+2^(1:4)),'first'), rep(TRUE,4))
+	expect_equal(samFlag(c(64+2^(0:4)),c('paired','first')), c(TRUE,rep(FALSE,4)))
+	expect_equal(samFlag(c(64+2^(0:4)+2^(1:5)),c('properPair','unmapped','first')), c(FALSE,TRUE,rep(FALSE,3)))
+})
 
 test_that("Test pwm",{
 	expect_equal(pwm(c('ACA','ACA','ACT')), matrix(c(1,0,0,0,0,1,0,0,2/3,0,0,1/3),nrow=4,ncol=3,dimnames=list(c('A','C','G','T'))))
@@ -214,6 +221,15 @@ test_that("Test pwm",{
 test_that("Test scoreFromPWM",{
 	pwm<-matrix(c(1,0,0,0,0,1,0,0,2/3,0,0,1/3),nrow=4,ncol=3,dimnames=list(c('A','C','G','T')))
 	expect_equal(scoreFromPWM(c('ACA','ACT','ACA','AGT','GCT'),pwm),log(c(2/3,1/3,2/3,0,0)))
+	expect_error(scoreFromPWM(c('ACA','ACT','ACA','AGT','GCTA'),pwm),'length')
+	expect_error(scoreFromPWM(c('ACA','ACT','ACA','AGT','GCT'),cbind(pwm,c(0,1,0,0))),'length')
+	expect_warning(scoreFromPWM(c('ACA','ACT','ACA','AGT','GCZ'),pwm),'base')
+	seqs<-rep(paste(rep('ACGT',100),collapse=''),200)
+	pwm<-pwm(seqs)
+	expect_equal(scoreFromPWM(seqs,pwm),log(rep(1,200)))
+	seqs<-replicate(200,paste(sample(LETTERS,500,TRUE),collapse=''))
+	pwm<-pwm(seqs,LETTERS)
+	expect_true(all(scoreFromPWM(seqs,pwm)>log(1/26)*500))
 })
 
 

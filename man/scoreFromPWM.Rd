@@ -17,4 +17,9 @@ vector with a score for each sequence
 \description{
 Calculate PWM scores for sequences
 }
+\examples{
+seqs<-c('ACA','ACA','ACA','ACT','ACT','ACC')
+seqPwm<-pwm(seqs)
+scoreFromPWM(seqs,seqPwm)
+}
 

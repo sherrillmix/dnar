@@ -17,4 +17,9 @@ logical vector with element for each element in flags with TRUE if flag meets al
 \description{
 Test sam flags for values
 }
+\examples{
+print(samFlags)
+samFlag(1:10,'paired')
+samFlag(1:10,'unmapped')
+}
 
