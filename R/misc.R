@@ -45,7 +45,7 @@ object.sizes<-function(env=.GlobalEnv)sort(sapply(ls(envir=env),function(x)objec
 
 #' Generate an error
 #'
-#' Convenience function for stop(simpleError()
+#' Convenience function for stop(simpleError())
 #' @param ... Strings to be concatenated into error message
 #' @export
 #' @return Generates stopping error before returning
@@ -384,3 +384,15 @@ table2vector<-function(tab){
 	return(structure(as.vector(tab),.Names=names(tab)))
 }
 
+#' Convenience function to escape characters for insertion into regex brackets
+#'
+#' Note to escape a '\code{]}' using this you'll have to use \code{perl=TRUE} in the downstream function
+#'
+#' @param regexChars a vector of single characters to escape
+#' @export
+#' @return a vector of escaped characters
+#' @examples
+#' escapeRegexBracketChars(c(']','\\','-','A','B'))
+escapeRegexBracketChars<-function(regexChars){
+	return(sprintf('%s%s',ifelse(regexChars %in% c('^','-','[',']','\\'),'\\',''),regexChars))
+}

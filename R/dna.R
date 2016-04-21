@@ -421,7 +421,7 @@ revComp<-function(dnas){
 #' degap(c('...ACTATATA----ACATG--G..','ATTAT--T'))
 #' degap(c('1000111011'),'0')
 degap<-function(seq,gaps=c('*','-','.')){
-	escapedGaps<-sprintf('%s%s',ifelse(gaps %in% c('^','-','[',']','\\'),'\\',''),gaps)
+	escapedGaps<-escapeRegexBracketChars(gaps)
 	gsub(sprintf('[%s]+',paste(escapedGaps,collapse='')),'',seq,perl=TRUE)
 }
 
@@ -485,36 +485,27 @@ samFlag<-function(flags,test='paired'){
 
 #' Trim ambiguous sequence from ends of reads
 #'
+#' Trim sequences to the first occurrence of a given length of unambiguous bases, e.g. to trim noisy starts and ends from Sanger sequences. Note that sequences shorter than nonNStretch will be completely deleted since they do not contain any stretch of unambiguous bases to pass the threshold.
+#'
 #' @param seqs sequences to be trimmed
-#' @param start trim starts?
-#' @param end trim ends?
-#' @param nonNStretch number of nonNs required
-#' @param nStretch delete until no stretch of Ns greater than this
+#' @param nonNStretch a one or two element (specifying start, end) to delete until finding a stretch of nonNs greater this length (0 means no trimming)
+#' @param nChars a vector of characters to count as Ns
 #' @export
 #' @return Vector sequences with ends trimmed
-trimNs<-function(seqs,start=TRUE,end=TRUE,nonNStretch=NULL,nStretch=10){
-	regex<-sprintf('[ACTG]{%d,}',nonNStretch)
-	if(start&!is.null(nonNStretch)){
-		starts<-regexpr(sprintf('%s',regex),seqs)
+trimNs<-function(seqs,nonNStretch=c(10,10),nChars=c("N")){
+	if(length(nonNStretch)==1)nonNStretch<-rep(nonNStretch,2)
+	regex<-sprintf('[^%s]{%d,}',paste(escapeRegexBracketChars(nChars),collapse=''),nonNStretch)
+	if(nonNStretch[1]>0){
+		starts<-regexpr(regex[1],seqs,perl=TRUE)
 		seqs[starts==-1]<-''
 		seqs<-substring(seqs,starts)
 	}
-	if(end&!is.null(nonNStretch)){
-		starts<-sapply(gregexpr(sprintf('%s',regex),seqs),tail,1)
-		lengths<-sapply(gregexpr(sprintf('%s',regex),seqs),function(x)tail(attr(x,'match.length'),1))
+	if(nonNStretch[2]>0){
+		regexResults<-gregexpr(regex[2],seqs,perl=TRUE)
+		starts<-sapply(regexResults,tail,1)
+		lengths<-sapply(regexResults,function(x)tail(attr(x,'match.length'),1))
 		seqs[starts==-1]<-''
 		seqs<-substring(seqs,1,starts+lengths-1)
-	}
-	if(!is.null(nStretch)){
-		regex<-sprintf('N{%d,}',nStretch)		
-		nStretches<-gregexpr(regex,seqs)
-		seqs<-mapply(function(reg,seq){
-			starts<-unique(c(reg,nchar(seq)+1))
-			ends<-c(0,reg+attr(reg,'match.length')-1)
-			diffs<-starts-ends-1
-			select<-which.max(diffs)
-			return(substring(seq,ends[select]+1,starts[select]-1))
-		},nStretches,seqs)
 	}
 	return(seqs)
 }

@@ -13,6 +13,6 @@ stopError(...)
 Generates stopping error before returning
 }
 \description{
-Convenience function for stop(simpleError()
+Convenience function for stop(simpleError())
 }
 

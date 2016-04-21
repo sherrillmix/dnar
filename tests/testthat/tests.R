@@ -207,6 +207,22 @@ test_that("Test samFlag",{
 	expect_equal(samFlag(c(64+2^(1:4)),'first'), rep(TRUE,4))
 	expect_equal(samFlag(c(64+2^(0:4)),c('paired','first')), c(TRUE,rep(FALSE,4)))
 	expect_equal(samFlag(c(64+2^(0:4)+2^(1:5)),c('properPair','unmapped','first')), c(FALSE,TRUE,rep(FALSE,3)))
+	expect_error(samFlag(1:10,'notARealFlag'),'Unknown')
+})
+
+test_that("Test trimNs",{
+	expect_equal(trimNs(c('AAA','TTAT'),3),c('AAA','TTAT'))
+	expect_equal(trimNs(c('AAA','TTAT'),4),c('','TTAT'))
+	expect_equal(trimNs(c('AAA','TTAT'),c(3,4)),c('','TTAT'))
+	expect_equal(trimNs(c('AAA','TTAT'),c(4,3)),c('','TTAT'))
+	expect_equal(trimNs(c('AAA','TTAT'),c(3,3)),c('AAA','TTAT'))
+	expect_equal(trimNs(c('A','NTN','NNACACANN',''),c(0,0)),c('A','NTN','NNACACANN',''))
+	expect_equal(trimNs(c('A','NTN','NNACACANN'),c(1,0)),c('A','TN','ACACANN'))
+	expect_equal(trimNs(c('A','NTN','NNACACANN'),c(0,1)),c('A','NT','NNACACA'))
+	expect_equal(trimNs(c('A','NTN','NANACNNACANN'),2),c('','','ACNNACA'))
+	expect_equal(trimNs(c('A','NTNNNNNNNNNNNN','NNNAANNNNNNNNNNNNNNAANNNNNNN'),2),c('','','AANNNNNNNNNNNNNNAA'))
+	expect_equal(trimNs(c('ZZZNNNANNNZZ!Z',''),2,c('Z','!')),c('NNNANNN',''))
+	expect_equal(trimNs(c('[-^ANNA-N^^^]]'),2,c('[',']','^','-')),c('ANNA'))
 })
 
 test_that("Test pwm",{
