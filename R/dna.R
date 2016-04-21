@@ -492,6 +492,8 @@ samFlag<-function(flags,test='paired'){
 #' @param nChars a vector of characters to count as Ns
 #' @export
 #' @return Vector sequences with ends trimmed
+#' @examples
+#' trimNs('NNNANNACTNGAGANNNNAAN',3)
 trimNs<-function(seqs,nonNStretch=c(10,10),nChars=c("N")){
 	if(length(nonNStretch)==1)nonNStretch<-rep(nonNStretch,2)
 	regex<-sprintf('[^%s]{%d,}',paste(escapeRegexBracketChars(nChars),collapse=''),nonNStretch)
