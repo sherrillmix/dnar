@@ -37,4 +37,13 @@ data.frame with a row for each exon or piece of alignment and columns chrom, nam
 \description{
 Take coordinates of blat matches and split into a single line for each exon
 }
+\examples{
+blat2exons(
+  c('chr1','chr1','chr2'),
+  c('read1','read2','read1'),
+  c('1,100','50,150,300','1000,2000,3000'),
+  c('20,200','50,50,100','999,999,1234'),
+  c('+','-','+')
+)
+}
 

@@ -722,7 +722,14 @@ blatFindGaps<-function(qStarts,tStarts,blockSizes){
 #' @param adjustStart add adjustStart to starts (good for 0 index start, 1 index ends of UCSC)
 #' @export
 #' @return data.frame with a row for each exon or piece of alignment and columns chrom, name, exonName, start, end and strand
-#example: with(blat,blat2exons(tName,qName,tStarts,blockSizes,strand))
+#' @examples
+#' blat2exons(
+#'   c('chr1','chr1','chr2'),
+#'   c('read1','read2','read1'),
+#'   c('1,100','50,150,300','1000,2000,3000'),
+#'   c('20,200','50,50,100','999,999,1234'),
+#'   c('+','-','+')
+#' )
 blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),lengths=TRUE,extraCols=NULL,extraSplits=NULL,introns=FALSE,prefix='ex',adjustStart=0){
 	if(any(c(length(chroms),length(names),length(strands),length(starts))!=length(ends)))stop(simpleError('Different lengths for chrom, strand, starts, lengths'))
 	startsList<-strsplit(starts,',')

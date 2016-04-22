@@ -203,6 +203,7 @@ test_that("Test pasteRegion",{
 
 test_that("Test samFlag",{
 	expect_equal(samFlag(c(1+2^(1:8),2^(1:8)),'paired'), rep(c(TRUE,FALSE),each=8))
+	expect_equal(samFlag(c(1+2^(1:8),2^(1:8)),1), rep(c(TRUE,FALSE),each=8))
 	expect_equal(samFlag(as.character(c(1+2^(1:8),2^(1:8))),'paired'), rep(c(TRUE,FALSE),each=8))
 	expect_equal(samFlag(c(64+2^(1:4)),'first'), rep(TRUE,4))
 	expect_equal(samFlag(c(64+2^(0:4)),c('paired','first')), c(TRUE,rep(FALSE,4)))
@@ -224,6 +225,26 @@ test_that("Test trimNs",{
 	expect_equal(trimNs(c('ZZZNNNANNNZZ!Z',''),2,c('Z','!')),c('NNNANNN',''))
 	expect_equal(trimNs(c('[-^ANNA-N^^^]]'),2,c('[',']','^','-')),c('ANNA'))
 })
+
+test_that("Test blat2exons",{
+	out<-data.frame(
+		chrom=rep(c('chr1','chr2'),c(5,3)),
+		name=rep(c('read1','read2','read1'),c(2,3,3)),
+		exonName=sprintf('%s_ex%d',rep(c('read1','read2','read1'),c(2,3,3)),c(1:3,2:1,1:3)),
+		start=c(1,100,50,150,300,1000,2000,3000),
+		end=c(20,299,99,199,399,1998,2998,4233),
+		strand=rep(c('+','-','+'),c(2,3,3)),
+		stringsAsFactors=FALSE
+	)
+	expect_equal(blat2exons(
+			c('chr1','chr1','chr2'),
+			c('read1','read2','read1'),
+			c('1,100','50,150,300','1000,2000,3000'),
+			c('20,200','50,50,100','999,999,1234'),
+			c('+','-','+')
+		),out)
+})
+
 
 test_that("Test pwm",{
 	expect_equal(pwm(c('ACA','ACA','ACT')), matrix(c(1,0,0,0,0,1,0,0,2/3,0,0,1/3),nrow=4,ncol=3,dimnames=list(c('A','C','G','T'))))
