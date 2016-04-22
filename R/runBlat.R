@@ -233,3 +233,41 @@ killBlat<-function(port){
 	}
 	return(NULL)
 }
+
+#' Run liftover to convert coordinates from one genome version to another
+#'
+#' @param chr vector of chromosomes
+#' @param start vector of start coordinate 1-based
+#' @param end vector of end coordinate 1-based
+#' @param strand vector of strands
+#' @param chainFile location of chain file for liftover
+#' @param liftoverBin location of the liftOver executable
+#' @param vocal if TRUE then message extra information
+#' @param removeNAs if TRUE then remove positions that did could not be lifted over
+#' @export
+#' @return four column data frame of chr, start, end and strand of coordinates
+liftCoords<-function(chr,start,end,strand,chainFile,liftoverBin='liftOver',vocal=FALSE,removeNAs=TRUE){
+	tmpFiles<-c(tempfile(),tempfile(),tempfile())
+	y<-data.frame('chr'=chr,'start'=start,'end'=end,'strand'=strand,stringsAsFactors=FALSE)
+	y$id<-1:nrow(y)
+	writeLines(sprintf('%s\t%d\t%d\t%d\t%d\t%s',y$chr,y$start-1,y$end,y$id,1,strand),tmpFiles[1])
+	cmd<-sprintf('%s %s %s %s %s',liftoverBin,tmpFiles[1],chainFile,tmpFiles[2],tmpFiles[3])
+	if(vocal)message(cmd)
+	returnCode<-system(cmd)
+	if(vocal)message('Return: ',returnCode)
+	lift<-read.table(tmpFiles[2],stringsAsFactors=FALSE)
+	lift<-lift[,-5]
+	colnames(lift)<-c('chr','start','end','id','strand')
+	if(any(table(lift$id)>1))warning('Liftover created duplicates')
+	y<-merge(y[,'id',drop=FALSE],lift,all.x=TRUE)
+	y<-y[,colnames(y)!='id']
+	y$start<-y$start+1
+	selector<-is.na(y$chr)|is.na(y$start)|is.na(y$end)
+	if(removeNAs&&any(selector)){
+		message("Removing ",sum(selector)," of ",length(selector)," reads for failing to liftover")
+		y<-y[!selector,]
+	}
+	return(y)
+}
+
+
