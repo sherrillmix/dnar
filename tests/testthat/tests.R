@@ -236,13 +236,14 @@ test_that("Test blat2exons",{
 		strand=rep(c('+','-','+'),c(2,3,3)),
 		stringsAsFactors=FALSE
 	)
-	expect_equal(blat2exons(
-			c('chr1','chr1','chr2'),
-			c('read1','read2','read1'),
-			c('1,100','50,150,300','1000,2000,3000'),
-			c('20,200','50,50,100','999,999,1234'),
-			c('+','-','+')
-		),out)
+	blat<-data.frame(
+		'chr'= c('chr1','chr1','chr2'),
+		'qName' = c('read1','read2','read1'),
+		'starts' = c('1,100','50,150,300','1000,2000,3000'),
+		'blocks' = c('20,200','50,50,100','999,999,1234'),
+		'strand' = c('+','-','+'),
+		stringsAsFactors=FALSE)
+	expect_equal(blat2exons(blat$chr,blat$qName,blat$starts,blat$blocks,blat$strand),out)
 })
 
 
