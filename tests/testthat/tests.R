@@ -243,7 +243,14 @@ test_that("Test blat2exons",{
 		'blocks' = c('20,200','50,50,100','999,999,1234'),
 		'strand' = c('+','-','+'),
 		stringsAsFactors=FALSE)
+	extraCols<-data.frame('x'=1:3,'y'=2:4)
+	extraColsOut<-extraCols[rep(1:3,c(2,3,3)),]
+	rownames(extraColsOut)<-1:nrow(extraColsOut)
 	expect_equal(blat2exons(blat$chr,blat$qName,blat$starts,blat$blocks,blat$strand),out)
+	expect_equal(blat2exons(blat$chr[1:2],blat$qName[1:2],blat$starts[1:2],blat$blocks[1:2],blat$strand[1:2]),out[1:5,])
+	expect_equal(blat2exons(blat$chr,blat$qName,blat$starts,blat$blocks,blat$strand,extraCols=extraCols),cbind(out,extraColsOut))
+	expect_error(blat2exons(blat$chr,blat$qName,blat$starts,blat$blocks,c(blat$strand,'+')),'length')
+	expect_error(blat2exons(blat$chr,c(blat$qName,'asd'),blat$starts,blat$blocks,c(blat$strand)),'length')
 })
 
 
