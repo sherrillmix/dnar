@@ -245,10 +245,15 @@ test_that("Test blat2exons",{
 		stringsAsFactors=FALSE)
 	extraCols<-data.frame('x'=1:3,'y'=2:4)
 	extraColsOut<-extraCols[rep(1:3,c(2,3,3)),]
+	extraColsOut<-extraCols[rep(1:3,c(2,3,3)),]
 	rownames(extraColsOut)<-1:nrow(extraColsOut)
+	extraSplits<-data.frame('xx'=c('1,2','4,4,4','5,6,7'),'yy'=c('a,b','aa,bb,cc','zz,yy,xx'),stringsAsFactors=FALSE)
+	extraSplitsOut<-data.frame('xx'=as.character(c(1,2,4,4,4,5,6,7)),'yy'=c('a','b','aa','bb','cc','zz','yy','xx'),stringsAsFactors=FALSE)
 	expect_equal(blat2exons(blat$chr,blat$qName,blat$starts,blat$blocks,blat$strand),out)
 	expect_equal(blat2exons(blat$chr[1:2],blat$qName[1:2],blat$starts[1:2],blat$blocks[1:2],blat$strand[1:2]),out[1:5,])
 	expect_equal(blat2exons(blat$chr,blat$qName,blat$starts,blat$blocks,blat$strand,extraCols=extraCols),cbind(out,extraColsOut))
+	expect_equal(blat2exons(blat$chr,blat$qName,blat$starts,blat$blocks,blat$strand,extraSplits=extraSplits),cbind(out,extraSplitsOut))
+	expect_equal(blat2exons(blat$chr,blat$qName,blat$starts,blat$blocks,blat$strand,extraSplits=extraSplits,extraCols=extraCols),cbind(out,extraColsOut,extraSplitsOut))
 	expect_error(blat2exons(blat$chr,blat$qName,blat$starts,blat$blocks,c(blat$strand,'+')),'length')
 	expect_error(blat2exons(blat$chr,c(blat$qName,'asd'),blat$starts,blat$blocks,c(blat$strand)),'length')
 })
