@@ -776,8 +776,8 @@ findIntrons<-function(starts,ends,names=1:length(startList),additionalColumns=NU
 	if(!is.null(additionalColumns)&&length(ends)!=nrow(additionalColumns))stop(simpleError('additionalColumns not same length as starts and ends'))
 	startList<-lapply(strsplit(starts,','),as.numeric)
 	endList<-lapply(strsplit(ends,','),as.numeric)
-	inEnds<-sapply(startList,function(x)as.numeric(x[-1])-1)	
-	inStarts<-sapply(endList,function(x)as.numeric(x[-length(x)])+1)	
+	inEnds<-lapply(startList,function(x)x[-1]-1)
+	inStarts<-lapply(endList,function(x)x[-length(x)]+1)
 	if(any(sapply(inEnds,length)!=sapply(inStarts,length)))stop(simpleError('Intron ends and starts not equal length'))
 	problemIndex<-mapply(function(x,y)which(x<y),inEnds,inStarts)
 	problems<-which(sapply(problemIndex,length)>0)
@@ -785,7 +785,6 @@ findIntrons<-function(starts,ends,names=1:length(startList),additionalColumns=NU
 		for(thisIndex in problemIndex[[problem]]){
 			#check if these are actually nogap neighbor exons
 			if(inStarts[[problem]][thisIndex]-1!=inEnds[[problem]][thisIndex]){
-				browser()
 				stop(simpleError('Introns have negative length'))
 			}
 		}

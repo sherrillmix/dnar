@@ -2,7 +2,7 @@ Package: dnar
 Type: Package
 Title: Miscellaneous functions to deal with bioinformatic analyses
 Version: 0.1
-Date: 2016-04-25
+Date: 2016-04-26
 Author: Scott Sherrill-Mix
 Maintainer: Scott Sherrill-Mix <sherrillmix@upenn.edu>
 Description: A package of accumulated functions to help with bioinformatics
