@@ -717,7 +717,6 @@ blatFindGaps<-function(qStarts,tStarts,blockSizes){
 #' @param lengths logical whether ends are end coordinates or lengths
 #' @param extraCols a dataframe of extra columns (1 per batch of starts) to be added to the output
 #' @param extraSplits a dataframe of extra comma-separated values (1 string of comma separated values per batch of starts, 1 value per start-stop pair) to be added to the output
-#' @param introns also output introns (the spaces between exons)
 #' @param prefix prefix to be added to exon names
 #' @param adjustStart add adjustStart to starts (good for 0 index start, 1 index ends of UCSC)
 #' @export
@@ -730,7 +729,7 @@ blatFindGaps<-function(qStarts,tStarts,blockSizes){
 #'   c('20,200','50,50,100','999,999,1234'),
 #'   c('+','-','+')
 #' )
-blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),lengths=TRUE,extraCols=NULL,extraSplits=NULL,introns=FALSE,prefix='ex',adjustStart=0){
+blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),lengths=TRUE,extraCols=NULL,extraSplits=NULL,prefix='ex',adjustStart=0){
 	if(any(c(length(chroms),length(names),length(strands),length(starts))!=length(ends)))stop(simpleError('Different lengths for chrom, strand, starts, lengths'))
 	startsList<-strsplit(starts,',')
 	if(adjustStart!=0)startsList<-lapply(startsList,function(x)as.numeric(x)+adjustStart)
@@ -758,46 +757,51 @@ blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),len
 			output[,i]<-thisData
 		}
 	}
-	if(introns){
-		inEnds<-sapply(startsList,function(x)as.numeric(x[-1])-1)	
-		inStarts<-sapply(endsList,function(x)as.numeric(x[-length(x)])+1)	
-		if(any(sapply(inEnds,length)!=sapply(inStarts,length)))stop(simpleError('Intron ends and starts not equal length'))
-		problemIndex<-mapply(function(x,y)which(x<y),inEnds,inStarts)
-		problems<-which(sapply(problemIndex,length)>0)
-		for(problem in problems){
-			for(thisIndex in problemIndex[[problem]]){
-				#check if these are actually nogap neighbor exons
-				if(inStarts[[problem]][thisIndex]-1!=inEnds[[problem]][thisIndex]){
-					browser()
-					stop(simpleError('Introns have negative length'))
-				}
-			}
-			#if these weren't nogap neighbor exons we would have errored out so we can delete them
-			inStarts[[problem]]<-inStarts[[problem]][-problemIndex[[problem]]]
-			inEnds[[problem]]<-inEnds[[problem]][-problemIndex[[problem]]]
-		}
-		inCount<-sapply(inEnds,length)
-		if(any(inCount!=sapply(inStarts,length)))stop(simpleError('Intron ends and starts not equal length after removing neighbors'))
-		selector<-inCount>0
-		introns<-blat2exons(chroms[selector],names[selector],sapply(inStarts[selector],paste,collapse=','),sapply(inEnds[selector],paste,collapse=','),strands[selector],FALSE,extraCols[selector,,drop=FALSE],NULL,FALSE,'in',adjustStart=0)
-		introns$isIntron<-TRUE
-		output$isIntron<-FALSE
-		output<-rbind(output,introns)
-	}
-#this is too slow
-#	thisExons<-apply(cbind(names,chroms,strands,starts,ends),1,function(x){
-#		exonStarts<-as.numeric(strsplit(x['starts'],',')[[1]])
-#		exonEnds<-as.numeric(strsplit(x['ends'],',')[[1]])
-#		if(length(exonStarts)!=length(exonEnds))stop(simpleError('Exon starts and ends not equal length'))
-#		if(lengths)exonEnds<-exonStarts+exonEnds-1
-#		exonNum<-1:length(exonStarts)
-#		if(x['strands']=='-')exonNum<-rev(exonNum)
-#		thisNames<-paste(x['names'],'_ex',1:length(exonStarts),sep='')
-#		return(data.frame('chr'=x['chroms'],'name'=thisNames,'start'=exonStarts,'end'=exonEnds,stringsAsFactors=FALSE,row.names=thisNames))
-#	})
-#	output<-do.call(rbind,thisExons)
 	return(output)
 }
+
+
+#' Convert set of starts and ends of exons to introns
+#'
+#' @param starts starts for exons given as a comma separated string for each "gene"
+#' @param ends ends for exons given as a comma separated string for each "gene"
+#' @param names vector of each "gene". Output data.frame will contain a column name with name_in + intron number
+#' @param additionalColumns a data.frame with a row for each starts and columns giving additional information
+#' @export
+#' @return A data.frame with columns start, end and name of intron where name is the input names + "_in" + number 
+#' @examples
+#' findIntrons(c('1,100','50,150,8000'),c('50,150','148,185,9000'))
+findIntrons<-function(starts,ends,names=1:length(startList),additionalColumns=NULL){
+	if(length(starts)!=length(ends))stop(simpleError('Starts and ends not same length'))
+	if(!is.null(additionalColumns)&&length(ends)!=nrow(additionalColumns))stop(simpleError('additionalColumns not same length as starts and ends'))
+	startList<-lapply(strsplit(starts,','),as.numeric)
+	endList<-lapply(strsplit(ends,','),as.numeric)
+	inEnds<-sapply(startList,function(x)as.numeric(x[-1])-1)	
+	inStarts<-sapply(endList,function(x)as.numeric(x[-length(x)])+1)	
+	if(any(sapply(inEnds,length)!=sapply(inStarts,length)))stop(simpleError('Intron ends and starts not equal length'))
+	problemIndex<-mapply(function(x,y)which(x<y),inEnds,inStarts)
+	problems<-which(sapply(problemIndex,length)>0)
+	for(problem in problems){
+		for(thisIndex in problemIndex[[problem]]){
+			#check if these are actually nogap neighbor exons
+			if(inStarts[[problem]][thisIndex]-1!=inEnds[[problem]][thisIndex]){
+				browser()
+				stop(simpleError('Introns have negative length'))
+			}
+		}
+		#if these weren't nogap neighbor exons we would have errored out so we can delete them
+		inStarts[[problem]]<-inStarts[[problem]][-problemIndex[[problem]]]
+		inEnds[[problem]]<-inEnds[[problem]][-problemIndex[[problem]]]
+	}
+	inCount<-sapply(inEnds,length)
+	if(any(inCount!=sapply(inStarts,length)))stop(simpleError('Intron ends and starts not equal length after removing neighbors'))
+	introns<-data.frame('start'=unlist(inStarts),'end'=unlist(inEnds),stringsAsFactors=FALSE)
+	introns$name<-paste(rep(names,inCount),unlist(lapply(inCount,function(x)if(x==0)return(NULL) else return(1:x))),sep='_in')
+	if(!is.null(additionalColumns))introns<-cbind(introns,additionalColumns[rep(1:nrow(additionalColumns),inCount),])
+	return(introns)
+}
+
+
 
 #' Generate a PWM for a set of sequences
 #'

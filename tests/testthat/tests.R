@@ -256,8 +256,12 @@ test_that("Test blat2exons",{
 	expect_equal(blat2exons(blat$chr,blat$qName,blat$starts,blat$blocks,blat$strand,extraSplits=extraSplits,extraCols=extraCols),cbind(out,extraColsOut,extraSplitsOut))
 	expect_error(blat2exons(blat$chr,blat$qName,blat$starts,blat$blocks,c(blat$strand,'+')),'length')
 	expect_error(blat2exons(blat$chr,c(blat$qName,'asd'),blat$starts,blat$blocks,c(blat$strand)),'length')
+
 })
 
+test_that("Test findIntrons",{
+	expect_equal(findIntrons(c('1,100','50,150,300','1000,2000,3000'),c('20,299','99,199,399','1998,2998,4223')),data.frame('start'=c(21,100,200,1999,2999),'end'=c(99,149,299,1999,2999),'name'=c('1_in1','2_in1','2_in2','3_in1','3_in2'),stringsAsFactors=FALSE))
+})
 
 test_that("Test pwm",{
 	expect_equal(pwm(c('ACA','ACA','ACT')), matrix(c(1,0,0,0,0,1,0,0,2/3,0,0,1/3),nrow=4,ncol=3,dimnames=list(c('A','C','G','T'))))

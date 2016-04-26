@@ -5,8 +5,8 @@
 \title{Take coordinates of blat matches and split into a single line for each exon}
 \usage{
 blat2exons(chroms, names, starts, ends, strands = rep("+", length(names)),
-  lengths = TRUE, extraCols = NULL, extraSplits = NULL, introns = FALSE,
-  prefix = "ex", adjustStart = 0)
+  lengths = TRUE, extraCols = NULL, extraSplits = NULL, prefix = "ex",
+  adjustStart = 0)
 }
 \arguments{
 \item{chroms}{Chromosome or other identifier}
@@ -24,8 +24,6 @@ blat2exons(chroms, names, starts, ends, strands = rep("+", length(names)),
 \item{extraCols}{a dataframe of extra columns (1 per batch of starts) to be added to the output}
 
 \item{extraSplits}{a dataframe of extra comma-separated values (1 string of comma separated values per batch of starts, 1 value per start-stop pair) to be added to the output}
-
-\item{introns}{also output introns (the spaces between exons)}
 
 \item{prefix}{prefix to be added to exon names}
 
