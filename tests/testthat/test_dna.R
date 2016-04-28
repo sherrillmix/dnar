@@ -1,20 +1,3 @@
-context("Helper functions")
-test_that("Test index matrix",{
-	expect_equal(indexMatrix(1,1,matrix(1)), 1)
-	expect_equal(indexMatrix(2,1,matrix(1:2,nrow=2)), 2)
-	expect_equal(indexMatrix(2,1,matrix(1:100,nrow=20)), 2)
-	expect_error(indexMatrix(NA,1,matrix(1:2,nrow=2)), "NA")
-	expect_error(indexMatrix(1,NA,matrix(1:2,nrow=2)), "NA")
-	expect_error(indexMatrix(100,1,matrix(1:2,nrow=2)), "rows outside")
-	expect_error(indexMatrix(1,100,matrix(1:2,nrow=2)), "cols outside")
-	expect_error(indexMatrix(1:2,1,matrix(1:2,nrow=2)), "different")
-	expect_equal(indexMatrix(c(1:3,20),c(1:3,1),matrix(1:100,nrow=20,byrow=TRUE)), c(1,7,13,96))
-	expect_equal(indexMatrix(c(1:3,20),c(1:3,1),matrix(1:100,nrow=20,byrow=TRUE),returnIndex=TRUE), c(1,22,43,20))
-	expect_equal(indexMatrix(letters[c(1:3,20)],LETTERS[c(1:3,1)],matrix(1:100,nrow=20,byrow=TRUE,dimnames=list(letters[1:20],LETTERS[1:5]))), c(1,7,13,96))
-})
-
-
-
 context("Simple DNA string manipulation")
 test_that("Test ambiguous2regex",{
 	expect_equal(ambiguous2regex(c("AATTCCGG",'GN@!','RYHB','')), c("AATTCCGG",'G[ACGT]@!','[AG][CT][ACT][CGT]',''))
@@ -79,6 +62,8 @@ test_that("Test seqSplit",{
 	expect_error(seqSplit("ACA","ACAA",fill=NULL), "length")
 })
 
+
+context('Test amino acid functions')
 test_that("Test dna2codons",{
 	expect_equal(dna2codons(c('GTTGAA','ACGTTT123','GTAAA')),list(c('GTT','GAA'),c('ACG','TTT','123'),c('GTA')))
 	expect_equal(dna2codons(c('GTTGAA','ACGTTT123','GTAAA'),frame=0:2),list(c('GTT','GAA'),c('CGT','TT1'),c('AAA')))
@@ -120,6 +105,8 @@ test_that("Test aa2dna",{
 	expect_equal(sapply(strsplit(aa2dna(c('MAAX','MMFFYYS',paste(sample(dnar::aminoAcids$code,50,TRUE),collapse=''))),'[()]+'),length),c(4,7,50)+1)
 })
 
+
+context('Gap functions')
 test_that("Test gap2NoGap",{
 	expect_equal(gap2NoGap("AA--CC--TT",1:10), c(1,2,2,2,3,4,4,4,5,6))
 	expect_equal(gap2NoGap("AA**CC..TT",1:10), c(1,2,2,2,3,4,4,4,5,6))
@@ -153,6 +140,7 @@ test_that("Test index2range",{
 	expect_equal(index2range(c()), data.frame('start'=NA,'end'=NA)[0,])
 })
 
+context('Reverse complimenting')
 test_that("Test reverseString",{
 	expect_equal(reverseString("1234\nabc_"), "_cba\n4321")
 	expect_equal(reverseString(reverseString("1234\nabc_")), "1234\nabc_")
@@ -287,6 +275,7 @@ test_that("Test findIntrons",{
 	expect_error(findIntrons(c('1,100,299','50,150,300','1000,2000,3000'),c('20,299,350','99,199,399','1998,2998,4223')),'negative')
 })
 
+context('Pwm functions')
 test_that("Test pwm",{
 	expect_equal(pwm(c('ACA','ACA','ACT')), matrix(c(1,0,0,0,0,1,0,0,2/3,0,0,1/3),nrow=4,ncol=3,dimnames=list(c('A','C','G','T'))))
 	expect_equal(pwm(c('ACAT','ACAC','ACTG','ACTz')), matrix(c(1,0,0,0,0,1,0,0,.5,0,0,.5,0,1/3,1/3,1/3),nrow=4,ncol=4,dimnames=list(c('A','C','G','T'))))

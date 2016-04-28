@@ -1,0 +1,15 @@
+
+context("Helper functions")
+test_that("Test index matrix",{
+	expect_equal(indexMatrix(1,1,matrix(1)), 1)
+	expect_equal(indexMatrix(2,1,matrix(1:2,nrow=2)), 2)
+	expect_equal(indexMatrix(2,1,matrix(1:100,nrow=20)), 2)
+	expect_error(indexMatrix(NA,1,matrix(1:2,nrow=2)), "NA")
+	expect_error(indexMatrix(1,NA,matrix(1:2,nrow=2)), "NA")
+	expect_error(indexMatrix(100,1,matrix(1:2,nrow=2)), "rows outside")
+	expect_error(indexMatrix(1,100,matrix(1:2,nrow=2)), "cols outside")
+	expect_error(indexMatrix(1:2,1,matrix(1:2,nrow=2)), "different")
+	expect_equal(indexMatrix(c(1:3,20),c(1:3,1),matrix(1:100,nrow=20,byrow=TRUE)), c(1,7,13,96))
+	expect_equal(indexMatrix(c(1:3,20),c(1:3,1),matrix(1:100,nrow=20,byrow=TRUE),returnIndex=TRUE), c(1,22,43,20))
+	expect_equal(indexMatrix(letters[c(1:3,20)],LETTERS[c(1:3,1)],matrix(1:100,nrow=20,byrow=TRUE,dimnames=list(letters[1:20],LETTERS[1:5]))), c(1,7,13,96))
+})
