@@ -1,4 +1,4 @@
-context("Simple DNA string manipulation")
+context("Test dna.R functions")
 test_that("Test ambiguous2regex",{
 	expect_equal(ambiguous2regex(c("AATTCCGG",'GN@!','RYHB','')), c("AATTCCGG",'G[ACGT]@!','[AG][CT][ACT][CGT]',''))
 	expect_equal(grep(ambiguous2regex('ANRT'),c('ATGT','ACAT','AGTT')), 1:2)
@@ -63,7 +63,6 @@ test_that("Test seqSplit",{
 })
 
 
-context('Test amino acid functions')
 test_that("Test dna2codons",{
 	expect_equal(dna2codons(c('GTTGAA','ACGTTT123','GTAAA')),list(c('GTT','GAA'),c('ACG','TTT','123'),c('GTA')))
 	expect_equal(dna2codons(c('GTTGAA','ACGTTT123','GTAAA'),frame=0:2),list(c('GTT','GAA'),c('CGT','TT1'),c('AAA')))
@@ -106,7 +105,6 @@ test_that("Test aa2dna",{
 })
 
 
-context('Gap functions')
 test_that("Test gap2NoGap",{
 	expect_equal(gap2NoGap("AA--CC--TT",1:10), c(1,2,2,2,3,4,4,4,5,6))
 	expect_equal(gap2NoGap("AA**CC..TT",1:10), c(1,2,2,2,3,4,4,4,5,6))
@@ -140,7 +138,6 @@ test_that("Test index2range",{
 	expect_equal(index2range(c()), data.frame('start'=NA,'end'=NA)[0,])
 })
 
-context('Reverse complimenting')
 test_that("Test reverseString",{
 	expect_equal(reverseString("1234\nabc_"), "_cba\n4321")
 	expect_equal(reverseString(reverseString("1234\nabc_")), "1234\nabc_")
@@ -275,7 +272,6 @@ test_that("Test findIntrons",{
 	expect_error(findIntrons(c('1,100,299','50,150,300','1000,2000,3000'),c('20,299,350','99,199,399','1998,2998,4223')),'negative')
 })
 
-context('Pwm functions')
 test_that("Test pwm",{
 	expect_equal(pwm(c('ACA','ACA','ACT')), matrix(c(1,0,0,0,0,1,0,0,2/3,0,0,1/3),nrow=4,ncol=3,dimnames=list(c('A','C','G','T'))))
 	expect_equal(pwm(c('ACAT','ACAC','ACTG','ACTz')), matrix(c(1,0,0,0,0,1,0,0,.5,0,0,.5,0,1/3,1/3,1/3),nrow=4,ncol=4,dimnames=list(c('A','C','G','T'))))
