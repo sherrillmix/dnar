@@ -262,15 +262,23 @@ test_that("Test blat2exons",{
 test_that("Test findIntrons",{
 	expect_equal(
 		findIntrons(c('1,100','50,150,300','1000,2000,3000'),c('20,299','99,199,399','1998,2998,4223')),
-		data.frame('start'=c(21,100,200,1999,2999),'end'=c(99,149,299,1999,2999),'name'=c('1_in1','2_in1','2_in2','3_in1','3_in2'),stringsAsFactors=FALSE)
+		data.frame('startAfter'=c(21,100,200,1999,2999)-1,'length'=c(99,149,299,1999,2999)-c(21,100,200,1999,2999)+1,'name'=c('1_in1','2_in1','2_in2','3_in1','3_in2'),stringsAsFactors=FALSE)
 	)
 	expect_equal(
 		findIntrons(c('1,100,300','50,150,300','1000,2000,3000'),c('20,299,350','99,199,399','1998,2998,4223')),
-		data.frame('start'=c(21,100,200,1999,2999),'end'=c(99,149,299,1999,2999),'name'=c('1_in1','2_in1','2_in2','3_in1','3_in2'),stringsAsFactors=FALSE)
+		data.frame('startAfter'=c(21,300,100,200,1999,2999)-1,'length'=c(99,298,149,299,1999,2999)-c(21,299,100,200,1999,2999)+1,'name'=c('1_in1','1_in2','2_in1','2_in2','3_in1','3_in2'),stringsAsFactors=FALSE)
 	)
 	expect_equal(
 		findIntrons(c('1,100,300','50,150,300','1000,2000,3000','1'),c('20,299,350','99,199,399','1998,2998,4223','10000'),names=letters[1:4]),
-		data.frame('start'=c(21,100,200,1999,2999),'end'=c(99,149,299,1999,2999),'name'=c('a_in1','b_in1','b_in2','c_in1','c_in2'),stringsAsFactors=FALSE)
+		data.frame('startAfter'=c(21,300,100,200,1999,2999)-1,'length'=c(99,298,149,299,1999,2999)-c(21,299,100,200,1999,2999)+1,'name'=c('a_in1','a_in2','b_in1','b_in2','c_in1','c_in2'),stringsAsFactors=FALSE)
+	)
+	expect_equal(
+		findIntrons(c('1,100','50,150,300','1000,2000,3000'),c('20,299','99,199,399','1998,2998,4223')),
+		findIntrons(list(c(1,100),c(50,150,300),c(1000,2000,3000)),list(c(20,299),c(99,199,399),c(1998,2998,4223)))
+	)
+	expect_equal(
+		findIntrons(c('1000,2000,3000'),c('1998,2998,4223')),
+		findIntrons(c(1000,2000,3000),c(1998,2998,4223))
 	)
 	expect_error(findIntrons(c('1,100,300','50,150,300','1000,2000,3000'),c('20,299,350','99,199,399','1998,2998,4223','1')),'length')
 	expect_error(findIntrons(c('1,100,300','50,150,300','1000,2000,3000','1'),c('20,299,350','99,199,399','1998,2998,4223')),'length')

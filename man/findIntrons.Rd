@@ -8,16 +8,16 @@ findIntrons(starts, ends, names = 1:length(startList),
   additionalColumns = NULL)
 }
 \arguments{
-\item{starts}{starts for exons given as a comma separated string for each "gene"}
+\item{starts}{starts for exons given as a comma separated string for each "gene" or list of numeric vectors}
 
-\item{ends}{ends for exons given as a comma separated string for each "gene"}
+\item{ends}{ends for exons given as a comma separated string for each "gene" or list of numeric vectors}
 
 \item{names}{vector of each "gene". Output data.frame will contain a column name with name_in + intron number}
 
 \item{additionalColumns}{a data.frame with a row for each starts and columns giving additional information}
 }
 \value{
-A data.frame with columns start, end and name of intron where name is the input names + "_in" + number
+A data.frame with columns startAfter giving the base before the intron, length giving the length of intron and name of intron where name is the input names + "_in" + number. Note that startAfter and length are used to allow zero length introns
 }
 \description{
 Convert set of starts and ends of exons to introns

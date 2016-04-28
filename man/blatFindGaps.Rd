@@ -14,9 +14,12 @@ blatFindGaps(qStarts, tStarts, blockSizes)
 \item{blockSizes}{comma separated block sizes}
 }
 \value{
-data.frame giving qGaps, tGaps, qGapStartAfter and tGapStartAfter
+data.frame giving qStartAfter, qGaps, tGapStartAfter and tGaps
 }
 \description{
 Find gaps in blat coordinates
+}
+\examples{
+blatFindGaps('1,100,200','4,200,300','99,50,100')
 }
 

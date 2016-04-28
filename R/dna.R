@@ -609,8 +609,8 @@ blockToAlign<-function(seqs,tSeqs,qStarts,tStarts,sizes){
 		gap<-as.data.frame(gap,stringsAsFactors=FALSE)
 		#depending on substring(seq,x,x-1) returning ''
 		if(nrow(gap)==0)return(gap)
-		gap$tSeq<-substring(tSeq,gap$tGapStartAfter+1,gap$tGapStartAfter+gap$tGaps)
-		gap$qSeq<-substring(qSeq,gap$qGapStartAfter+1,gap$qGapStartAfter+gap$qGaps)
+		gap$tSeq<-substring(tSeq,gap$tStartAfter+1,gap$tStartAfter+gap$tGaps)
+		gap$qSeq<-substring(qSeq,gap$qStartAfter+1,gap$qStartAfter+gap$qGaps)
 		dummy<-paste(rep('-',max(nchar(c(gap$tSeq,gap$qSeq)))),collapse='')
 		gap[,c('tSeq','qSeq')]<-t(apply(gap[,c('tSeq','qSeq')],1,function(x)paste(x,substring(dummy,1,max(nchar(x))-nchar(x)),sep='')))
 		return(gap)
@@ -682,8 +682,9 @@ cutBlatReads<-function(seqs,starts,fillStarts=NULL,fillEnds=NULL,gaps=NULL){
 #' @param tStarts comma separated starts for target seq
 #' @param blockSizes comma separated block sizes
 #' @export
-#' @return data.frame giving qGaps, tGaps, qGapStartAfter and tGapStartAfter
-#currently finds from start of both sequences. could add argument and make the c(0,XX) conditional
+#' @return data.frame giving qStartAfter, qGaps, tGapStartAfter and tGaps
+#' @examples
+#' blatFindGaps('1,100,200','4,200,300','99,50,100')
 blatFindGaps<-function(qStarts,tStarts,blockSizes){
 	if(length(qStarts)!=length(tStarts)||length(blockSizes)!=length(qStarts))stop(simpleError('Lengths of starts and blocksizes not equal'))
 	qStartList<-lapply(strsplit(qStarts,','),as.numeric)
@@ -693,14 +694,13 @@ blatFindGaps<-function(qStarts,tStarts,blockSizes){
 	if(any(blockNums!=sapply(tStartList,length))||any(blockNums!=sapply(blockSizeList,length)))stop(simpleError('Comma separated lists of starts and blocksizes not equal length'))
 
 	gaps<-mapply(function(qStarts,tStarts,blockSizes){
-		qStarts<-c(0,qStarts)
-		tStarts<-c(0,tStarts)
-		blockSizes<-c(1,blockSizes)
 		tEnds<-tStarts+blockSizes-1
 		qEnds<-qStarts+blockSizes-1
-		tGapLengths<-tStarts[-1]-tEnds[-length(tEnds)]-1
-		qGapLengths<-qStarts[-1]-qEnds[-length(qEnds)]-1
-		return(cbind('qGaps'=qGapLengths,'tGaps'=tGapLengths,'qGapStartAfter'=qEnds[-length(qEnds)],'tGapStartAfter'=tEnds[-length(tEnds)]))
+		qGaps<-findIntrons(qStarts,qEnds)
+		tGaps<-findIntrons(tStarts,tEnds)
+		if(nrow(qGaps)!=nrow(tGaps))stop(simpleError('Mismatch in target and query introns'))
+		out<-data.frame('qStartAfter'=qGaps$startAfter,'qGaps'=qGaps$length,'tStartAfter'=tGaps$startAfter,'tGaps'=tGaps$length)
+		return(out)
 	},qStartList,tStartList,blockSizeList,SIMPLIFY=FALSE)
 
 	return(gaps)
@@ -763,19 +763,27 @@ blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),len
 
 #' Convert set of starts and ends of exons to introns
 #'
-#' @param starts starts for exons given as a comma separated string for each "gene"
-#' @param ends ends for exons given as a comma separated string for each "gene"
+#' @param starts starts for exons given as a comma separated string for each "gene" or list of numeric vectors
+#' @param ends ends for exons given as a comma separated string for each "gene" or list of numeric vectors
 #' @param names vector of each "gene". Output data.frame will contain a column name with name_in + intron number
 #' @param additionalColumns a data.frame with a row for each starts and columns giving additional information
 #' @export
-#' @return A data.frame with columns start, end and name of intron where name is the input names + "_in" + number 
+#' @return A data.frame with columns startAfter giving the base before the intron, length giving the length of intron and name of intron where name is the input names + "_in" + number. Note that startAfter and length are used to allow zero length introns
 #' @examples
 #' findIntrons(c('1,100','50,150,8000'),c('50,150','148,185,9000'))
 findIntrons<-function(starts,ends,names=1:length(startList),additionalColumns=NULL){
 	if(length(starts)!=length(ends))stop(simpleError('Starts and ends not same length'))
 	if(!is.null(additionalColumns)&&length(ends)!=nrow(additionalColumns))stop(simpleError('additionalColumns not same length as starts and ends'))
-	startList<-lapply(strsplit(starts,','),as.numeric)
-	endList<-lapply(strsplit(ends,','),as.numeric)
+	if(is.character(starts)){
+		startList<-lapply(strsplit(starts,','),as.numeric)
+		endList<-lapply(strsplit(ends,','),as.numeric)
+	}else if(is.numeric(starts)){
+		startList<-list(starts)
+		endList<-list(ends)
+	}else{
+		startList<-starts
+		endList<-ends
+	}
 	inEnds<-lapply(startList,function(x)x[-1]-1)
 	inStarts<-lapply(endList,function(x)x[-length(x)]+1)
 	if(any(sapply(inEnds,length)!=sapply(inStarts,length)))stop(simpleError('Intron ends and starts not equal length'))
@@ -789,12 +797,12 @@ findIntrons<-function(starts,ends,names=1:length(startList),additionalColumns=NU
 			}
 		}
 		#if these weren't nogap neighbor exons we would have errored out so we can delete them
-		inStarts[[problem]]<-inStarts[[problem]][-problemIndex[[problem]]]
-		inEnds[[problem]]<-inEnds[[problem]][-problemIndex[[problem]]]
+		#inStarts[[problem]]<-inStarts[[problem]][-problemIndex[[problem]]]
+		#inEnds[[problem]]<-inEnds[[problem]][-problemIndex[[problem]]]
 	}
 	inCount<-sapply(inEnds,length)
 	if(any(inCount!=sapply(inStarts,length)))stop(simpleError('Intron ends and starts not equal length after removing neighbors'))
-	introns<-data.frame('start'=unlist(inStarts),'end'=unlist(inEnds),stringsAsFactors=FALSE)
+	introns<-data.frame('startAfter'=unlist(inStarts)-1,'length'=unlist(inEnds)-unlist(inStarts)+1,stringsAsFactors=FALSE)
 	introns$name<-paste(rep(names,inCount),unlist(lapply(inCount,function(x)if(x==0)return(NULL) else return(1:x))),sep='_in')
 	if(!is.null(additionalColumns))introns<-cbind(introns,additionalColumns[rep(1:nrow(additionalColumns),inCount),])
 	return(introns)
