@@ -62,6 +62,22 @@ test_that("Test seqSplit",{
 	expect_error(seqSplit("ACA","ACAA",fill=NULL), "length")
 })
 
+test_that("Test blatFindGaps",{
+	expect_equal(blatFindGaps(c('1,100,200','1','1,10,20,30'),c('4,200,300','100','1,1001,2001,3001'),c('99,50,100','10000','3,4,5,6')),
+		list(
+			data.frame(qStartAfter=c(99,149),qGaps=c(0,50),tStartAfter=c(102,249),tGaps=c(97,50)),
+			data.frame(qStartAfter=-99,qGaps=-99,tStartAfter=-99,tGaps=-99)[0,],
+			data.frame(qStartAfter=c(3,13,24),qGaps=c(6,6,5),tStartAfter=c(3,1004,2005),tGaps=c(997,996,995))
+		)
+	)
+	expect_error(blatFindGaps(c('1,100,200','1','1,10,20,30'),c('4,200,300','100','1,1001,2001,3001'),c('99,50,100','10000')),'Length')
+	expect_error(blatFindGaps(c('1,100,200','1'),c('4,200,300','100','1,1001,2001,3001'),c('99,50,100','10000')),'Length')
+	expect_error(blatFindGaps(c('1'),c('4,200,300','100'),c('99,50,100','10000')),'Length')
+	expect_error(blatFindGaps(c('1,100','1'),c('4,200,300','100'),c('99,50,100','10000')),'length')
+	expect_error(blatFindGaps(c('1,100,200','1'),c('4,200,300','100'),c('99,50','10000')),'length') 
+	expect_error(blatFindGaps(c('1,100,200','1'),c('4,200,300','100'),c('150,99,50','10000')),'negative') 
+	expect_error(blatFindGaps(c('1,100,300','1'),c('4,200,300','100'),c('50,101,50','10000')),'negative') 
+})
 
 test_that("Test dna2codons",{
 	expect_equal(dna2codons(c('GTTGAA','ACGTTT123','GTAAA')),list(c('GTT','GAA'),c('ACG','TTT','123'),c('GTA')))
