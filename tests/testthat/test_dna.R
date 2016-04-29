@@ -164,19 +164,19 @@ test_that("Test reverseString",{
 	expect_equal(reverseString("(0)1[23]4",brackets=FALSE), "4]32[1)0(")
 })
 
-test_that("Test compliment",{
-	expect_equal(complimentDna(c("ACTG",'A')), c("TGAC",'T'))
-	expect_equal(complimentDna(c(rep(paste(rep(c('AA','TTT','C','GGGG'),100),collapse=''),100),'A')), c(rep(paste(rep(c('TT','AAA','G','CCCC'),100),collapse=''),100),'T'))
-	expect_equal(complimentDna(complimentDna(c("AATTGGCCA",'','A'))), c("AATTGGCCA",'','A'))
-	expect_equal(complimentDna(c("XZ!@")), c("XZ!@"))
-	expect_equal(complimentDna(c("CAGT","MNK")), c("GTCA","KNM"))
-	expect_equal(complimentDna(c("CAGT","MNK"),ambigs=FALSE), c("GTCA","MNK"))
+test_that("Test complement",{
+	expect_equal(complementDna(c("ACTG",'A')), c("TGAC",'T'))
+	expect_equal(complementDna(c(rep(paste(rep(c('AA','TTT','C','GGGG'),100),collapse=''),100),'A')), c(rep(paste(rep(c('TT','AAA','G','CCCC'),100),collapse=''),100),'T'))
+	expect_equal(complementDna(complementDna(c("AATTGGCCA",'','A'))), c("AATTGGCCA",'','A'))
+	expect_equal(complementDna(c("XZ!@")), c("XZ!@"))
+	expect_equal(complementDna(c("CAGT","MNK")), c("GTCA","KNM"))
+	expect_equal(complementDna(c("CAGT","MNK"),ambigs=FALSE), c("GTCA","MNK"))
 })
 
-test_that("Test reverse compliment",{
+test_that("Test reverse complement",{
 	expect_equal(revComp(c("ACTG",'A')), c("CAGT",'T'))
 	expect_equal(revComp(revComp(c("AATTGGCCA",'','A'))), c("AATTGGCCA",'','A'))
-	expect_equal(revComp(c("AATTGGCCA",'','A')), complimentDna(reverseString(c("AATTGGCCA",'','A'))))
+	expect_equal(revComp(c("AATTGGCCA",'','A')), complementDna(reverseString(c("AATTGGCCA",'','A'))))
 	expect_equal(revComp(c("A[CT]G",'HDMNK')), c("C[AG]T",'MNKHD'))
 })
 

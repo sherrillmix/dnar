@@ -377,38 +377,38 @@ reverseString<-function(strings,brackets=TRUE){
 	return(output)
 }
 
-#' Compliment DNA 
+#' Complement DNA 
 #'
 #' @param dnas vector of sequences
-#' @param ambigs if TRUE compliment ambiguous bases
+#' @param ambigs if TRUE complement ambiguous bases
 #' @export
-#' @return vector with the DNA sequences complimented
+#' @return vector with the DNA sequences complemented
 #' @examples
-#' complimentDna(c('CTAG','ATCCAC'))
-#' complimentDna(c('CT[AC]G','ATNRY'))
-complimentDna<-function(dnas,ambigs=TRUE){
+#' complementDna(c('CTAG','ATCCAC'))
+#' complementDna(c('CT[AC]G','ATNRY'))
+complementDna<-function(dnas,ambigs=TRUE){
 	finds<-'TGAC'
 	replaces<-'ACTG'
 	#deal with ambiguous
 	if(ambigs){
 		sortAmbig<-sapply(lapply(strsplit(dnar::ambiguousBaseCodes,''),sort),paste,collapse='',USE.NAMES=FALSE)
-		revAmbig<-sapply(strsplit(complimentDna(sortAmbig,ambigs=FALSE),''),function(x)paste(sort(x),collapse=''),USE.NAMES=FALSE)
+		revAmbig<-sapply(strsplit(complementDna(sortAmbig,ambigs=FALSE),''),function(x)paste(sort(x),collapse=''),USE.NAMES=FALSE)
 		ambigComp<-names(sortAmbig)[sapply(revAmbig,function(x)which(x==sortAmbig))]
 		finds<-sprintf('%s%s',finds,paste(names(sortAmbig),collapse=''))
 		replaces<-sprintf('%s%s',replaces,paste(ambigComp,collapse=''))
 	}
 	return(chartr(finds,replaces,dnas))
 }
-#' Reverse compliment dna
+#' Reverse complement dna
 #'
 #' @param dnas vector of sequences
 #' @export
-#' @return vector of reverse complimented dna sequences
+#' @return vector of reverse complemented dna sequences
 #' @examples
 #' revComp(c('CTAG','ATCCAC'))
 #' revComp(c('CT[AC]G','ATNRY'))
 revComp<-function(dnas){
-	return(complimentDna(reverseString(dnas),TRUE))
+	return(complementDna(reverseString(dnas),TRUE))
 }
 
 #' Remove gap characters from DNA sequences

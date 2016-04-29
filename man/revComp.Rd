@@ -2,7 +2,7 @@
 % Please edit documentation in R/dna.R
 \name{revComp}
 \alias{revComp}
-\title{Reverse compliment dna}
+\title{Reverse complement dna}
 \usage{
 revComp(dnas)
 }
@@ -10,10 +10,10 @@ revComp(dnas)
 \item{dnas}{vector of sequences}
 }
 \value{
-vector of reverse complimented dna sequences
+vector of reverse complemented dna sequences
 }
 \description{
-Reverse compliment dna
+Reverse complement dna
 }
 \examples{
 revComp(c('CTAG','ATCCAC'))
