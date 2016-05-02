@@ -4,7 +4,7 @@
 #' @export
 #' @return logical vector of length(x) specifying if each element of x was an error
 isError<-function(x){
-    sapply(x,function(y)inherits(y,'simpleError')|inherits(y,'try-error'))
+    unlist(lapply(x,function(y)inherits(y,'simpleError')|inherits(y,'try-error')))
 }
 
 #' Convenience function for selecting multiple elements from a matrix by rows and columns position

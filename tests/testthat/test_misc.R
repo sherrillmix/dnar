@@ -1,5 +1,9 @@
 
 context("Helper functions")
+test_that("Test isError",{
+	expect_equal(isError(c(as.list(1:100),list(simpleError('Test')),as.list(letters))),rep(c(FALSE,TRUE,FALSE),c(100,1,26)))
+})
+
 test_that("Test index matrix",{
 	expect_equal(indexMatrix(1,1,matrix(1)), 1)
 	expect_equal(indexMatrix(2,1,matrix(1:2,nrow=2)), 2)
