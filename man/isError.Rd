@@ -2,7 +2,7 @@
 % Please edit documentation in R/misc.R
 \name{isError}
 \alias{isError}
-\title{Convenience function to check for errors}
+\title{Convenience function to check for errors in a list of results e.g. from mclapply}
 \usage{
 isError(x)
 }
@@ -13,6 +13,12 @@ isError(x)
 logical vector of length(x) specifying if each element of x was an error
 }
 \description{
-Convenience function to check for errors
+Convenience function to check for errors in a list of results e.g. from mclapply
+}
+\examples{
+isError(c(list(1:3),list(simpleError('Error!'))))
+}
+\seealso{
+\code{\link[parallel]{mclapply}}
 }
 

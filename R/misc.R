@@ -1,8 +1,11 @@
-#' Convenience function to check for errors
+#' Convenience function to check for errors in a list of results e.g. from mclapply
 #'
 #' @param x vector or list to check for errors
 #' @export
 #' @return logical vector of length(x) specifying if each element of x was an error
+#' @seealso \code{\link[parallel]{mclapply}}
+#' @examples
+#' isError(c(list(1:3),list(simpleError('Error!'))))
 isError<-function(x){
     unlist(lapply(x,function(y)inherits(y,'simpleError')|inherits(y,'try-error')))
 }
