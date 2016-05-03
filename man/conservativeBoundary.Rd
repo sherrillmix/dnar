@@ -12,9 +12,20 @@ conservativeBoundary(boundaries, base = 0)
 \item{base}{value, e.g. 0 or 1}
 }
 \value{
-single numberic. if the boundaries overlap the base then return base otherwise return value closest to base
+single numeric. if the boundaries overlap the base then return base otherwise return value closest to base
 }
 \description{
 Get the conservative edge of a confidence interval
+}
+\examples{
+conservativeBoundary(c(1,100),10)
+conservativeBoundary(c(20,100),10)
+conservativeBoundary(c(-100,-20),0)
+mat<-matrix(1:4,nrow=2)
+fish<-fisher.test(mat)
+conservativeBoundary(fish$conf.int,1)
+mat2<-matrix(c(10,1,1,10),nrow=2)
+fish2<-fisher.test(mat2)
+conservativeBoundary(fish2$conf.int,1)
 }
 

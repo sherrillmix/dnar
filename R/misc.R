@@ -63,7 +63,17 @@ stopError<-function(...){
 #' @param boundaries upper and lower values
 #' @param base value, e.g. 0 or 1
 #' @export
-#' @return single numberic. if the boundaries overlap the base then return base otherwise return value closest to base
+#' @return single numeric. if the boundaries overlap the base then return base otherwise return value closest to base
+#' @examples
+#' conservativeBoundary(c(1,100),10)
+#' conservativeBoundary(c(20,100),10)
+#' conservativeBoundary(c(-100,-20),0)
+#' mat<-matrix(1:4,nrow=2)
+#' fish<-fisher.test(mat)
+#' conservativeBoundary(fish$conf.int,1)
+#' mat2<-matrix(c(10,1,1,10),nrow=2)
+#' fish2<-fisher.test(mat2)
+#' conservativeBoundary(fish2$conf.int,1)
 conservativeBoundary<-function(boundaries,base=0){
 	boundaries<-sort(boundaries)
 	return(ifelse(all(boundaries>base),boundaries[1],ifelse(all(boundaries<base),boundaries[2],base)))
