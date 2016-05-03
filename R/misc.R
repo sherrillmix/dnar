@@ -44,7 +44,8 @@ adjustWindow<-function()options(width=as.integer(Sys.getenv('COLUMNS')))
 #' @param env the environment to list
 #' @export
 #' @return object sizes in decreasing order
-object.sizes<-function(env=.GlobalEnv)sort(sapply(ls(envir=env),function(x)object.size(get(x))),decreasing=TRUE)
+#' object.sizes()
+object.sizes<-function(env=.GlobalEnv)sort(sapply(ls(envir=env),function(x)object.size(get(x,env))),decreasing=TRUE)
 
 #' Generate an error
 #'
@@ -52,6 +53,7 @@ object.sizes<-function(env=.GlobalEnv)sort(sapply(ls(envir=env),function(x)objec
 #' @param ... Strings to be concatenated into error message
 #' @export
 #' @return Generates stopping error before returning
+#' tryCatch(stopError('Error: we had ',sum(1:10),' problems'),error=function(e)print(e))
 stopError<-function(...){
 	stop(simpleError(paste(...,sep='')))
 }

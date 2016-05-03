@@ -11,6 +11,7 @@ object.sizes(env = .GlobalEnv)
 }
 \value{
 object sizes in decreasing order
+object.sizes()
 }
 \description{
 Convenience function to list objects by size

@@ -11,6 +11,7 @@ stopError(...)
 }
 \value{
 Generates stopping error before returning
+tryCatch(stopError('Error: we had ',sum(1:10),' problems'),error=function(e)print(e))
 }
 \description{
 Convenience function for stop(simpleError())

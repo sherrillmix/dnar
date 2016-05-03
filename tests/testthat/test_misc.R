@@ -17,3 +17,28 @@ test_that("Test index matrix",{
 	expect_equal(indexMatrix(c(1:3,20),c(1:3,1),matrix(1:100,nrow=20,byrow=TRUE),returnIndex=TRUE), c(1,22,43,20))
 	expect_equal(indexMatrix(letters[c(1:3,20)],LETTERS[c(1:3,1)],matrix(1:100,nrow=20,byrow=TRUE,dimnames=list(letters[1:20],LETTERS[1:5]))), c(1,7,13,96))
 })
+
+test_that("Test object.sizes",{
+	test<-list(xxx=1:10, yyy=1:20)
+	testEnv<-as.environment(test)
+	first<-object.sizes(testEnv)
+	test<-c(test,'abc'=list(rnorm(1000)))
+	testEnv2<-as.environment(test)
+	second<-object.sizes(testEnv2)
+	#expect_equal(sort(c(names(first),'abc')),sort(names(second)))
+})
+
+test_that("Test stopError",{
+	expect_error(stopError('Test'),'Test')
+	expect_error(stopError('Test ',sum(1:3),' test'),'Test 6 test')
+})
+
+test_that("Test conservativeBoundary",{
+	expect_equal(conservativeBoundary(c(-1,1),0),0)
+	expect_equal(conservativeBoundary(c(-1,1),.5),.5)
+	expect_equal(conservativeBoundary(c(-1,1),2),1)
+	expect_equal(conservativeBoundary(c(-1,1),-1.1),-1)
+	expect_equal(conservativeBoundary(c(-Inf,1),0),0)
+	expect_equal(conservativeBoundary(c(-1,Inf),0),0)
+	expect_equal(conservativeBoundary(c(10,Inf),0),10)
+})
