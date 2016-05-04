@@ -87,10 +87,15 @@ conservativeBoundary<-function(boundaries,base=0){
 #' @param fill the value to fill at the start or end  of the output lagged vector
 #' @export
 #' @return a vector the same length as x 
+#' @examples
+#' lagNA(1:10,3)
+#' lagNA(1:10,-3)
+#' lagNA(1:10,-3,-99)
 lagNA<-function(x,lag=1,fill=NA){
 	out<-x	
+	if(abs(lag)>=length(x))return(rep(fill,length(x)))
 	if(lag>0)out<-c(out[-(1:lag)],rep(fill,lag))
-	if(lag<0)out<-c(rep(fill,abs(lag)),out[-(length(x)-(1:lag)+1)])
+	if(lag<0)out<-c(rep(fill,abs(lag)),out[-(length(x)+(-1:lag)+1)])
 	return(out)
 }
 

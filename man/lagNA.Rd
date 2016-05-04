@@ -19,4 +19,9 @@ a vector the same length as x
 \description{
 Convenience function for lagging with NA
 }
+\examples{
+lagNA(1:10,3)
+lagNA(1:10,-3)
+lagNA(1:10,-3,-99)
+}
 

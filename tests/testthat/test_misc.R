@@ -42,3 +42,18 @@ test_that("Test conservativeBoundary",{
 	expect_equal(conservativeBoundary(c(-1,Inf),0),0)
 	expect_equal(conservativeBoundary(c(10,Inf),0),10)
 })
+
+test_that("Test lagNA",{
+	expect_equal(lagNA(1:10,1),c(2:10,NA))
+	expect_equal(lagNA(1:10,5),c(6:10,rep(NA,5)))
+	expect_equal(lagNA(1:10,5,-99),c(6:10,rep(-99,5)))
+	expect_equal(lagNA(1:10,-1),c(NA,1:9))
+	expect_equal(lagNA(1:10,-5),c(rep(NA,5),1:5))
+	expect_equal(lagNA(1:10,-5,-99),c(rep(-99,5),1:5))
+	expect_equal(lagNA(1:20,-50),rep(NA,20))
+	expect_equal(lagNA(1:20,-50),rep(NA,20))
+	expect_equal(lagNA(1:20,-20),rep(NA,20))
+	expect_equal(lagNA(1:20,20),rep(NA,20))
+	expect_equal(lagNA(1:20,-19),rep(c(NA,1),c(19,1)))
+	expect_equal(lagNA(1:20,19),rep(c(20,NA),c(1,19)))
+})
