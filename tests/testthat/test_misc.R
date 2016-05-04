@@ -57,3 +57,23 @@ test_that("Test lagNA",{
 	expect_equal(lagNA(1:20,-19),rep(c(NA,1),c(19,1)))
 	expect_equal(lagNA(1:20,19),rep(c(20,NA),c(1,19)))
 })
+
+test_that("Test movingStat",{
+	expect_equal(movingStat(1:10,min,2),c(1,1,1,2:8))
+	expect_equal(movingStat(10:1,min,2),rev(c(1,1,1,2:8)))
+	expect_equal(movingStat(20:1,max,5),c(rep(20,6),19:6))
+	expect_equal(movingStat(20,max,5),c(20))
+	expect_equal(movingStat(1:100,mean,0),1:100)
+})
+
+test_that("Test allSameLength",{
+	expect_equal(allSameLength(1:10,2:11,letters[1:10]),TRUE)
+	expect_equal(allSameLength(1:10,2:11,letters[1:11]),FALSE)
+	expect_equal(allSameLength(1:11,2:11,letters[1:11]),FALSE)
+	expect_equal(allSameLength(as.list(1:10),1:10),TRUE)
+	test<-lapply(1:100,function(x)rnorm(100))
+	expect_equal(do.call(allSameLength,test),TRUE)
+	expect_equal(do.call(allSameLength,c(test,list(1:99))),FALSE)
+})
+
+

@@ -19,4 +19,10 @@ a vector the same length as vec
 \description{
 Calculating a moving average/max/min statistic over a vector
 }
+\examples{
+movingStat(1:10,mean)
+movingStat(1:10,max)
+movingStat(1:20,min)
+movingStat(rnorm(100),mean,5)
+}
 

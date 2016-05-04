@@ -106,6 +106,11 @@ lagNA<-function(x,lag=1,fill=NA){
 #' @param spacer how many neighbors to the left and right to average
 #' @export
 #' @return a vector the same length as vec
+#' @examples
+#' movingStat(1:10,mean)
+#' movingStat(1:10,max)
+#' movingStat(1:20,min)
+#' movingStat(rnorm(100),mean,5)
 movingStat<-function(vec,statFunc=max,spacer=2){
 	n<-length(vec)
 	sapply(1:n,function(x)statFunc(vec[max(1,x-spacer):min(n,x+spacer)]))
