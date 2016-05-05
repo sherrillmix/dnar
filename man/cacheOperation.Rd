@@ -24,6 +24,20 @@ cacheOperation(cacheFile, operation, ..., OVERWRITE = FALSE, VOCAL = TRUE,
 Output from operation function with ... arguments
 }
 \description{
-Cache an operation to disk or load if cache file present
+Cache an operation to disk to save computation time in the future. A hash of the function and arguments is generated to avoid erroneous caching but any global variables or arguments excluded by EXCLUDE are not checked and are vulnerable erroneous output if they are changed.
+}
+\examples{
+cache<-tempfile()
+cacheOperation(cache,mean,1:10)
+cacheOperation(cache,mean,1:10)
+cacheOperation(cache,mean,x=1:20,OVERWRITE=TRUE)
+cacheOperation(cache,mean,x=1:20,OVERWRITE=TRUE,EXCLUDE='x')
+#Note that EXCLUDEd arguments are not checked and can generate false output
+y<-2
+cacheOperation(cache,function(x)sum(x^y),1:10,OVERWRITE=TRUE)
+#Note that global variables can generate false output
+y<-3
+cacheOperation(cache,function(x)sum(x^y),1:10,OVERWRITE=TRUE)
+cacheOperation(cache,mean,x=1:100,OVERWRITE=TRUE,EXCLUDE='x')
 }
 

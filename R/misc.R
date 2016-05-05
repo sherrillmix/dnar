@@ -142,6 +142,8 @@ anyArgsNA<-function(...,recursive=FALSE){
 
 #' Cache an operation to disk or load if cache file present
 #'
+#' Cache an operation to disk to save computation time in the future. A hash of the function and arguments is generated to avoid erroneous caching but any global variables or arguments excluded by EXCLUDE are not checked and are vulnerable erroneous output if they are changed.
+#' 
 #' @param cacheFile File location to save data to 
 #' @param operation A function taking ... arguments and returning object to be stored
 #' @param ... Arguments for operation function
@@ -150,13 +152,26 @@ anyArgsNA<-function(...,recursive=FALSE){
 #' @param EXCLUDE Vector of names of arguments to exclude from md5 digest comparison (for very large arguments)
 #' @export
 #' @return Output from operation function with ... arguments
+#' @examples
+#' cache<-tempfile()
+#' cacheOperation(cache,mean,1:10)
+#' cacheOperation(cache,mean,1:10)
+#' cacheOperation(cache,mean,x=1:20,OVERWRITE=TRUE)
+#' cacheOperation(cache,mean,x=1:20,OVERWRITE=TRUE,EXCLUDE='x')
+#' #Note that EXCLUDEd arguments are not checked and can generate false output
+#' y<-2
+#' cacheOperation(cache,function(x)sum(x^y),1:10,OVERWRITE=TRUE)
+#' #Note that global variables can generate false output
+#' y<-3
+#' cacheOperation(cache,function(x)sum(x^y),1:10,OVERWRITE=TRUE)
+#' cacheOperation(cache,mean,x=1:100,OVERWRITE=TRUE,EXCLUDE='x')
 cacheOperation<-function(cacheFile,operation,...,OVERWRITE=FALSE,VOCAL=TRUE,EXCLUDE=NULL){
 	#avoid evaluation EXCLUDEd args until necessary since they're probably big
 	unevalArgs<-match.call(expand.dots=FALSE)$'...'
 	varSelector<-if(is.null(names(unevalArgs)))rep(TRUE,length(unevalArgs)) else !names(unevalArgs) %in% EXCLUDE
 	allArgs<-lapply(unevalArgs[varSelector],eval)
 	#try to prevent function scope from changing things
-	md5<-digest::digest(lapply(allArgs,function(x)if(is.function(x))deparse(x)else x))
+	md5<-digest::digest(lapply(c(operation,allArgs),function(x)if(is.function(x))deparse(x)else x))
 	if(file.exists(cacheFile)){
 		tmp<-new.env()
 		load(cacheFile,envir=tmp)

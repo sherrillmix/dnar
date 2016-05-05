@@ -100,7 +100,7 @@ test_that("Test cacheOperation",{
 	load(cache,tmp)
 	expect_equal(get('out',tmp),mean(1:10))
 	expect_error(cacheOperation(cache,mean,1:11),'match')
-	expect_error(cacheOperation(cache,median,1:11),'match')
+	expect_error(cacheOperation(cache,median,1:10),'match')
 	expect_error(cacheOperation(cache,median,1:11),'match')
 	expect_equal(cacheOperation(cache,median,1:11,OVERWRITE=TRUE),median(1:11))
 	expect_equal(cacheOperation(cache,mean,x=1:10,OVERWRITE=TRUE,EXCLUDE='x'),mean(1:10))
