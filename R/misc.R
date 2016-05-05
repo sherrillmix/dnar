@@ -131,12 +131,13 @@ allSameLength<-function(...){
 #' Convenience function to check whether any  args have NAs
 #' 
 #' @param ... arguments to check if contain NA
+#' @param recursive A logical indicating whether to recursively look inside arguments for NAs
 #' @export
 #' @return logical indicating whether any argument contains NA
-anyNa<-function(...){
+anyArgsNA<-function(...,recursive=FALSE){
 	args<-list(...)
-	hasNa<-sapply(args,function(x)any(is.na(x)))
-	return(any(hasNa))
+	hasNa<-anyNA(args,recursive=recursive)
+	return(hasNa)
 }
 
 #' Cache an operation to disk or load if cache file present

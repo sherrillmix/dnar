@@ -76,4 +76,33 @@ test_that("Test allSameLength",{
 	expect_equal(do.call(allSameLength,c(test,list(1:99))),FALSE)
 })
 
+test_that("Test anyArgsNA",{
+	expect_equal(anyArgsNA(1:10,2:11,letters[1:10]),FALSE)
+	expect_equal(anyArgsNA(1:100),FALSE)
+	expect_equal(anyArgsNA(list(1:100,1:200,1:500)),FALSE)
+	expect_equal(anyArgsNA(list(1:100,1:200,1:500,NA)),FALSE)
+	expect_equal(anyArgsNA(list(1:100,1:200,1:500,NA),recursive=TRUE),TRUE)
+	expect_equal(anyArgsNA(1:10,2:11,list(1:100,1:200,1:500,NA),recursive=TRUE),TRUE)
+	expect_equal(anyArgsNA(1:10,2:11,list(1:100,1:200,1:500,list(list(NA))),recursive=TRUE),TRUE)
+	expect_equal(do.call(anyArgsNA,as.list(1:1000)),FALSE)
+	expect_equal(do.call(anyArgsNA,c(as.list(1:1000),list(NA))),TRUE)
+})
 
+
+test_that("Test cacheOperation",{
+	cache<-tempfile()
+	expect_equal(cacheOperation(cache,mean,1:10),mean(1:10))
+	expect_message(cacheOperation(cache,mean,1:10,VOCAL=TRUE),'[Cc]ache')
+	expect_message(cacheOperation(cache,mean,1:11,VOCAL=FALSE,OVERWRITE=TRUE),NA)
+	expect_message(cacheOperation(cache,mean,1:10,VOCAL=FALSE,OVERWRITE=TRUE),NA)
+	expect_equal(cacheOperation(cache,mean,1:10),mean(1:10))
+	tmp<-new.env()
+	load(cache,tmp)
+	expect_equal(get('out',tmp),mean(1:10))
+	expect_error(cacheOperation(cache,mean,1:11),'match')
+	expect_error(cacheOperation(cache,median,1:11),'match')
+	expect_error(cacheOperation(cache,median,1:11),'match')
+	expect_equal(cacheOperation(cache,median,1:11,OVERWRITE=TRUE),median(1:11))
+	expect_equal(cacheOperation(cache,mean,x=1:10,OVERWRITE=TRUE,EXCLUDE='x'),mean(1:10))
+	expect_equal(cacheOperation(cache,mean,x=1:20,EXCLUDE='x'),mean(1:10)) #incorrect answer but expected when the md5 check is excluded
+})
