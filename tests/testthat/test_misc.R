@@ -106,3 +106,10 @@ test_that("Test cacheOperation",{
 	expect_equal(cacheOperation(cache,mean,x=1:10,OVERWRITE=TRUE,EXCLUDE='x'),mean(1:10))
 	expect_equal(cacheOperation(cache,mean,x=1:20,EXCLUDE='x'),mean(1:10)) #incorrect answer but expected when the md5 check is excluded
 })
+
+test_that("Test cv.glm.par",{
+	test<-data.frame(x=1:10,y=1:10*4)
+	expect_equal(cv.glm.par(glm(y~x,data=test),test)$pred,test$y) 
+	expect_output(cv.glm.par(glm(y~x,data=test),test,vocal=TRUE),'\\.')
+	expect_output(cv.glm.par(glm(y~x,data=test),test,vocal=FALSE),NA)
+})

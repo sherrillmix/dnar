@@ -193,29 +193,35 @@ cacheOperation<-function(cacheFile,operation,...,OVERWRITE=FALSE,VOCAL=TRUE,EXCL
 }
 
 #' Check predictions of glm by cross validation
+#'
 #' @param model a glm to cross validate
+#' @param data data for the model
 #' @param K number of pieces to split data into
 #' @param nCores number of cores to use
 #' @param subsets predefined subset of same length as data specifying groupings
 #' @param vocal echo progress indicator
 #' @export
 #' @return a dataframe giving predictions for each data point with columns prediction and subsetId
-cv.glm.par<-function(model,K=nrow(thisData),nCores=1,subsets=NULL,vocal=TRUE){
+#' @examples
+#' z<-data.frame('x'=1:10,y=rnorm(10,1:10))
+#' cv.glm.par(glm(y~x,data=z))
+cv.glm.par<-function(model,data=eval(modelCall$data),K=nrow(data),nCores=1,subsets=NULL,vocal=FALSE){
 	modelCall<-model$call
-	thisData<-eval(modelCall$data)
-	n<-nrow(thisData)
+	n<-nrow(data)
 	if(is.null(subsets))subsets<-split(1:n,sample(rep(1:K,length.out=n)))
 	preds<-parallel::mclapply(subsets,function(outGroup){
 		if(vocal)cat('.')
-		subsetData<-thisData[-outGroup,,drop=FALSE]
-		predData<-thisData[outGroup,,drop=FALSE]
+		subsetData<-data[-outGroup,,drop=FALSE]
+		predData<-data[outGroup,,drop=FALSE]
 		thisModel<-modelCall
 		thisModel$data<-subsetData
 		return(predict(eval(thisModel),predData))
 	},mc.cores=nCores)
 	pred<-unlist(preds)[order(unlist(subsets))]
 	subsetId<-rep(1:K,sapply(subsets,length))[order(unlist(subsets))]
-	return(data.frame(pred,subsetId))
+	out<-data.frame(pred,subsetId)
+	rownames(out)<-NULL
+	return(out)
 }
 
 #' A function to break an mclapply into parts, save to disk and run independently

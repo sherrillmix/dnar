@@ -4,11 +4,13 @@
 \alias{cv.glm.par}
 \title{Check predictions of glm by cross validation}
 \usage{
-cv.glm.par(model, K = nrow(thisData), nCores = 1, subsets = NULL,
-  vocal = TRUE)
+cv.glm.par(model, data = eval(modelCall$data), K = nrow(data), nCores = 1,
+  subsets = NULL, vocal = FALSE)
 }
 \arguments{
 \item{model}{a glm to cross validate}
+
+\item{data}{data for the model}
 
 \item{K}{number of pieces to split data into}
 
@@ -23,5 +25,9 @@ a dataframe giving predictions for each data point with columns prediction and s
 }
 \description{
 Check predictions of glm by cross validation
+}
+\examples{
+z<-data.frame('x'=1:10,y=rnorm(10,1:10))
+cv.glm.par(glm(y~x,data=z))
 }
 
