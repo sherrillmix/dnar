@@ -27,7 +27,7 @@ a dataframe giving predictions for each data point with columns prediction and s
 Check predictions of glm by cross validation
 }
 \examples{
-z<-data.frame('x'=1:10,y=rnorm(10,1:10))
+z<-data.frame('x'=1:11,y=c(rnorm(10,1:10),100))
 cv.glm.par(glm(y~x,data=z))
 }
 

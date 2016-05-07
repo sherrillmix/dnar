@@ -203,7 +203,7 @@ cacheOperation<-function(cacheFile,operation,...,OVERWRITE=FALSE,VOCAL=TRUE,EXCL
 #' @export
 #' @return a dataframe giving predictions for each data point with columns prediction and subsetId
 #' @examples
-#' z<-data.frame('x'=1:10,y=rnorm(10,1:10))
+#' z<-data.frame('x'=1:11,y=c(rnorm(10,1:10),100))
 #' cv.glm.par(glm(y~x,data=z))
 cv.glm.par<-function(model,data=eval(modelCall$data),K=nrow(data),nCores=1,subsets=NULL,vocal=FALSE){
 	modelCall<-model$call
@@ -232,20 +232,24 @@ cv.glm.par<-function(model,data=eval(modelCall$data),K=nrow(data),nCores=1,subse
 #' @param extraCode character vector of setup code (each command self-contained within a cell or concatenated with ;)
 #' @param ... arguments for mclapply
 #' @param nSplits number of splits to make (if > mc.cores then R will restart more frequently)
+#' @param VOCAL if TRUE then output status information
+#' @param envir environment to look for variables in
 #' @export
 #' @return the concatenated outputs from applyFunc 
-cleanMclapply<-function(x,mc.cores,applyFunc,...,extraCode='',nSplits=mc.cores){
+cleanMclapply<-function(x,mc.cores,applyFunc,...,extraCode='',nSplits=mc.cores,VOCAL=TRUE,envir=.GlobalEnv){
+	#otherwise global variables can get pulled along with function environment
+	environment(applyFunc)<-new.env()
 	if(nSplits<mc.cores)nSplits<-mc.cores
 	splits<-unique(round(seq(0,length(x),length.out=nSplits+1)))
 	if(length(splits)<nSplits+1)nSplits<-length(splits)-1 #not enough items to fill so set lower
 	dotVars<-match.call(expand.dots=FALSE)$'...'
-	extraArgs<-lapply(dotVars,eval)
+	extraArgs<-lapply(dotVars,eval,envir=envir)
 	files<-c()
 	outFiles<-c()
 	scriptFiles<-c()
 	logFiles<-c()
 	for(ii in 1:nSplits){
-		message("Writing core ",ii," data")
+		if(VOCAL)message("Writing core ",ii," data")
 		thisInRdat<-tempfile()
 		thisRScript<-tempfile()
 		thisOutRdat<-tempfile()
@@ -253,18 +257,21 @@ cleanMclapply<-function(x,mc.cores,applyFunc,...,extraCode='',nSplits=mc.cores){
 		THISDATA__<-x[(splits[ii]+1):splits[ii+1]]
 		SAVEDATA__<-c('THISDATA__'=list(THISDATA__),'applyFunc'=applyFunc,extraArgs)
 		save(SAVEDATA__,file=thisInRdat)
-		script<-sprintf('load("%s")\nwith(SAVEDATA__,{%s})\nout<-with(SAVEDATA__,lapply(THISDATA__,applyFunc%s%s))\nsave(out,file="%s");',thisInRdat,paste(extraCode,collapse=';'),ifelse(length(extraArgs)>0,',',''),paste(names(extraArgs),names(extraArgs),sep='=',collapse=','),thisOutRdat)
+		script<-sprintf('load("%s")\n%s\nout<-with(SAVEDATA__,lapply(THISDATA__,applyFunc%s%s))\nsave(out,file="%s");',thisInRdat,paste(extraCode,collapse=';'),ifelse(length(extraArgs)>0,',',''),paste(names(extraArgs),names(extraArgs),sep='=',collapse=','),thisOutRdat)
 		writeLines(script,thisRScript)
 		outFiles<-c(outFiles,thisOutRdat)		
 		scriptFiles<-c(scriptFiles,thisRScript)		
 		logFiles<-c(logFiles,thisLog)		
 	}
-	message("Running")
-	message("Logs: ",paste(logFiles,collapse=', '))
-	exitCode<-parallel::mclapply(mapply(c,scriptFiles,logFiles,SIMPLIFY=FALSE),function(x){out<-system(sprintf("R CMD BATCH --no-save --no-restore %s %s",x[1],x[2]));cat('.');return(out)},mc.cores=mc.cores)
-	cat('\n')
-	if(any(exitCode!=0)){message('Problem running multi R code');browser()}
-	message("Loading split outputs")
+	if(VOCAL)message("Running")
+	if(VOCAL)message("Logs: ",paste(logFiles,collapse=', '))
+	exitCode<-parallel::mclapply(mapply(c,scriptFiles,logFiles,SIMPLIFY=FALSE),function(x){out<-system(sprintf("R CMD BATCH --no-save --no-restore %s %s",x[1],x[2]));if(VOCAL)cat('.');return(out)},mc.cores=mc.cores)
+	if(VOCAL)cat('\n')
+	if(any(exitCode!=0)){
+		if(VOCAL)message(paste(tail(readLines(logFiles[exitCode!=0][1]),30),collapse=''))
+		stop(simpleError('Problem running multi R code'))
+	}
+	if(VOCAL)message("Loading split outputs")
 	out<-do.call(c,lapply(outFiles,function(outFile){load(outFile);return(out)}))
 	return(out)
 }

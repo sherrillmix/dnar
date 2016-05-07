@@ -5,7 +5,7 @@
 \title{A function to break an mclapply into parts, save to disk and run independently}
 \usage{
 cleanMclapply(x, mc.cores, applyFunc, ..., extraCode = "",
-  nSplits = mc.cores)
+  nSplits = mc.cores, VOCAL = TRUE, envir = .GlobalEnv)
 }
 \arguments{
 \item{x}{vector/list to apply over}
@@ -19,6 +19,10 @@ cleanMclapply(x, mc.cores, applyFunc, ..., extraCode = "",
 \item{extraCode}{character vector of setup code (each command self-contained within a cell or concatenated with ;)}
 
 \item{nSplits}{number of splits to make (if > mc.cores then R will restart more frequently)}
+
+\item{VOCAL}{if TRUE then output status information}
+
+\item{envir}{environment to look for variables in}
 }
 \value{
 the concatenated outputs from applyFunc

@@ -112,4 +112,21 @@ test_that("Test cv.glm.par",{
 	expect_equal(cv.glm.par(glm(y~x,data=test),test)$pred,test$y) 
 	expect_output(cv.glm.par(glm(y~x,data=test),test,vocal=TRUE),'\\.')
 	expect_output(cv.glm.par(glm(y~x,data=test),test,vocal=FALSE),NA)
+	test<-data.frame(x=1:11,y=c(1:10*4,1000))
+	expect_equal(cv.glm.par(glm(y~x,data=test),test)$pred[11],11*4)
 })
+
+
+test_that("Test cleanMclapply",{
+	expect_equal(cleanMclapply(1:10,2,function(x)x^2),as.list((1:10)^2))
+	expect_equal(cleanMclapply(1:100,2,function(x)log(x^2)),lapply(1:100,function(x)log(x^2)))
+	y<-10
+	env<-environment()
+	expect_error(cleanMclapply(1:10,2,function(x)x^2+y),"[Pp]roblem")
+	expect_equal(cleanMclapply(1:10,2,function(x,y)x^2+y,y=y,envir=env),as.list((1:10)^2+10))
+	expect_equal(cleanMclapply(1:10,2,function(x)x^2+y-z,extraCode='y<-10;z<-5'),as.list((1:10)^2+10-5))
+	expect_message(cleanMclapply(1:10,2,function(x)x^2),'Logs')
+	expect_message(cleanMclapply(1:10,2,function(x)x^2,VOCAL=FALSE),NA)
+})
+
+
