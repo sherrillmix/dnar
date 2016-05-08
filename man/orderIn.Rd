@@ -23,4 +23,7 @@ a vector the same length as query specifying the order of query elements in targ
 \description{
 Find the  order of one vector in another
 }
+\examples{
+orderIn(c('z','c','a','t'),letters)
+}
 

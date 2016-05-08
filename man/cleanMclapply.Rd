@@ -25,7 +25,9 @@ cleanMclapply(x, mc.cores, applyFunc, ..., extraCode = "",
 \item{envir}{environment to look for variables in}
 }
 \value{
-the concatenated outputs from applyFunc
+the concatenated outputs from applyFunc 
+cleanMclapply(1:10,2,sqrt)
+cleanMclapply(1:10,2,function(x,y)x^y,y=3)
 }
 \description{
 A function to break an mclapply into parts, save to disk and run independently

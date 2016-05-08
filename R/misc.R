@@ -236,6 +236,8 @@ cv.glm.par<-function(model,data=eval(modelCall$data),K=nrow(data),nCores=1,subse
 #' @param envir environment to look for variables in
 #' @export
 #' @return the concatenated outputs from applyFunc 
+#' cleanMclapply(1:10,2,sqrt)
+#' cleanMclapply(1:10,2,function(x,y)x^y,y=3)
 cleanMclapply<-function(x,mc.cores,applyFunc,...,extraCode='',nSplits=mc.cores,VOCAL=TRUE,envir=.GlobalEnv){
 	#otherwise global variables can get pulled along with function environment
 	environment(applyFunc)<-new.env()
@@ -268,7 +270,7 @@ cleanMclapply<-function(x,mc.cores,applyFunc,...,extraCode='',nSplits=mc.cores,V
 	exitCode<-parallel::mclapply(mapply(c,scriptFiles,logFiles,SIMPLIFY=FALSE),function(x){out<-system(sprintf("R CMD BATCH --no-save --no-restore %s %s",x[1],x[2]));if(VOCAL)cat('.');return(out)},mc.cores=mc.cores)
 	if(VOCAL)cat('\n')
 	if(any(exitCode!=0)){
-		if(VOCAL)message(paste(tail(readLines(logFiles[exitCode!=0][1]),30),collapse=''))
+		if(VOCAL)message(paste(tail(readLines(logFiles[exitCode!=0][1]),30),collapse='\n'))
 		stop(simpleError('Problem running multi R code'))
 	}
 	if(VOCAL)message("Loading split outputs")
@@ -286,6 +288,8 @@ cleanMclapply<-function(x,mc.cores,applyFunc,...,extraCode='',nSplits=mc.cores,V
 #' @param ... arguments for order
 #' @export
 #' @return a vector the same length as query specifying the order of query elements in target
+#' @examples
+#' orderIn(c('z','c','a','t'),letters)
 orderIn<-function(query,target,strict=FALSE,orderFunc=order,...){
 	if(any(!query %in% target)){
 		if(strict){
@@ -306,6 +310,9 @@ orderIn<-function(query,target,strict=FALSE,orderFunc=order,...){
 #' @param fill value to insert in missing elements
 #' @export
 #' @return list with missing elements filled in and elements not in namesList removed
+#' @examples
+#' fillList(list(c('a'=1,'b'=2),c('c'=3)))
+#' fillList(list(c('a'=1,'b'=2),c('c'=3)),namesList='a')
 fillList<-function(x,namesList=unique(unlist(lapply(x,names))),fill=NA){
 	output<-lapply(x,function(x){
 		x<-x[names(x) %in% namesList]

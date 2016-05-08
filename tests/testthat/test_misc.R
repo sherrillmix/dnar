@@ -129,4 +129,19 @@ test_that("Test cleanMclapply",{
 	expect_message(cleanMclapply(1:10,2,function(x)x^2,VOCAL=FALSE),NA)
 })
 
+test_that("Test orderIn",{
+	expect_equal(orderIn(1:10,1:10),1:10)
+	expect_equal(orderIn(1:10,10:1),10:1)
+	expect_equal(orderIn(1:10,10:1,decreasing=TRUE),1:10)
+	expect_equal(orderIn(1:10,10:1,orderFunc=rank),10:1)
+	expect_equal(orderIn(1:5,c(5,3,1,2,4)),c(5,3,1,2,4))
+	expect_equal(orderIn(1:5,c(5,3,1,2,4,1:5,1:5)),c(5,3,1,2,4))
+	expect_equal(orderIn(c('z','a','t','c'),letters),c(2,4,3,1))
+	expect_error(orderIn(1:5,c(1),strict=TRUE),'not in')
+})
 
+test_that("Test fillList",{
+	expect_equal(fillList(list(c('a'=1,'b'=2),c('c'=3))),list(c('a'=1,'b'=2,'c'=NA),c('c'=3,'a'=NA,'b'=NA)))
+	expect_equal(fillList(list(c('a'=1,'b'=2),c('c'=3)),fill=-99),list(c('a'=1,'b'=2,'c'=-99),c('c'=3,'a'=-99,'b'=-99)))
+	expect_equal(fillList(list(c('a'=1,'b'=2),c('c'=3)),namesList='a'),list(c('a'=1),c('a'=NA,'b'=99)[1]))
+})
