@@ -35,9 +35,10 @@ indexMatrix<-function(rows,cols,mat,returnIndex=FALSE){
 
 #' Convenience function for selecting multiple elements from a matrix by x,y position
 #' convenience function to resize R console window
+#' @param width width to adjust window to
 #'
 #' @export
-adjustWindow<-function()options(width=as.integer(Sys.getenv('COLUMNS')))
+adjustWindow<-function(width=as.integer(Sys.getenv('COLUMNS')))if(!is.na(width))options(width=width)
 
 #' Convenience function to list objects by size
 #'

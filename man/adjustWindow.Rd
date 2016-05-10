@@ -5,7 +5,10 @@
 \title{Convenience function for selecting multiple elements from a matrix by x,y position
 convenience function to resize R console window}
 \usage{
-adjustWindow()
+adjustWindow(width = as.integer(Sys.getenv("COLUMNS")))
+}
+\arguments{
+\item{width}{width to adjust window to}
 }
 \description{
 Convenience function for selecting multiple elements from a matrix by x,y position

@@ -18,6 +18,12 @@ test_that("Test index matrix",{
 	expect_equal(indexMatrix(letters[c(1:3,20)],LETTERS[c(1:3,1)],matrix(1:100,nrow=20,byrow=TRUE,dimnames=list(letters[1:20],LETTERS[1:5]))), c(1,7,13,96))
 })
 
+test_that("Test adjustWindow",{
+	expect_error(adjustWindow(),NA)
+	noColumns<-is.na(as.integer(Sys.getenv('COLUMNS')))
+	expect_equal(c(ifelse(noColumns,NA,options('width')$width),1)[1],as.integer(Sys.getenv('COLUMNS')))
+})
+
 test_that("Test object.sizes",{
 	test<-list(xxx=1:10, yyy=1:20)
 	testEnv<-as.environment(test)
@@ -138,6 +144,7 @@ test_that("Test orderIn",{
 	expect_equal(orderIn(1:5,c(5,3,1,2,4,1:5,1:5)),c(5,3,1,2,4))
 	expect_equal(orderIn(c('z','a','t','c'),letters),c(2,4,3,1))
 	expect_error(orderIn(1:5,c(1),strict=TRUE),'not in')
+	expect_equal(orderIn(1:5,c(1)),1:5)
 })
 
 test_that("Test fillList",{
@@ -206,3 +213,4 @@ test_that("Test arrow",{
 	expect_error(arrow(5.1,5,2),'border')
 	dev.off()
 })
+
