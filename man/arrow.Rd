@@ -28,4 +28,8 @@ a data.frame with columns x and y specifying coordinates for arrows
 \description{
 Find coords for arrow plotting
 }
+\examples{
+plot(1:10)
+polygon(arrow(1:5,3:7*1.5,2:6))
+}
 

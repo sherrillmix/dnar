@@ -17,4 +17,11 @@ axis line position
 \description{
 Convert from user coordinates to axis line
 }
+\examples{
+plot(1:10)
+mtext('Test1',1,convertUserToLine(0,1))
+points(5.5,0,xpd=NA)
+mtext('Test2',2,convertUserToLine(0,2))
+points(0,5.5,xpd=NA)
+}
 

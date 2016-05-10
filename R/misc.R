@@ -329,6 +329,10 @@ fillList<-function(x,namesList=unique(unlist(lapply(x,names))),fill=NA){
 #' @param axis axis to do conversion on (1:4 same as axis, mtext command)
 #' @export
 #' @return position in user coordinates
+#' @examples
+#' plot(1:10)
+#' points(rep(5,5),convertLineToUser(0:4,1),xpd=NA)
+#' points(convertLineToUser(0:4,2),rep(5,5),xpd=NA)
 convertLineToUser<-function(line,axis=1){
 	if(!(axis %in% 1:4))stop(simpleError('Undefined axis'))
 	axisPair<-sort((c(axis-1,axis+1)%%4)+1)
@@ -350,6 +354,12 @@ convertLineToUser<-function(line,axis=1){
 #' @param axis axis to do conversion on (1:4 same as axis, mtext command)
 #' @export
 #' @return axis line position
+#' @examples
+#' plot(1:10)
+#' mtext('Test1',1,convertUserToLine(0,1))
+#' points(5.5,0,xpd=NA)
+#' mtext('Test2',2,convertUserToLine(0,2))
+#' points(0,5.5,xpd=NA)
 convertUserToLine<-function(usr,axis=1){
 	if(!(axis %in% 1:4))stop(simpleError('Undefined axis'))
 	axisPair<-sort((c(axis-1,axis+1)%%4)+1)
@@ -378,6 +388,9 @@ convertUserToLine<-function(usr,axis=1){
 #' @param concat logical indicating whether to concatenate multiple arrows into one data frame separated by NAs (e.g. ready for poly)
 #' @export
 #' @return a data.frame with columns x and y specifying coordinates for arrows
+#' @examples
+#' plot(1:10)
+#' polygon(arrow(1:5,3:7*1.5,2:6))
 arrow<-function(left,right,y,arrowLength=diff(par('usr')[1:2])*.05,shaft=.2,point=.4,concat=TRUE){
 	if(any(left>right))stop(simpleError('Left border > right border of arrow'))
 	arrowX<-right-arrowLength
