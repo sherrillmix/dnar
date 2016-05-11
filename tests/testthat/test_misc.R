@@ -214,3 +214,11 @@ test_that("Test arrow",{
 	dev.off()
 })
 
+test_that("Test stackRegions",{
+	expect_equal(stackRegions(1:10,1:10),rep(1,10))
+	expect_equal(stackRegions(1:10,1:10+.1),rep(1,10))
+	expect_equal(stackRegions(1:10,1:10+100),1:10)
+	expect_equal(stackRegions(1:10,1:10+4.9),rep(1:5,2))
+	expect_error(stackRegions(1:10,1:11),'length')
+	expect_error(stackRegions(1:10,c(-1,2:10)),'less')
+})

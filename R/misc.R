@@ -407,7 +407,11 @@ arrow<-function(left,right,y,arrowLength=diff(par('usr')[1:2])*.05,shaft=.2,poin
 #' @param ends vector of ends of regions (note can add buffer by adding arbitrary spacer)
 #' @export
 #' @return vector of row ids
+#' @examples
+#' stackRegions(1:10,1:10+2)
+#' stackRegions(1:10,1:10+5)
 stackRegions<-function(starts,ends){
+	if(any(ends<starts))stop(simpleError('Ends less than starts'))
 	nReg<-length(starts)
 	if(nReg!=length(ends))stop(simpleError('Starts and ends must be same length'))
 	startEnds<-data.frame('id'=1:nReg,start=starts,end=ends)
