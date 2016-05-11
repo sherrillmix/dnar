@@ -222,3 +222,22 @@ test_that("Test stackRegions",{
 	expect_error(stackRegions(1:10,1:11),'length')
 	expect_error(stackRegions(1:10,c(-1,2:10)),'less')
 })
+
+test_that("Test wilsonInt",{
+	#values calculated from http://epitools.ausvet.com.au/content.php?page=CIProportion
+	expect_equal(wilsonInt(1,9),c(.0178762131,.4041500268))
+	expect_equal(wilsonInt(90,10),c(0.8256343385,0.9447708629))
+	expect_equal(wilsonInt(90:89,10:9),wilsonInt(90,10)) #just takes the first one
+	expect_equal(wilsonInt(1,9),rev(1-wilsonInt(9,1))) 
+	expect_equal(wilsonInt(900,9),rev(1-wilsonInt(9,900))) 
+	expect_error(wilsonInt(900,-1),'less')
+	expect_error(wilsonInt(-1,10),'less')
+	expect_error(wilsonInt(-1,-1),'less')
+})
+
+test_that('Most abundant',{
+	expect_equal(mostAbundant(c(1:10,10)),'10')
+	expect_equal(mostAbundant(c('c',letters)),'c')
+	expect_true(mostAbundant(c(1:10,10,1)) %in% c('10','1'))
+	expect_equal(mostAbundant(c('c',rep(letters,10))),'c')
+})

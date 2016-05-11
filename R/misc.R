@@ -427,17 +427,25 @@ stackRegions<-function(starts,ends){
 }
 
 
-#' Calculate the Wilson score interval http://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval
+#' Calculate the Wilson score interval 
 #'
-#' @param nTrue number of trues observed
-#' @param nFalse number of falses observed
+#' @param nTrue single number of trues observed
+#' @param nFalse single number of falses observed
 #' @param alpha error percentile
+#' @references \url{http://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval}
 #' @export
 #' @return two element vector giving the lower and upper bounds of the interval 
+#' @examples
+#' wilsonInt(10,100)
+#' wilsonInt(0,100)
+#' wilsonInt(100,1)
 wilsonInt<-function(nTrue,nFalse,alpha=.05){
+	nTrue<-nTrue[1]
+	nFalse<-nFalse[1]
+	if(nTrue<0|nFalse<0)stop(simpleError('Counts less than zero'))
 	n<-nTrue+nFalse
 	prop<-nTrue/n
-	z<-pnorm(1-alpha/2)
+	z<-qnorm(1-alpha/2)
 	plusMinus<-z*sqrt(prop*(1-prop)/n+z^2/4/n^2)
 	return((prop+1/2/n*z^2+c(-plusMinus,plusMinus))/(1+1/n*z^2))
 }
@@ -448,6 +456,9 @@ wilsonInt<-function(nTrue,nFalse,alpha=.05){
 #' @param values A vector of items
 #' @export
 #' @return First most abundant item as a string
+#' @examples
+#' mostAbundant(c(1:10,1))
+#' mostAbundant(c('d',rep(letters,10)))
 mostAbundant<-function(values){
 	tmp<-table(values)
 	return(names(tmp)[which.max(tmp)])

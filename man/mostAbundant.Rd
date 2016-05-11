@@ -15,4 +15,8 @@ First most abundant item as a string
 \description{
 Convenience function for picking first most abundant of a set of values
 }
+\examples{
+mostAbundant(c(1:10,1))
+mostAbundant(c('d',rep(letters,10)))
+}
 

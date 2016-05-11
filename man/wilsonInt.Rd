@@ -2,14 +2,14 @@
 % Please edit documentation in R/misc.R
 \name{wilsonInt}
 \alias{wilsonInt}
-\title{Calculate the Wilson score interval http://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval}
+\title{Calculate the Wilson score interval}
 \usage{
 wilsonInt(nTrue, nFalse, alpha = 0.05)
 }
 \arguments{
-\item{nTrue}{number of trues observed}
+\item{nTrue}{single number of trues observed}
 
-\item{nFalse}{number of falses observed}
+\item{nFalse}{single number of falses observed}
 
 \item{alpha}{error percentile}
 }
@@ -17,6 +17,14 @@ wilsonInt(nTrue, nFalse, alpha = 0.05)
 two element vector giving the lower and upper bounds of the interval
 }
 \description{
-Calculate the Wilson score interval http://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval
+Calculate the Wilson score interval
+}
+\examples{
+wilsonInt(10,100)
+wilsonInt(0,100)
+wilsonInt(100,1)
+}
+\references{
+\url{http://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval}
 }
 
