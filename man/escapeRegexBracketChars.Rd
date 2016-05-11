@@ -4,10 +4,13 @@
 \alias{escapeRegexBracketChars}
 \title{Convenience function to escape characters for insertion into regex brackets}
 \usage{
-escapeRegexBracketChars(regexChars)
+escapeRegexBracketChars(regexChars, escapeChars = c("^", "-", "[", "]",
+  "\\\\"))
 }
 \arguments{
-\item{regexChars}{a vector of single characters to escape}
+\item{regexChars}{a vector of single characters to escape if in escapeChars}
+
+\item{escapeChars}{a vector of which characters to escape}
 }
 \value{
 a vector of escaped characters

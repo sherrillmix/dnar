@@ -235,9 +235,21 @@ test_that("Test wilsonInt",{
 	expect_error(wilsonInt(-1,-1),'less')
 })
 
-test_that('Most abundant',{
+test_that('Test mostAbundant',{
 	expect_equal(mostAbundant(c(1:10,10)),'10')
 	expect_equal(mostAbundant(c('c',letters)),'c')
 	expect_true(mostAbundant(c(1:10,10,1)) %in% c('10','1'))
 	expect_equal(mostAbundant(c('c',rep(letters,10))),'c')
+})
+
+test_that('Test table2vector',{
+	expect_equal(table2vector(table(c(3,3,4,rep(1:4,20)))),c('1'=20,'2'=20,'3'=22,'4'=21))
+	expect_equal(table2vector(table(rep('a',1000))),c('a'=1000))
+	expect_error(table2vector(table(1:10,1:10)),'dimension')
+	expect_error(table2vector(table(1:10,rep(1,10))),'dimension')
+})
+
+test_that('Test table2vector',{
+	expect_equal(escapeRegexBracketChars(c(']','\\','-','A','b')),c('\\]','\\\\','\\-','A','b'))
+	expect_equal(escapeRegexBracketChars(c('a','b','c'),c('a','c')),c('\\a','b','\\c'))
 })

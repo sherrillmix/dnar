@@ -469,8 +469,10 @@ mostAbundant<-function(values){
 #' @param tab A one-dimensional table e.g. the output from \code{table}
 #' @export
 #' @return a named vector with elements corresponding to the counts in table
+#' @examples
+#' table2vector(1:10)
 table2vector<-function(tab){
-	if(length(dim(tab))>1)stop(simpleError('table2vector only works with 1-d tables'))
+	if(length(dim(tab))>1)stop(simpleError('table2vector only works with 1 dimensional tables'))
 	return(structure(as.vector(tab),.Names=names(tab)))
 }
 
@@ -478,11 +480,12 @@ table2vector<-function(tab){
 #'
 #' Note to escape a '\code{]}' using this you'll have to use \code{perl=TRUE} in the downstream function
 #'
-#' @param regexChars a vector of single characters to escape
+#' @param regexChars a vector of single characters to escape if in escapeChars
+#' @param escapeChars a vector of which characters to escape
 #' @export
 #' @return a vector of escaped characters
 #' @examples
 #' escapeRegexBracketChars(c(']','\\','-','A','B'))
-escapeRegexBracketChars<-function(regexChars){
-	return(sprintf('%s%s',ifelse(regexChars %in% c('^','-','[',']','\\'),'\\',''),regexChars))
+escapeRegexBracketChars<-function(regexChars,escapeChars=c('^','-','[',']','\\')){
+	return(sprintf('%s%s',ifelse(regexChars %in% escapeChars,'\\',''),regexChars))
 }
