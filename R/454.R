@@ -8,6 +8,7 @@
 #' @examples
 #' seq2flow('ACTAAAAAT')
 seq2flow<-function(seq,flowOrder=c('T','A','C','G'),outputLength=NULL){
+	if(any(table(flowOrder)>1))stop(simpleError('Repeated character found in flow order'))
 	seqSplit<-strsplit(seq,'')[[1]]
 	if(any(!seqSplit %in% flowOrder))stop(simpleError('Unknown character found'))
 	dif<-seqSplit!=c(seqSplit[-1],'DUMMY')
@@ -54,6 +55,10 @@ indexFlow<-function(flow,coords){
 #' @param flowOrder order of nucleotide flows
 #' @export
 #' @return DNA sequence corresponding to the flowgram
+#' @examples
+#' flow2seq(1:4)
+#' flow2seq(1:4,letters[1:4])
+#' flow2seq(c(0,4,0,0,9,2,3))
 flow2seq<-function(flow,flowOrder=c('T','A','C','G')){
 	if(is.character(flow)&length(flow)==1)flow<-strsplit(flow,'\t')[[1]]
 	flow<-as.numeric(flow)
