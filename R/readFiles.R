@@ -164,7 +164,7 @@ samView<-function(fileName,samArgs='',...,samtoolsBinary='samtools',vocal=FALSE,
 			out<-NULL
 		}else{
 			if(samCommand=='view')out<-read.sam(samOut,skips=0,...)
-			else if(samCommand=='depth'||grepl('bam2depth',samtoolsBinary))out<-read.table(samOut,sep='\t',stringsAsFactors=FALSE,...)
+			else if(samCommand=='depth'||grepl('bam2depth',samtoolsBinary))out<-utils::read.table(samOut,sep='\t',stringsAsFactors=FALSE,...)
 			else out<-readLines(samOut)
 		}
 		close(samOut)
@@ -238,7 +238,7 @@ fillZeros<-function(cover,posCol='pos',countCols=colnames(cover)[grep('counts',c
 #' @export
 #' @return dataframe of blat data
 readBlast<-function(fileName,skips=0,nrows=-1,calcScore=TRUE){
-	x<-read.table(fileName,skip=skips,sep="\t",stringsAsFactors=FALSE,colClasses=c(rep('character',2),rep('numeric',10)),nrows=nrows)
+	x<-utils::read.table(fileName,skip=skips,sep="\t",stringsAsFactors=FALSE,colClasses=c(rep('character',2),rep('numeric',10)),nrows=nrows)
 	colnames(x)<-c('qName','tName','percID','alignLength','mismatch','nGap','qStart','qEnd','tStart','tEnd','eValue','hspBit')
 	#Score equation from blat's webpage
 	if(calcScore)x$score<-x$alignLength-x$mismatch-x$nGap
@@ -285,7 +285,7 @@ readLargeBlat<-function(fileName,nHeader=5,nrows=1e6,isGz=grepl('.gz$',fileName)
 			leftOverData<-thisData[0,]
 		}else{
 			#we're not sure if the last entry is complete
-			lastSelector<-thisData$qName==tail(thisData$qName,1)
+			lastSelector<-thisData$qName==utils::tail(thisData$qName,1)
 			leftOverData<-thisData[lastSelector,]
 			thisData<-thisData[!lastSelector,]
 		}
@@ -325,7 +325,7 @@ readBlat<-function(fileName,skips=5,calcScore=TRUE,fixStarts=TRUE,nCols=21,filte
 		colClasses<-c(colClasses,rep('character',2))
 	}
 	#textConnection is too slow to be useful here
-	x<-read.table(fileName,sep="\t",stringsAsFactors=FALSE,skip=skips,colClasses=colClasses,col.names=colNames,...)
+	x<-utils::read.table(fileName,sep="\t",stringsAsFactors=FALSE,skip=skips,colClasses=colClasses,col.names=colNames,...)
 
 	#Score equation from blat's webpage
 	if(calcScore)x$score<-x$match-x$mismatch-x$qGaps-x$tGaps

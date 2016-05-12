@@ -16,5 +16,8 @@ Depends:
 Imports:
     parallel,
     bitops,
-    digest
+    digest,
+	 utils,
+	 graphics,
+	 stats
 RoxygenNote: 5.0.1

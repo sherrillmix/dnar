@@ -4,7 +4,7 @@
 \alias{arrow}
 \title{Find coords for arrow plotting}
 \usage{
-arrow(left, right, y, arrowLength = diff(par("usr")[1:2]) * 0.05,
+arrow(left, right, y, arrowLength = diff(graphics::par("usr")[1:2]) * 0.05,
   shaft = 0.2, point = 0.4, concat = TRUE)
 }
 \arguments{

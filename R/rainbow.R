@@ -19,7 +19,7 @@ rainbow.lab<-function(n,start=1.5,end=-3,alpha=1,lightScale=0,lightMultiple=.7){
 	#return(cols)
 	l<-seq(1,.4,length.out=n)^lightScale*lightMultiple
 	rgb<-cl2pix(seq(0,1,length.out=n),l,start=start,end=end,toColor=FALSE)
-	return(rgb(rgb,alpha=alpha))
+	return(grDevices::rgb(rgb,alpha=alpha))
 }
 
 
@@ -78,7 +78,7 @@ cl2pix<-function(c, l,start=-3,end=4,toColor=TRUE) {
   a <- sin(angle+start)*r
   b <- cos(angle+start)*r
   out<-lab2rgb(cbind(L,a,b))
-  if(toColor)out<-rgb(out)
+  if(toColor)out<-grDevices::rgb(out)
   return(out)
 }
 

@@ -46,7 +46,7 @@ adjustWindow<-function(width=as.integer(Sys.getenv('COLUMNS')))if(!is.na(width))
 #' @export
 #' @return object sizes in decreasing order
 #' object.sizes()
-object.sizes<-function(env=.GlobalEnv)sort(sapply(ls(envir=env),function(x)object.size(get(x,env))),decreasing=TRUE)
+object.sizes<-function(env=.GlobalEnv)sort(sapply(ls(envir=env),function(x)utils::object.size(get(x,env))),decreasing=TRUE)
 
 #' Generate an error
 #'
@@ -271,7 +271,7 @@ cleanMclapply<-function(x,mc.cores,applyFunc,...,extraCode='',nSplits=mc.cores,V
 	exitCode<-parallel::mclapply(mapply(c,scriptFiles,logFiles,SIMPLIFY=FALSE),function(x){out<-system(sprintf("R CMD BATCH --no-save --no-restore %s %s",x[1],x[2]));if(VOCAL)cat('.');return(out)},mc.cores=mc.cores)
 	if(VOCAL)cat('\n')
 	if(any(exitCode!=0)){
-		if(VOCAL)message(paste(tail(readLines(logFiles[exitCode!=0][1]),30),collapse='\n'))
+		if(VOCAL)message(paste(utils::tail(readLines(logFiles[exitCode!=0][1]),30),collapse='\n'))
 		stop(simpleError('Problem running multi R code'))
 	}
 	if(VOCAL)message("Loading split outputs")
@@ -339,12 +339,12 @@ convertLineToUser<-function(line,axis=1){
 	axisPair<-sort((c(axis-1,axis+1)%%4)+1)
 	isHeight<-(axis%%2)==1
 	isSecond<-axis>2
-	thisMar<-par('mar')[axis]
-	marWidth<-thisMar/sum(par('mar')[axisPair])*(par('fin')-par('pin'))[isHeight+1]
+	thisMar<-graphics::par('mar')[axis]
+	marWidth<-thisMar/sum(graphics::par('mar')[axisPair])*(graphics::par('fin')-graphics::par('pin'))[isHeight+1]
 	widthPerLine<-marWidth/thisMar
-	#find base line + add in if plot doesn't cover whole device e.g. par(mfrow=c(2,1))
-	base<-ifelse(isSecond,par('fin')[isHeight+1]-widthPerLine*thisMar,widthPerLine*thisMar) + par('fig')[1+isHeight*2]*par('din')[isHeight+1]
-	func<-if(isHeight)grconvertY else grconvertX
+	#find base line + add in if plot doesn't cover whole device e.g. graphics::par(mfrow=c(2,1))
+	base<-ifelse(isSecond,graphics::par('fin')[isHeight+1]-widthPerLine*thisMar,widthPerLine*thisMar) + graphics::par('fig')[1+isHeight*2]*graphics::par('din')[isHeight+1]
+	func<-if(isHeight)graphics::grconvertY else graphics::grconvertX
 	out<-func(base+line*widthPerLine*ifelse(isSecond,1,-1),'inches','user')
 	return(out)
 }
@@ -366,14 +366,14 @@ convertUserToLine<-function(usr,axis=1){
 	axisPair<-sort((c(axis-1,axis+1)%%4)+1)
 	isHeight<-(axis%%2)==1
 	isSecond<-axis>2
-	thisMar<-par('mar')[axis]
-	marWidth<-thisMar/sum(par('mar')[axisPair])*(par('fin')-par('pin'))[isHeight+1]
+	thisMar<-graphics::par('mar')[axis]
+	marWidth<-thisMar/sum(graphics::par('mar')[axisPair])*(graphics::par('fin')-graphics::par('pin'))[isHeight+1]
 	widthPerLine<-marWidth/thisMar
-	#find base line + add in if plot doesn't cover whole device e.g. par(mfrow=c(2,1))
-	plotWidth<-par('fin')[isHeight+1]
-	func<-if(isHeight)grconvertY else grconvertX
+	#find base line + add in if plot doesn't cover whole device e.g. graphics::par(mfrow=c(2,1))
+	plotWidth<-graphics::par('fin')[isHeight+1]
+	func<-if(isHeight)graphics::grconvertY else graphics::grconvertX
 	usrInches<-func(usr,'user','inches')
-	base<-ifelse(isSecond,par('fin')[isHeight+1]-widthPerLine*thisMar,widthPerLine*thisMar) + par('fig')[1+isHeight*2]*par('din')[isHeight+1]
+	base<-ifelse(isSecond,graphics::par('fin')[isHeight+1]-widthPerLine*thisMar,widthPerLine*thisMar) + graphics::par('fig')[1+isHeight*2]*graphics::par('din')[isHeight+1]
 	out<-(usrInches-base)/widthPerLine*ifelse(isSecond,1,-1)
 	return(out)
 }
@@ -392,7 +392,7 @@ convertUserToLine<-function(usr,axis=1){
 #' @examples
 #' plot(1:10)
 #' polygon(arrow(1:5,3:7*1.5,2:6))
-arrow<-function(left,right,y,arrowLength=diff(par('usr')[1:2])*.05,shaft=.2,point=.4,concat=TRUE){
+arrow<-function(left,right,y,arrowLength=diff(graphics::par('usr')[1:2])*.05,shaft=.2,point=.4,concat=TRUE){
 	if(any(left>right))stop(simpleError('Left border > right border of arrow'))
 	arrowX<-right-arrowLength
 	arrowX<-ifelse(arrowX<left,left+(right-left)/10,arrowX)
@@ -445,7 +445,7 @@ wilsonInt<-function(nTrue,nFalse,alpha=.05){
 	if(nTrue<0|nFalse<0)stop(simpleError('Counts less than zero'))
 	n<-nTrue+nFalse
 	prop<-nTrue/n
-	z<-qnorm(1-alpha/2)
+	z<-stats::qnorm(1-alpha/2)
 	plusMinus<-z*sqrt(prop*(1-prop)/n+z^2/4/n^2)
 	return((prop+1/2/n*z^2+c(-plusMinus,plusMinus))/(1+1/n*z^2))
 }
