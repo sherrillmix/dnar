@@ -9,12 +9,16 @@ indexFlow(flow, coords)
 \arguments{
 \item{flow}{vector of flow values (e.g. produced by seq2flow)}
 
-\item{coords}{bp coordinates of desired positions}
+\item{coords}{1-based coordinates of desired positions}
 }
 \value{
-flow number for each coord
+flow number for each coord. Infinity if coordinate is outside sequence.
 }
 \description{
 Find flow corresponding to a given base position
+}
+\examples{
+indexFlow(seq2flow('CCTTAA'),1:6)
+indexFlow(seq2flow('GTGTG'),1:5)
 }
 

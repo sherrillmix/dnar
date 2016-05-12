@@ -19,4 +19,7 @@ vector of flows
 \description{
 Convert a DNA sequence into expected 454 flows
 }
+\examples{
+seq2flow('ACTAAAAAT')
+}
 

@@ -1,5 +1,5 @@
-
 context("Helper functions")
+
 test_that("Test isError",{
 	expect_equal(isError(c(as.list(1:100),list(simpleError('Test')),as.list(letters))),rep(c(FALSE,TRUE,FALSE),c(100,1,26)))
 })

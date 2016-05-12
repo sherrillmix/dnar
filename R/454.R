@@ -5,8 +5,11 @@
 #' @param outputLength minimum output length
 #' @export
 #' @return vector of flows
+#' @examples
+#' seq2flow('ACTAAAAAT')
 seq2flow<-function(seq,flowOrder=c('T','A','C','G'),outputLength=NULL){
 	seqSplit<-strsplit(seq,'')[[1]]
+	if(any(!seqSplit %in% flowOrder))stop(simpleError('Unknown character found'))
 	dif<-seqSplit!=c(seqSplit[-1],'DUMMY')
 	strLengths<-diff(c(0,which(dif)))
 	chars<-seqSplit[dif]
@@ -14,7 +17,7 @@ seq2flow<-function(seq,flowOrder=c('T','A','C','G'),outputLength=NULL){
 	numFlows<-length(flowOrder)
 	distMat<-matrix(NA,nrow=numFlows,ncol=numFlows,dimnames=list(flowOrder,flowOrder))
 	distMat[,1]<-length(flowOrder):1
-	for(i in 2:numFlows)distMat[,i]<-c(distMat[numFlows,i-1],distMat[-numFlows,i-1])
+	if(numFlows>1)for(i in 2:numFlows)distMat[,i]<-c(distMat[numFlows,i-1],distMat[-numFlows,i-1])
 	dists<-rep(NA,length(chars))
 	for(i in flowOrder){
 		dists[chars==i&is.na(nextChars)]<-NA
@@ -22,6 +25,7 @@ seq2flow<-function(seq,flowOrder=c('T','A','C','G'),outputLength=NULL){
 	}
 	dists<-c(which(flowOrder==chars[1]),dists[-length(dists)])
 	if(is.null(outputLength))outputLength<-sum(dists)
+	else outputLength<-max(outputLength,sum(dists))
 	output<-rep(0,outputLength)
 	output[cumsum(dists)]<-strLengths
 	names(output)<-rep(flowOrder,length.out=length(output))
@@ -31,12 +35,16 @@ seq2flow<-function(seq,flowOrder=c('T','A','C','G'),outputLength=NULL){
 #' Find flow corresponding to a given base position
 #'
 #' @param flow vector of flow values (e.g. produced by seq2flow)
-#' @param coords bp coordinates of desired positions
+#' @param coords 1-based coordinates of desired positions
 #' @export
-#' @return flow number for each coord
+#' @return flow number for each coord. Infinity if coordinate is outside sequence.
+#' @examples
+#' indexFlow(seq2flow('CCTTAA'),1:6)
+#' indexFlow(seq2flow('GTGTG'),1:5)
 indexFlow<-function(flow,coords){
 	indices<-cumsum(flow)
-	output<-sapply(coords,function(x,y)return(min(which(y>=x))),indices)
+	if(any(coords<1))stop(simpleError('Negative coords found'))
+	output<-sapply(coords,function(x,y)return(min(which(y>=x),Inf)),indices)
 	return(output)
 }
 
@@ -55,54 +63,3 @@ flow2seq<-function(flow,flowOrder=c('T','A','C','G')){
 	return(output)
 }
 
-#' Break 454 file(s) into separate files for each sample
-#'
-#' @param names names of reads e.g. >DRDR12A125
-#' @param samples sample ID for each above read
-#' @param barcodes list of vectors of barcodes or barcode/primers with each entry indexed by sample
-#' @param outDir directory to put seperate sffs
-#' @param sffDir directory to look for sffs
-#' @param baseName prepend to sample names 
-#' @param sffBinDir location of sfffile binary
-#' @param vocal if TRUE output status messages
-#' @export
-#' @return NULL
-makeSeperateSffs<-function(names,samples,barcodes,outDir,sffDir,baseName='reads',sffBinDir='',vocal=TRUE){
-	if(length(names)!=length(samples))stop(simpleError('Length of names and sample assignments differ'))
-	if(sffBinDir!='')sffBinDir<-sprintf('%s/',sffBinDir)
-	#apparently sfffile can't find sff files in a directory even though it says it can so we'll just feed it every sff
-	sffFiles<-paste(list.files(sffDir,'\\.sff$',full.names=TRUE),collapse=' ')
-
-	#can't let sfffile break this up for us because some people have overlapping barcodes among samples
-	if(!all(unique(samples) %in% names(barcodes)))stop(simpleError('Please give barcodes for every sample'))
-	for(i in unique(samples)){
-		#outFile<-sprintf('%s/%s%s.sff',outDir,baseName,i)
-		#don't need to include sample since sfffile will do it automatically from the barcode file
-		outFile<-sprintf('%s/%s.sff',outDir,baseName)
-		finalOutFile<-sprintf('%s/%s.%s.sff',outDir,baseName,i)
-		capsOutFile<-sprintf('%s/%s.%s.sff',outDir,baseName,toupper(i))
-		nameFile<-tempfile()
-		selector<-samples==i
-		writeLines(names[selector],nameFile)
-		barcodeFile<-tempfile()
-		thisBarcodes<-barcodes[[i]]
-		barLines<-paste(sprintf('mid = "%s", "%s",2;',i,thisBarcodes),collapse='\n')
-		writeLines(c('GSMIDs','{',barLines,'}'),barcodeFile)
-		cmd<-sprintf('%ssfffile -i %s -o %s -mcf %s -s %s',sffBinDir,nameFile,outFile,barcodeFile,sffFiles)
-		if(vocal)message(cmd)
-		returnCode<-system(cmd,intern=TRUE)
-		if(length(grep('reads written into the SFF file',returnCode))==0)stop(simpleError('Some error in sfffile'))
-		if(length(grep('reads written into the SFF file',returnCode))!=1)stop(simpleError('Too many sff files made'))
-		thisRegex<-sprintf(' *%s: *([0-9]+) reads written into the SFF file\\.',toupper(i))
-		numberWritten<-returnCode[grep(thisRegex,returnCode)]
-		numberWritten<-gsub(thisRegex,'\\1',numberWritten)
-		if(sum(selector)!=numberWritten)browser()#stop(simpleError('Reads written do not match selected reads'))
-		cmd<-sprintf('%ssffinfo -a %s',sffBinDir,capsOutFile)
-		if(vocal)message(' ',cmd)
-		if(length(system(cmd,intern=TRUE))!=sum(selector))stop(simpleError('sffinfo gives different number of reads from selected'))
-		file.rename(capsOutFile,finalOutFile)
-		unlink(barcodeFile)
-		unlink(nameFile)
-	}
-	return(NULL)
-}
