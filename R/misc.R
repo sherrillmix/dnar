@@ -216,7 +216,7 @@ cv.glm.par<-function(model,data=eval(modelCall$data),K=nrow(data),nCores=1,subse
 		predData<-data[outGroup,,drop=FALSE]
 		thisModel<-modelCall
 		thisModel$data<-subsetData
-		return(predict(eval(thisModel),predData))
+		return(stats::predict(eval(thisModel),predData))
 	},mc.cores=nCores)
 	pred<-unlist(preds)[order(unlist(subsets))]
 	subsetId<-rep(1:K,sapply(subsets,length))[order(unlist(subsets))]

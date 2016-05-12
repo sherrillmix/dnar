@@ -109,7 +109,7 @@ rarefy<-function(species,counts=rep(1,length(species)),samples=seq(10,sum(counts
 				return(chao(table(thisSpecies)))	
 			} else return(length(unique(thisSpecies)))
 		},species,sample,chaoAdjust)	
-		estimate<-quantile(numSpecies,quants)
+		estimate<-stats::quantile(numSpecies,quants)
 		return(estimate)
 	},reps,species,debug)
 	output<-do.call(rbind,output)

@@ -504,8 +504,8 @@ trimNs<-function(seqs,nonNStretch=c(10,10),nChars=c("N")){
 	}
 	if(nonNStretch[2]>0){
 		regexResults<-gregexpr(regex[2],seqs,perl=TRUE)
-		starts<-sapply(regexResults,tail,1)
-		lengths<-sapply(regexResults,function(x)tail(attr(x,'match.length'),1))
+		starts<-sapply(regexResults,utils::tail,1)
+		lengths<-sapply(regexResults,function(x)utils::tail(attr(x,'match.length'),1))
 		seqs[starts==-1]<-''
 		seqs<-substring(seqs,1,starts+lengths-1)
 	}

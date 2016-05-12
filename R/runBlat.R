@@ -255,7 +255,7 @@ liftCoords<-function(chr,start,end,strand,chainFile,liftoverBin='liftOver',vocal
 	if(vocal)message(cmd)
 	returnCode<-system(cmd)
 	if(vocal)message('Return: ',returnCode)
-	lift<-read.table(tmpFiles[2],stringsAsFactors=FALSE)
+	lift<-utils::read.table(tmpFiles[2],stringsAsFactors=FALSE)
 	lift<-lift[,-5]
 	colnames(lift)<-c('chr','start','end','id','strand')
 	if(any(table(lift$id)>1))warning('Liftover created duplicates')
