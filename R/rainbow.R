@@ -8,6 +8,11 @@
 #' @param lightMultiple multiple to scale lightness by
 #' @export 
 #' @return vector of color strings
+#' @examples 
+#' cols<-rainbow.lab(100)
+#' plot(1:100,cex=3,col=cols,lwd=5)
+#' cols<-rainbow.lab(100,lightScale=1)
+#' plot(1:100,col=cols,lwd=5)
 rainbow.lab<-function(n,start=1.5,end=-3,alpha=1,lightScale=0,lightMultiple=.7){
 	#something is going crazy with R's implementation of lab
 	#angles<-seq(start*2*pi,end*2*pi,length.out=n)

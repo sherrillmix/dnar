@@ -26,4 +26,10 @@ vector of color strings
 \description{
 Rainbow based on circle of lab color space
 }
+\examples{
+cols<-rainbow.lab(100)
+plot(1:100,cex=3,col=cols,lwd=5)
+cols<-rainbow.lab(100,lightScale=1)
+plot(1:100,col=cols,lwd=5)
+}
 
