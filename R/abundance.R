@@ -5,6 +5,9 @@
 #' @param standardize If TRUE divide x by sum x
 #' @export
 #' @return Shannon diversity
+#' @examples
+#' shannon(1:10)
+#' shannon(1:10,base=2)
 shannon<-function(x,base=exp(1),standardize=TRUE){
    if(any(x<0))stop(simpleError('Please give positive values of x'))
    x<-x[x>0]
