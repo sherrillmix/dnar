@@ -11,3 +11,15 @@ test_that("Test shannon",{
 	expect_equal(shannon(c(c(.25,.25),standardize=FALSE)),-.5*log(1/4))
 })
 
+test_that("Test rao",{
+	expect_equal(rao(1,matrix(0)),0)
+	expect_equal(rao(rep(1,2),matrix(c(0,1,1,0),nrow=2)),.5)
+	expect_equal(rao(rep(1,2),matrix(c(0,1,1,0),nrow=2)),.5)
+	expect_equal(rao(rep(1,2),matrix(c(0,2,2,0),nrow=2)),1)
+	expect_error(rao(rep(1,2),as.matrix(dist(1:3))),'match')
+	expect_error(rao(rep(1,3),as.matrix(dist(1:2))),'match')
+	expect_equal(rao(rep(1,3),as.matrix(dist(1:3))),8/9)
+	expect_equal(rao(rep(1,4),as.matrix(dist(1:4))),20/16)
+	expect_equal(rao(1:3,as.matrix(dist(1:3))),28/36)
+})
+

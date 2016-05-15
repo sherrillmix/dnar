@@ -13,6 +13,7 @@ rao(x, dist)
 }
 \value{
 Rao diversity
+rao(1:3,as.matrix(dist(1:3)))
 }
 \description{
 Calculate Rao diversity of a vector

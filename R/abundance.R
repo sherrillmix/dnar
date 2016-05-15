@@ -23,13 +23,14 @@ shannon<-function(x,base=exp(1),standardize=TRUE){
 #' @param dist Distance matrix of NxN elements
 #' @export
 #' @return Rao diversity
+#' rao(1:3,as.matrix(dist(1:3)))
 rao<-function(x,dist){
+	if(any(dim(dist)!=length(x)))stop(simpleError('Distance and proportion vectors do not match'))
 	zeros<-x==0
 	x<-x[!zeros]
 	dist<-dist[!zeros,!zeros]
 	props<-x/sum(x)
 	propTable<-outer(props,props)
-	if(any(dim(propTable)!=dim(dist)))stop(simpleError('Distance and proportion vectors do not match'))
 	return(sum(propTable*dist))
 }
 
