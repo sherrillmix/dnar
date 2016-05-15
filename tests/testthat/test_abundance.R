@@ -23,3 +23,15 @@ test_that("Test rao",{
 	expect_equal(rao(1:3,as.matrix(dist(1:3))),28/36)
 })
 
+test_that("Test jensenShannon",{
+	expect_equal(jensenShannon(1,1),0)
+	expect_equal(jensenShannon(rep(1,20),rep(1,20)),0)
+	expect_equal(jensenShannon(0:2,2:0),2/3)
+	expect_equal(jensenShannon(0:2,2:0,3),1+1/3*log(1/3,3)+2/3*log(2/3,3))
+	expect_error(jensenShannon(rep(1,20),rep(1,21)),'[Ll]ength')
+	counts1<-sample(1:100)
+	counts2<-sample(1:100)
+	expect_equal(jensenShannon(counts1,counts2),jensenShannon(counts2,counts1))
+	expect_equal(jensenShannon(counts1,counts2),jensenShannon(counts1,counts2,method='kullback'))
+	expect_equal(jensenShannon(counts1,counts2,3),jensenShannon(counts1,counts2,3,method='kullback'))
+})

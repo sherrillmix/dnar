@@ -39,15 +39,20 @@ rao<-function(x,dist){
 #' @param x Vector of counts or proportions of N elements
 #' @param y Second vector of counts or proportions of N elements 
 #' @param base Base of logarithm
+#' @param method Method used to calculate either shannon or kullback. Should get the same answer either way
 #' @export
 #' @return Jensen-Shannon divergence
-jensenShannon<-function(x,y,base=2){
+#' @examples
+#' jensenShannon(1:4,4:1)
+jensenShannon<-function(x,y,base=2,method=c('shannon','kullback')){
+	method<-match.arg(method)
+	if(length(x)!=length(y))stop(simpleError('Length of x and y differ'))
 	propX<-x/ifelse(sum(x)==0,1,sum(x))
 	propY<-y/ifelse(sum(y)==0,1,sum(y))
-	shannonCalc<-shannon((propX+propY)/2,base,FALSE)-shannon(propX,base,FALSE)/2-shannon(propY,base,FALSE)/2
-	kullbackCalc<-.5*kullback(propX,(propY+propX)/2,base,FALSE)+.5*kullback(propY,(propY+propX)/2,base,FALSE)
-	if(round(shannonCalc,5)!=round(kullbackCalc,5))stop(simpleError('Problem calculating shannon jensen'))
-	return(kullbackCalc)
+	if(method=='shannon')out<-shannon((propX+propY)/2,base,FALSE)-shannon(propX,base,FALSE)/2-shannon(propY,base,FALSE)/2
+	if(method=='kullback')out<-.5*kullback(propX,(propY+propX)/2,base,FALSE)+.5*kullback(propY,(propY+propX)/2,base,FALSE)
+	#if(round(shannonCalc,5)!=round(kullbackCalc,5))stop(simpleError('Problem calculating shannon jensen'))
+	return(out)
 }
 
 #' Calculate Kullback-Leibler divergence between two probability distributions
