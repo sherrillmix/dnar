@@ -39,23 +39,24 @@ rao<-function(x,dist){
 #' @param x Vector of counts or proportions of N elements
 #' @param y Second vector of counts or proportions of N elements 
 #' @param base Base of logarithm
-#' @param method Method used to calculate either shannon or kullback. Should get the same answer either way
 #' @export
 #' @return Jensen-Shannon divergence
 #' @examples
 #' jensenShannon(1:4,4:1)
-jensenShannon<-function(x,y,base=2,method=c('shannon','kullback')){
-	method<-match.arg(method)
+jensenShannon<-function(x,y,base=2){
 	if(length(x)!=length(y))stop(simpleError('Length of x and y differ'))
 	propX<-x/ifelse(sum(x)==0,1,sum(x))
 	propY<-y/ifelse(sum(y)==0,1,sum(y))
-	if(method=='shannon')out<-shannon((propX+propY)/2,base,FALSE)-shannon(propX,base,FALSE)/2-shannon(propY,base,FALSE)/2
-	if(method=='kullback')out<-.5*kullback(propX,(propY+propX)/2,base,FALSE)+.5*kullback(propY,(propY+propX)/2,base,FALSE)
+	out<-shannon((propX+propY)/2,base,FALSE)-shannon(propX,base,FALSE)/2-shannon(propY,base,FALSE)/2
+	#if(method=='shannon')out<-shannon((propX+propY)/2,base,FALSE)-shannon(propX,base,FALSE)/2-shannon(propY,base,FALSE)/2
+	#if(method=='kullback')out<-.5*kullback(propX,(propY+propX)/2,base,FALSE)+.5*kullback(propY,(propY+propX)/2,base,FALSE)
 	#if(round(shannonCalc,5)!=round(kullbackCalc,5))stop(simpleError('Problem calculating shannon jensen'))
 	return(out)
 }
 
 #' Calculate Kullback-Leibler divergence between two probability distributions
+#'
+#' Undefined if zero counts/proportions
 #'
 #' @param x Vector of counts or proportions of N elements
 #' @param y Second vector of counts or proportions of N elements 
@@ -63,9 +64,11 @@ jensenShannon<-function(x,y,base=2,method=c('shannon','kullback')){
 #' @param standardize If TRUE divide x and y by sum(x) and sum(y)
 #' @export
 #' @return Kullback-Leibler divergence
+#' @examples
+#' kullback(1:3,3:1)
 kullback<-function(x,y,base=2,standardize=TRUE){
-	selector<-y>0&x>0
-	x<-x[selector];y<-y[selector]
+	selector<-y<=0&x<=0
+	x<-x[!selector];y<-y[!selector]
 	if(standardize){
 		propX<-x/sum(x)
 		propY<-y/sum(y)

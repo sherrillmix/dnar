@@ -4,7 +4,7 @@
 \alias{jensenShannon}
 \title{Calculate Jensen Shannon divergence between two probability distributions}
 \usage{
-jensenShannon(x, y, base = 2, method = c("shannon", "kullback"))
+jensenShannon(x, y, base = 2)
 }
 \arguments{
 \item{x}{Vector of counts or proportions of N elements}
@@ -12,8 +12,6 @@ jensenShannon(x, y, base = 2, method = c("shannon", "kullback"))
 \item{y}{Second vector of counts or proportions of N elements}
 
 \item{base}{Base of logarithm}
-
-\item{method}{Method used to calculate either shannon or kullback. Should get the same answer either way}
 }
 \value{
 Jensen-Shannon divergence

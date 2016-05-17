@@ -19,6 +19,9 @@ kullback(x, y, base = 2, standardize = TRUE)
 Kullback-Leibler divergence
 }
 \description{
-Calculate Kullback-Leibler divergence between two probability distributions
+Undefined if zero counts/proportions
+}
+\examples{
+kullback(1:3,3:1)
 }
 
