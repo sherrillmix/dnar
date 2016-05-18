@@ -15,4 +15,7 @@ Chao index
 \description{
 Calculate chao diversity index
 }
+\examples{
+chao(c(1,1,1,2,3,5,100))
+}
 

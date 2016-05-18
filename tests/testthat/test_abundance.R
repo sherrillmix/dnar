@@ -45,3 +45,25 @@ test_that("Test kullback",{
 	expect_equal(kullback(c(1,1,1),c(.1,.1,.8),base=3), sum(1/3*log(1/3/c(.1,.1,.8),3)))
 	expect_equal(kullback(c(.1,.1,.8),c(1,1,1)), sum(c(.1,.1,.8)*log2(c(.1,.1,.8)*3)))
 })
+
+test_that("Test chao",{
+	expect_equal(chao(-1),0)
+	expect_equal(chao(0),0)
+	expect_equal(chao(1),1)
+	expect_equal(chao(rep(1,2)),3)
+	expect_equal(chao(rep(1,3)),6)
+	expect_equal(chao(rep(1,4)),10)
+	expect_equal(chao(c(rep(1,2),rep(2,1))),3.5)
+	expect_equal(chao(c(rep(1,2),rep(2,1),rep(100,100))),103.5)
+	expect_equal(chao(c(rep(1,4),rep(100,100))),110)
+	expect_equal(chao(c(rep(1,4),rep(2,4),rep(100,100))),108+4*3/2/5)
+})
+
+test_that("Test rarefaction",{
+	expect_equal(rarefy(rep(1,100),1,reps=1000)[,3],1)
+	expect_equal(rarefy(rep(1,100),100,reps=1000)[,1],100)
+	expect_equal(rarefy(100,100,reps=1000)[,3],1)
+	out<-data.frame('50%'=1:2,'2.5%'=1:2,'97.5%'=1:2,row.names=c(1,100),check.names=FALSE)
+	expect_equal(rarefy(c(50,50),c(1,100),reps=1000),out)
+	expect_equal(rarefy(c(50,50),2,reps=1000,chao=TRUE)[,3],3)
+})

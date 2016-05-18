@@ -4,15 +4,12 @@
 \alias{rarefy}
 \title{Calculate rarefaction using boostrapping}
 \usage{
-rarefy(species, counts = rep(1, length(species)), samples = seq(10,
-  sum(counts), 10), reps = 10000, quants = c(0.5, 0.025, 0.975),
-  chaoAdjust = FALSE, debug = FALSE, replaceSpecies = FALSE,
-  minCount = 0)
+rarefy(counts, samples = unique(round(sum(counts) * seq(0.1, 1, 0.1))),
+  reps = 1000, quants = c(0.5, 0.025, 0.975), chaoAdjust = FALSE,
+  replace = FALSE)
 }
 \arguments{
-\item{species}{Ids of species}
-
-\item{counts}{Corresponding counts of species}
+\item{counts}{Counts of species}
 
 \item{samples}{Vector of numbers of draws to calculate rarefaction at}
 
@@ -22,16 +19,16 @@ rarefy(species, counts = rep(1, length(species)), samples = seq(10,
 
 \item{chaoAdjust}{If TRUE calculate chao-predicted species number on each random draw}
 
-\item{debug}{If TRUE display debugging information}
-
-\item{replaceSpecies}{If TRUE sample with replacements. If FALSE sample without replacement.}
-
-\item{minCount}{Remove and species with less than minCount counts}
+\item{replace}{If TRUE sample with replacements. If FALSE sample without replacement.}
 }
 \value{
 Dataframe of calculated quantiles with rownames of the number of samples drawn
 }
 \description{
 Calculate rarefaction using boostrapping
+}
+\examples{
+rarefy(1:20,reps=100)
+rarefy(1:20,reps=100,chaoAdjust=TRUE)
 }
 

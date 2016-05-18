@@ -84,6 +84,8 @@ kullback<-function(x,y,base=2,standardize=TRUE){
 #' @param counts A vector of counts with one entry per "species"
 #' @export
 #' @return Chao index
+#' @examples
+#' chao(c(1,1,1,2,3,5,100))
 chao<-function(counts){
 	counts<-counts[counts>0]
 	return(length(counts)+sum(counts==1)*(sum(counts==1)-1)/2/(sum(counts==2)+1))
@@ -91,41 +93,32 @@ chao<-function(counts){
 
 #' Calculate rarefaction using boostrapping
 #' 
-#' @param species Ids of species
-#' @param counts Corresponding counts of species
+#' @param counts Counts of species
 #' @param samples Vector of numbers of draws to calculate rarefaction at
 #' @param reps How many random samples to take at each step
 #' @param quants Quantiles to return
 #' @param chaoAdjust If TRUE calculate chao-predicted species number on each random draw
-#' @param debug If TRUE display debugging information
-#' @param minCount Remove and species with less than minCount counts
-#' @param replaceSpecies If TRUE sample with replacements. If FALSE sample without replacement.
+#' @param replace If TRUE sample with replacements. If FALSE sample without replacement.
 #' @export
 #' @return Dataframe of calculated quantiles with rownames of the number of samples drawn
-rarefy<-function(species,counts=rep(1,length(species)),samples=seq(10,sum(counts),10),reps=10000,quants=c(.5,.025,.975),chaoAdjust=FALSE,debug=FALSE,replaceSpecies=FALSE,minCount=0){
-	if(length(species)!=length(counts))stop(simpleError('Length of species and counts not equal'))
-	if(minCount>0){
-		speciesCounts<-tapply(counts,species,sum)
-		badSpecies<-names(speciesCounts)[speciesCounts<minCount]
-		message('Bad species:',paste(badSpecies,collapse=','))
-		counts<-counts[!species %in% badSpecies]
-		species<-species[!species %in% badSpecies]
-	}
-	species<-rep(species,counts)
-	if(debug)message('Number of samples: ',length(samples),' Last sample:',samples[length(samples)])
-	output<-lapply(samples,function(sample,reps,species,debug){
-		if(debug)message('Sample ',sample,' started')
+#' @examples
+#' rarefy(1:20,reps=100)
+#' rarefy(1:20,reps=100,chaoAdjust=TRUE)
+rarefy<-function(counts,samples=unique(round(sum(counts)*seq(.1,1,.1))),reps=1000,quants=c(.5,.025,.975),chaoAdjust=FALSE,replace=FALSE){
+	species<-rep(1:length(counts),counts)
+	output<-lapply(samples,function(sample,reps,species){
 		numSpecies<-sapply(1:reps,function(rep,species,sample,chaoAdjust){
-			thisSpecies<-sample(species,sample,replace=replaceSpecies)
+			thisSpecies<-sample(species,sample,replace=replace)
 			if(chaoAdjust){
 				return(chao(table(thisSpecies)))	
 			} else return(length(unique(thisSpecies)))
 		},species,sample,chaoAdjust)	
 		estimate<-stats::quantile(numSpecies,quants)
 		return(estimate)
-	},reps,species,debug)
-	output<-do.call(rbind,output)
-	return(list(output,samples))
+	},reps,species)
+	output<-as.data.frame(do.call(rbind,output))
+	rownames(output)<-samples
+	return(output)
 }
 
 #' Calculate rarefaction using formula
