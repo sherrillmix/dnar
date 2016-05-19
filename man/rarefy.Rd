@@ -31,4 +31,7 @@ Calculate rarefaction using boostrapping
 rarefy(1:20,reps=100)
 rarefy(1:20,reps=100,chaoAdjust=TRUE)
 }
+\seealso{
+\code{\link{rareEquation}}, \code{\link{chao}}
+}
 

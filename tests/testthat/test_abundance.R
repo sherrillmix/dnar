@@ -40,6 +40,8 @@ test_that("Test kullback",{
 	expect_equal(kullback(0:1,1:0),NaN)
 	expect_equal(kullback(c(1,1),0:1),Inf)
 	expect_equal(kullback(0:1,c(1,1)),NaN)
+	expect_equal(kullback(c(.5,.5),c(.2,.8),standardize=FALSE), sum(.5*log2(.5/c(.2,.8))))
+	expect_equal(kullback(c(20,20),c(20,80),standardize=TRUE), sum(.5*log2(.5/c(.2,.8))))
 	expect_equal(kullback(c(.5,.5),c(.2,.8)), sum(.5*log2(.5/c(.2,.8))))
 	expect_equal(kullback(c(.5,.5),c(.2,.8),base=3), sum(.5*log(.5/c(.2,.8),3)))
 	expect_equal(kullback(c(1,1,1),c(.1,.1,.8),base=3), sum(1/3*log(1/3/c(.1,.1,.8),3)))
@@ -59,11 +61,21 @@ test_that("Test chao",{
 	expect_equal(chao(c(rep(1,4),rep(2,4),rep(100,100))),108+4*3/2/5)
 })
 
-test_that("Test rarefaction",{
+test_that("Test rarefy",{
+	expect_equal(rarefy(rep(1,100),0,reps=1000)[,3],0)
 	expect_equal(rarefy(rep(1,100),1,reps=1000)[,3],1)
 	expect_equal(rarefy(rep(1,100),100,reps=1000)[,1],100)
 	expect_equal(rarefy(100,100,reps=1000)[,3],1)
 	out<-data.frame('50%'=1:2,'2.5%'=1:2,'97.5%'=1:2,row.names=c(1,100),check.names=FALSE)
 	expect_equal(rarefy(c(50,50),c(1,100),reps=1000),out)
 	expect_equal(rarefy(c(50,50),2,reps=1000,chao=TRUE)[,3],3)
+})
+
+test_that("Test rareEquation",{
+	expect_equal(rareEquation(rep(1,100),0:100),structure(0:100,.Names=0:100))
+	expect_equal(rareEquation(c(50,50),51),c('51'=2))
+	expect_equal(rareEquation(2,3),c('3'=NaN))
+	expect_equal(as.vector(round(rareEquation(1:20,40))),as.vector(round(rarefy(1:20,40,reps=1000)[,1])))
+	#example calc from http://ww2.tnstate.edu/ganter/B412%20ExtraRarefaction.html
+	expect_equal(round(rareEquation(c(42,23,16,14,6,5),25),2),c('25'=5.53))
 })

@@ -2,19 +2,25 @@
 % Please edit documentation in R/abundance.R
 \name{rareEquation}
 \alias{rareEquation}
-\title{Calculate rarefaction of single sample using equation}
+\title{Calculate rarefaction using formula}
 \usage{
-rareEquation(speciesCounts, sampleSize)
+rareEquation(counts, samples = unique(round(sum(counts) * seq(0.1, 1, 0.1))))
 }
 \arguments{
-\item{speciesCounts}{Vector of counts for each "species" e.g. c(10,100,5)}
+\item{counts}{Counts of species}
 
-\item{sampleSize}{Single value of number of draws from sample}
+\item{samples}{Vector of numbers of draws to calculate rarefaction at}
 }
 \value{
-Rarefaction value
+Vector with predicted rarefied counts for entries and the sampled number of reads for names
 }
 \description{
-Calculate rarefaction of single sample using equation
+Calculate rarefaction using formula
+}
+\examples{
+rareEquation(1:20)
+}
+\seealso{
+\code{\link{rarefy}}
 }
 

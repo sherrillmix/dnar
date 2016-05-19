@@ -101,6 +101,7 @@ chao<-function(counts){
 #' @param replace If TRUE sample with replacements. If FALSE sample without replacement.
 #' @export
 #' @return Dataframe of calculated quantiles with rownames of the number of samples drawn
+#' @seealso \code{\link{rareEquation}}, \code{\link{chao}}
 #' @examples
 #' rarefy(1:20,reps=100)
 #' rarefy(1:20,reps=100,chaoAdjust=TRUE)
@@ -123,36 +124,22 @@ rarefy<-function(counts,samples=unique(round(sum(counts)*seq(.1,1,.1))),reps=100
 
 #' Calculate rarefaction using formula
 #'
-#' @param sample Vector of numbers of individuals per species
-#' @param step Size of sampling steps for rarefaction
-#' @param maxN The maximum number of counts to rarefy to
+#' @param counts Counts of species
+#' @param samples Vector of numbers of draws to calculate rarefaction at
 #' @export
-#' @return Matrix with two columns; number of draws and rarefaction value
-quickRare<-function(sample,step=10,maxN=sum(sample)){
-	sampleSize<-20;
-	steps<-unique(c(seq(step,maxN,step),maxN))
-	output<-sapply(steps,function(x)rareEquation(sample,x))
-	return(data.frame('rare'=output,'sampleN'=steps))
-}
-
-#' Calculate rarefaction of single sample using equation
-#'
-#' @param speciesCounts Vector of counts for each "species" e.g. c(10,100,5)
-#' @param sampleSize Single value of number of draws from sample 
-#' @export
-#' @return Rarefaction value
-rareEquation<-function(speciesCounts,sampleSize){
-	#numbers too big
-	#output2<-length(sample)-choose(sum(sample),sampleSize)^-1*sum(choose(sum(sample)-sample,sampleSize))
-	#message(output2)
-	#no way to log sum 
-	#logSum<-log(sum(choose(sum(sample)-sample,sampleSize)))
-	#output<-length(sample) - exp(- lchoose(sum(sample),sampleSize) + logSum)
-	#zeros can take computational time
-	speciesCounts<-speciesCounts[speciesCounts>0]
-	output<-sum(1-exp(lchoose(sum(speciesCounts)-speciesCounts,sampleSize)-lchoose(sum(speciesCounts),sampleSize)))
-	if(is.na(output)||is.infinite(output))browser()
-	return(output)
+#' @return Vector with predicted rarefied counts for entries and the sampled number of reads for names
+#' @seealso \code{\link{rarefy}}
+#' @examples
+#' rareEquation(1:20)
+rareEquation<-function(counts,samples=unique(round(sum(counts)*seq(.1,1,.1)))){
+	counts<-counts[counts>0]
+	if(length(samples)>1){
+		out<-sapply(samples,function(xx)rareEquation(counts,xx))
+	}else{
+		out<-sum(1-exp(lchoose(sum(counts)-counts,samples)-lchoose(sum(counts),samples)))
+	}
+	names(out)<-samples
+	return(out)
 }
 
 
