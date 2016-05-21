@@ -4,19 +4,25 @@
 \alias{chooseAtLeastOneFromEach}
 \title{Calculate the number of combinations possible from nGroups groups with groupsize members and n observations}
 \usage{
-chooseAtLeastOneFromEach(nGroups, groupSize, n)
+chooseAtLeastOneFromEach(n, nGroups, groupSize)
 }
 \arguments{
+\item{n}{number of observations pulled from the individuals}
+
 \item{nGroups}{number of equally sized groups}
 
 \item{groupSize}{size of the equally sized groups}
-
-\item{n}{number of observations pulled from the individuals}
 }
 \value{
 number of combinations containing at least one individual from each group
 }
 \description{
 Calculate the number of combinations possible from nGroups groups with groupsize members and n observations
+}
+\examples{
+chooseAtLeastOneFromEach(10,10,2)
+}
+\seealso{
+\code{\link{pRare}}
 }
 
