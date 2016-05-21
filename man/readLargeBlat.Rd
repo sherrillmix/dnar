@@ -18,7 +18,7 @@ readLargeBlat(fileName, nHeader = 5, nrows = 1e+06, isGz = grepl(".gz$",
 
 \item{filterFunc}{a function taking a data.frame of blat data and returning a TRUE/FALSE vector specifying rows to keep}
 
-\item{...}{additional arguments to readBlat}
+\item{...}{additional arguments to read.blat}
 }
 \value{
 data.frame of blat data

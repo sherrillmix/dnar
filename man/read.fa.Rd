@@ -4,17 +4,26 @@
 \alias{read.fa}
 \title{Read a fasta file}
 \usage{
-read.fa(fileName, assumeSingleLine = FALSE)
+read.fa(fileName, assumeSingleLine = FALSE, ...)
 }
 \arguments{
 \item{fileName}{name of file}
 
-\item{assumeSingleLine}{don't process sequence lines. just assume they're one line per sequence}
+\item{assumeSingleLine}{if TRUE don't process sequence lines. just assume they're one line per sequence}
+
+\item{...}{additional arguments to readLines}
 }
 \value{
-dataframe with columns name and seq
+data.frame with columns name and seq
 }
 \description{
 Read a fasta file
+}
+\examples{
+file<-tempfile()
+x<-generateFakeFasta(10000,bases=c('A','C','T','G','\\n','-'))
+write.fa(x$name,x$seq,file)
+y<-read.fa(file)
+nrow(y)
 }
 

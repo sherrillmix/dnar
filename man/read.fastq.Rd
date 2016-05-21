@@ -4,12 +4,14 @@
 \alias{read.fastq}
 \title{Read fastq file}
 \usage{
-read.fastq(fileName, convert = FALSE)
+read.fastq(fileName, convert = FALSE, baseQual = 33)
 }
 \arguments{
 \item{fileName}{name of fastq file}
 
 \item{convert}{if TRUE convert condensed quals to space separated numeric quals}
+
+\item{baseQual}{integer to subtract from quality characters to convert into quality space}
 }
 \value{
 dataframe with name, seq, qual

@@ -2,9 +2,10 @@
 #'
 #' @param fileName name of fastq file
 #' @param convert if TRUE convert condensed quals to space separated numeric quals
+#' @param baseQual integer to subtract from quality characters to convert into quality space
 #' @export
 #' @return dataframe with name, seq, qual
-read.fastq<-function(fileName,convert=FALSE){
+read.fastq<-function(fileName,convert=FALSE,baseQual=33){
 	#assuming no comments and seq and qual on a single line each
 	#assuming any line starting with @ 2 lines later by + is the block and no extra chars (who designed this format?)
 	#as.integer(charToRaw())
@@ -18,7 +19,7 @@ read.fastq<-function(fileName,convert=FALSE){
 	if(length(plusLines)!=length(atLines))stop(simpleError('Problem finding @ + lines'))
 	output<-data.frame('name'=sub('^@','',x[atLines]), 'seq'=x[atLines+1], 'qual'=x[atLines+3],stringsAsFactors=FALSE)
 	if(any(nchar(output$seq)!=nchar(output$qual)))stop(simpleError('Sequence and qual lengths do not match'))
-	if(convert)output$qual<-unlist(lapply(x[atLines + 3],function(x)paste(as.integer(charToRaw(x))-33,collapse=' ')))
+	if(convert)output$qual<-unlist(lapply(x[atLines + 3],function(x)paste(as.integer(charToRaw(x))-baseQual,collapse=' ')))
 	return(output)
 }
 
@@ -59,34 +60,7 @@ readFaDir<-function(dir='.',suffix='\\.(fn?a|fasta)$',recursive=FALSE,vocal=FALS
 	return(allFa)
 }
 
-
-#' Read a fasta file
-#' 
-#' @param fileName name of file
-#' @param assumeSingleLine don't process sequence lines. just assume they're one line per sequence
-#' @export
-#' @return dataframe with columns name and seq
-read.fa<-function(fileName,assumeSingleLine=FALSE){
-	x<-readLines(fileName)
-	if(assumeSingleLine){
-		output<-data.frame('name'=x[seq(1,length(x),2)],'seq'=x[seq(2,length(x),2)],stringsAsFactors=FALSE)
-		if(any(grepl('^>',output$seq,perl=TRUE)|!grepl('^>',output$name,perl=TRUE)))stop(simpleError('Problem reading single line fasta'))
-		output$name<-substring(output$name,2)
-	}else{
-		if(length(x)==0)return(NULL)
-		x<-x[!grepl('^[#;]',x,perl=TRUE)&x!='']
-		y<-paste(x,collapse="\n")
-		splits<-strsplit(y,'>',fixed=TRUE)[[1]][-1]
-		splits2<-strsplit(splits,"\n",fixed=TRUE)
-		output<-lapply(splits2,function(x){return(c(x[1],paste(x[-1],collapse='')))})
-		output<-as.data.frame(do.call(rbind,output),stringsAsFactors=FALSE)
-		colnames(output)<-c('name','seq')
-	}
-	output$seq<-gsub(' +$','',output$seq,perl=TRUE)
-	return(output)
-}
-
-#' Read a fasta file alternative
+#' Read a fasta file 
 #' 
 #' @param fileName name of file
 #' @param assumeSingleLine if TRUE don't process sequence lines. just assume they're one line per sequence
@@ -95,11 +69,11 @@ read.fa<-function(fileName,assumeSingleLine=FALSE){
 #' @return  data.frame with columns name and seq
 #' @examples
 #' file<-tempfile()
-#' x<-generateFakeFasta(100,bases=c('A','C','T','G','\n','-'))
+#' x<-generateFakeFasta(10000,bases=c('A','C','T','G','\n','-'))
 #' write.fa(x$name,x$seq,file)
-#' system.time(y<-read.fa2(file))
-#' system.time(y<-read.fa(file))
-read.fa2<-function(fileName,assumeSingleLine=FALSE,...){
+#' y<-read.fa(file)
+#' nrow(y)
+read.fa<-function(fileName,assumeSingleLine=FALSE,...){
 	x<-readLines(fileName,warn=FALSE,...)
 	if(length(x)==0)return(NULL)
 	if(assumeSingleLine){
@@ -237,7 +211,7 @@ fillZeros<-function(cover,posCol='pos',countCols=colnames(cover)[grep('counts',c
 #' @param calcScore if TRUE, calculate score column
 #' @export
 #' @return dataframe of blat data
-readBlast<-function(fileName,skips=0,nrows=-1,calcScore=TRUE){
+read.blast<-function(fileName,skips=0,nrows=-1,calcScore=TRUE){
 	x<-utils::read.table(fileName,skip=skips,sep="\t",stringsAsFactors=FALSE,colClasses=c(rep('character',2),rep('numeric',10)),nrows=nrows)
 	colnames(x)<-c('qName','tName','percID','alignLength','mismatch','nGap','qStart','qEnd','tStart','tEnd','eValue','hspBit')
 	#Score equation from blat's webpage
@@ -255,7 +229,7 @@ readBlast<-function(fileName,skips=0,nrows=-1,calcScore=TRUE){
 #' @param nrows number of lines ot read in per shot
 #' @param isGz if TRUE then file is assumed to be gzipped
 #' @param filterFunc a function taking a data.frame of blat data and returning a TRUE/FALSE vector specifying rows to keep 
-#' @param ... additional arguments to readBlat
+#' @param ... additional arguments to read.blat
 #' @export
 #' @return data.frame of blat data
 readLargeBlat<-function(fileName,nHeader=5,nrows=1e6,isGz=grepl('.gz$',fileName),filterFunc=function(x)rep(TRUE,nrow(x)),...){
@@ -270,14 +244,14 @@ readLargeBlat<-function(fileName,nHeader=5,nrows=1e6,isGz=grepl('.gz$',fileName)
 	on.exit(close(openFile))
 	#burn off the header
 	readLines(openFile,n=nHeader)
-	leftOverData<-readBlat(openFile,skips=0,nrows=1,...)
+	leftOverData<-read.blat(openFile,skips=0,nrows=1,...)
 	out<-leftOverData[0,]
 	counter<-1
 	finished<-FALSE
 	while(!finished){
 		message('Working on ',counter*nrows)
 		counter<-counter+1
-		thisData<-readBlat(openFile,skips=0,nrows=nrows,...)
+		thisData<-read.blat(openFile,skips=0,nrows=nrows,...)
 		finished<-nrow(thisData)<1
 		thisData<-rbind(leftOverData,thisData)
 		if(finished){
@@ -311,7 +285,7 @@ readLargeBlat<-function(fileName,nHeader=5,nrows=1e6,isGz=grepl('.gz$',fileName)
 #' @param ... additional arguments to read.table
 #' @export
 #' @return dataframe of blat data
-readBlat<-function(fileName,skips=5,calcScore=TRUE,fixStarts=TRUE,nCols=21,filterFunction=NULL,...){
+read.blat<-function(fileName,skips=5,calcScore=TRUE,fixStarts=TRUE,nCols=21,filterFunction=NULL,...){
 	#if we don't read in all lines at once it becomes a pain to deal with open/closed connections when we want to peak 
 	
 	#test for empty file
@@ -356,7 +330,7 @@ readBlat<-function(fileName,skips=5,calcScore=TRUE,fixStarts=TRUE,nCols=21,filte
 #' @param fileName wiggle file to read
 #' @export
 #' @return data.frame with columns start, value, end and chr
-readWiggle<-function(fileName){
+read.wiggle<-function(fileName){
 	x<-readLines(fileName)
 	trackLines<-grep('chrom=',x)
 	if(length(trackLines)==0)stop(simpleError('No track lines found in wiggle file'))
@@ -389,7 +363,7 @@ readWiggle<-function(fileName){
 #' @param vocal if TRUE print status messages
 #' @export
 #' @return list of reference sequence in [[1]], aligned reads in [[2]] (note reads are not globally aligned still need to use start coordinate to place globally), snps in [[3]]
-readAce<-function(aceFile,dropMosaik=TRUE,checkSnps=TRUE,vocal=TRUE){
+read.ace<-function(aceFile,dropMosaik=TRUE,checkSnps=TRUE,vocal=TRUE){
 	#debug<-FALSE
 	#if(!exists(x)|!debug)x<-readLines(aceFile)
 	x<-readLines(aceFile)
