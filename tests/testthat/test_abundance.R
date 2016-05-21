@@ -79,3 +79,20 @@ test_that("Test rareEquation",{
 	#example calc from http://ww2.tnstate.edu/ganter/B412%20ExtraRarefaction.html
 	expect_equal(round(rareEquation(c(42,23,16,14,6,5),25),2),c('25'=5.53))
 })
+
+test_that("Test pRare",{
+	expect_equal(sum(sapply(0:10,pRare,10,10,10)),1)
+	expect_equal(sum(sapply(0:20,pRare,20,12,13)),1)
+	expect_equal(pRare(21,20,10,10),0)
+	expect_equal(pRare(0,20,10,10),0)
+	expect_lt(pRare(1,20,10,10),pRare(2,20,10,10))
+	expect_lt(pRare(1,20,10,10),pRare(2,20,10,10))
+	expect_lt(pRare(2,21,10,10),pRare(2,20,10,10))
+	expect_equal(pRare(1,2,2,2),1/3)
+	expect_equal(pRare(2,2,2,2),2/3)
+	expect_equal(pRare(1,2,2,3),3*2/15)
+	expect_equal(pRare(2,2,2,3),1-3*2/15)
+	expect_equal(pRare(1,2,3,3),3*3/36)
+	expect_equal(pRare(2,2,3,3),1-3*3/36)
+	expect_equal(pRare(3,3,3,3),3^3/84)
+})

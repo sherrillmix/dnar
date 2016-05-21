@@ -147,11 +147,12 @@ rareEquation<-function(counts,samples=unique(round(sum(counts)*seq(.1,1,.1)))){
 #' Calculate the probability of observing observedX species from nGroups groups with groupsize members with n observations
 #'
 #' @param nGroups number of equally sized groups
-#' @param groupSize size of the equally sized groups
 #' @param n number of observations pulled from the individuals
+#' @param groupSize size of the equally sized groups
 #' @param observedX number of species observed
 #' @return probability of observing observedX species from nGroups groups with groupsize members with n observations
-pRare<-function(nGroups,groupSize,n,observedX){
+#' pRare(4,10,10,10)
+pRare<-function(observedX,n,nGroups,groupSize){
 	choose(nGroups,observedX)*chooseAtLeastOneFromEach(observedX,groupSize,n)/choose(nGroups*groupSize,n)
 }
 

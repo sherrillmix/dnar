@@ -4,19 +4,20 @@
 \alias{pRare}
 \title{Calculate the probability of observing observedX species from nGroups groups with groupsize members with n observations}
 \usage{
-pRare(nGroups, groupSize, n, observedX)
+pRare(observedX, n, nGroups, groupSize)
 }
 \arguments{
-\item{nGroups}{number of equally sized groups}
-
-\item{groupSize}{size of the equally sized groups}
+\item{observedX}{number of species observed}
 
 \item{n}{number of observations pulled from the individuals}
 
-\item{observedX}{number of species observed}
+\item{nGroups}{number of equally sized groups}
+
+\item{groupSize}{size of the equally sized groups}
 }
 \value{
 probability of observing observedX species from nGroups groups with groupsize members with n observations
+pRare(4,10,10,10)
 }
 \description{
 Calculate the probability of observing observedX species from nGroups groups with groupsize members with n observations
