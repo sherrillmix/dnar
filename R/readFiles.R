@@ -5,10 +5,17 @@
 #' @param baseQual integer to subtract from quality characters to convert into quality space
 #' @export
 #' @return dataframe with name, seq, qual
+#' @examples
+#' fastq<-c(
+#'   "@SEQ_ID",
+#'   "GATTTGGGGTTCAAAGCAGTATCGATCAAATAGTAAATCCATTTGTTCAACTCACAGTTT",
+#'   "+",
+#'	  "!''*((((***+))%%%++)(%%%%).1***-+*''))**55CCF>>>>>>CCCCCCC65"
+#' )
+#' read.fastq(textConnection(fastq))
 read.fastq<-function(fileName,convert=FALSE,baseQual=33){
 	#assuming no comments and seq and qual on a single line each
 	#assuming any line starting with @ 2 lines later by + is the block and no extra chars (who designed this format?)
-	#as.integer(charToRaw())
 	x<-readLines(fileName)
 	plusLines<-grep('^\\+',x)
 	atLines<-grep('^@',x)
@@ -47,6 +54,7 @@ read.phd<-function(fileName,trimQual=-Inf){
 #' @param ... additional arguments to read.fa
 #' @export
 #' @return data.frame with columns name, seq and file
+#' @examples
 #' tmpDir<-tempdir()
 #' files<-file.path(tmpDir,sprintf('%d.fa',1:9))
 #' for(ii in files){

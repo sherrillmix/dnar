@@ -19,4 +19,13 @@ dataframe with name, seq, qual
 \description{
 Read fastq file
 }
+\examples{
+fastq<-c(
+  "@SEQ_ID",
+  "GATTTGGGGTTCAAAGCAGTATCGATCAAATAGTAAATCCATTTGTTCAACTCACAGTTT",
+  "+",
+  "!''*((((***+))\%\%\%++)(\%\%\%\%).1***-+*''))**55CCF>>>>>>CCCCCCC65"
+)
+read.fastq(textConnection(fastq))
+}
 
