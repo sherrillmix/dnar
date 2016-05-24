@@ -69,7 +69,7 @@ readFaDir<-function(dir='.',suffix='\\.(fn?a|fasta)$',recursive=FALSE,vocal=FALS
 #' @return  data.frame with columns name and seq
 #' @examples
 #' file<-tempfile()
-#' x<-generateFakeFasta(10000,bases=c('A','C','T','G','\n','-'))
+#' x<-generateFakeFasta(100,bases=c('A','C','T','G','\n','-'))
 #' write.fa(x$name,x$seq,file)
 #' y<-read.fa(file)
 #' nrow(y)
