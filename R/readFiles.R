@@ -47,12 +47,19 @@ read.phd<-function(fileName,trimQual=-Inf){
 #' @param ... additional arguments to read.fa
 #' @export
 #' @return data.frame with columns name, seq and file
+#' tmpDir<-tempdir()
+#' files<-file.path(tmpDir,sprintf('%d.fa',1:9))
+#' for(ii in files){
+#'	  tmp<-generateFakeFasta(5,10:20,c('A','C','T','G'))
+#'	  write.fa(tmp$name,tmp$seq,ii)
+#' }
+#' seqs<-readFaDir(tmpDir)
 readFaDir<-function(dir='.',suffix='\\.(fn?a|fasta)$',recursive=FALSE,vocal=FALSE,...){
 	faFiles<-list.files(dir,suffix,recursive=recursive)
 	if(length(faFiles)<1)stop(simpleError('No fa files found'))
 	for(ii in faFiles){
 		if(vocal)message('Working on ',ii)
-		tmp<-read.fa(sprintf('%s/%s',dir,ii),...)
+		tmp<-read.fa(file.path(dir,ii),...)
 		tmp$file<-ii
 		if(exists('allFa'))allFa<-rbind(allFa,tmp)
 		else allFa<-tmp
@@ -72,7 +79,6 @@ readFaDir<-function(dir='.',suffix='\\.(fn?a|fasta)$',recursive=FALSE,vocal=FALS
 #' x<-generateFakeFasta(100,bases=c('A','C','T','G','\n','-'))
 #' write.fa(x$name,x$seq,file)
 #' y<-read.fa(file)
-#' nrow(y)
 read.fa<-function(fileName,assumeSingleLine=FALSE,...){
 	x<-readLines(fileName,warn=FALSE,...)
 	if(length(x)==0|sum(nchar(x))==0)return(NULL)
