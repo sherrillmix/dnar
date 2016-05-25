@@ -13,6 +13,22 @@ test_that("Test read.fastq",{
   )
   out<-data.frame('name'=c('seq1','seq2'),'seq'=c('GATTTGGGGTTCAAAGCAGTATCGATCAAATAGTAAATCCATTTGTTCAACTCACAGTTT','GACCGGAACT'),'qual'=c("!''*((((***+))%%%++)(%%%%).1***-+*''))**55CCF>>>>>>CCCCCCC65","!''*(!!!*!"),stringsAsFactors=FALSE)
   expect_equal(read.fastq(textConnection(fastq)),out)
+  tmpFile<-tempfile()
+  writeLines(fastq,tmpFile)
+  expect_equal(read.fastq(tmpFile),out)
+  shortq<-fastq
+  shortq[8]<-substring(shortq[8],1,nchar(shortq[8])-1)
+  expect_error(read.fastq(textConnection(shortq)),'length')
+  shortq<-fastq
+  shortq[6]<-substring(shortq[6],1,nchar(shortq[6])-1)
+  expect_error(read.fastq(textConnection(shortq)),'length')
+  expect_true(all(grepl('^[0-9 ]+',read.fastq(textConnection(fastq),convert=TRUE)$qual)))
+  expect_equal(read.fastq(textConnection('@1\nAA\n+\nI@'),convert=TRUE)$qual,'40 31')
+  tmpGz<-tempfile(fileext='.gz')
+  gzHandle<-gzfile(tmpGz)
+  writeLines(fastq,gzHandle)
+  close(gzHandle)
+  expect_equal(read.fastq(tmpGz),out)
 })
 
 

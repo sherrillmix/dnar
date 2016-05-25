@@ -10,7 +10,7 @@
 #'   "@SEQ_ID",
 #'   "GATTTGGGGTTCAAAGCAGTATCGATCAAATAGTAAATCCATTTGTTCAACTCACAGTTT",
 #'   "+",
-#'	  "!''*((((***+))%%%++)(%%%%).1***-+*''))**55CCF>>>>>>CCCCCCC65"
+#'   "!''*((((***+))%%%++)(%%%%).1***-+*''))**55CCF>>>>>>CCCCCCC65"
 #' )
 #' read.fastq(textConnection(fastq))
 read.fastq<-function(fileName,convert=FALSE,baseQual=33){
