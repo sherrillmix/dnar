@@ -68,6 +68,9 @@ test_that("Test read.fa",{
   out2<-data.frame('name'=c('read2'),'seq'=c('GGTTCCGGG'),stringsAsFactors=FALSE)
   #throw out first
   expect_equal(read.fa(textConnection(dat)),out2)
+  expect_equal(read.fa(textConnection('')),NULL)
+  expect_equal(read.fa(textConnection(rep('\n\n',10))),NULL)
+  expect_equal(read.fa(textConnection(rep('AA\nCC\n',10))),NULL)
 })
 
 test_that("Test generateFakeFasta",{

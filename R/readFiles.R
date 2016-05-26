@@ -89,7 +89,7 @@ readFaDir<-function(dir='.',suffix='\\.(fn?a|fasta)$',recursive=FALSE,vocal=FALS
 #' y<-read.fa(file)
 read.fa<-function(fileName,assumeSingleLine=FALSE,...){
 	x<-readLines(fileName,warn=FALSE,...)
-	if(length(x)==0|sum(nchar(x))==0)return(NULL)
+	if(length(x)==0)return(NULL)
 	if(assumeSingleLine){
 		output<-data.frame('name'=x[seq(1,length(x),2)],'seq'=x[seq(2,length(x),2)],stringsAsFactors=FALSE)
 		if(any(grepl('^>',output$seq,perl=TRUE)|!grepl('^>',output$name,perl=TRUE)))stop(simpleError('Problem reading single line fasta'))
@@ -98,6 +98,7 @@ read.fa<-function(fileName,assumeSingleLine=FALSE,...){
 		x<-x[!grepl('^[;#]',x,perl=TRUE)&x!='']
 		nameLines<-grep('^>',x,perl=TRUE)
 		thisNames<-sub('^>','',x[nameLines],perl=TRUE)
+		if(length(nameLines)==0)return(NULL)
 		seqs<-apply(cbind(nameLines+1,c(nameLines[-1]-1,length(x))),1,function(coords){
 			if(coords[1]<=coords[2])return(paste(x[coords[1]:coords[2]],collapse=''))
 			else return('')
