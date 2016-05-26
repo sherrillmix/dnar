@@ -69,3 +69,27 @@ test_that("Test read.fa",{
   #throw out first
   expect_equal(read.fa(textConnection(dat)),out2)
 })
+
+test_that("Test generateFakeFasta",{
+  fasta<-generateFakeFasta(1000,90:110,c('A','Z'))
+  expect_equal(nrow(fasta),1000)
+  expect_true(all(grepl('^>',fasta$name)))
+  expect_true(!any(grepl('[^AZ]',fasta$seq)))
+  expect_true(all(nchar(fasta$seq) %in% c(90:110)))
+  expect_equal(length(unique(fasta$name)),1000)
+})
+
+test_that("Test write.fa",{
+  fa<-generateFakeFasta(100,10:300)
+  fa$noGreater<-sub('^>','',fa$name)
+  tmp<-tempfile()
+  write.fa(fa$noGreater,fa$seq,tmp)
+  expect_equal(read.fa(tmp)$seq,fa$seq)
+  expect_equal(read.fa(tmp)$name,fa$noGreater)
+  fa<-generateFakeFasta(100,10:300,c('A','C','T','G','\n'))
+  fa$noGreater<-sub('^>','',fa$name)
+  tmpGz<-tempfile(fileext='.gz')
+  write.fa(fa$name,fa$seq,tmpGz)
+  expect_equal(read.fa(tmpGz)$seq,gsub('\n','',fa$seq))
+  expect_equal(read.fa(tmpGz)$name,fa$noGreater)
+})

@@ -117,11 +117,13 @@ read.fa<-function(fileName,assumeSingleLine=FALSE,...){
 #' @param bases possible bases
 #' @export
 #' @return data.frame with nSeq rows and columns name and seq
+#' @examples
+#' generateFakeFasta(10,10:20)
 generateFakeFasta<-function(nSeq=10000,nChar=100:1000,bases=c('A','C','T','G','-','N')){
 	nChars<-sample(nChar,nSeq,TRUE)
 	names<-sprintf('>%d_%s',1:nSeq,replicate(nSeq,paste(sample(c(letters,LETTERS),30,TRUE),collapse='')))
 	seqs<-sapply(nChars,function(x)paste(sample(bases,x,TRUE),collapse=''))
-	return(data.frame('name'=names,'seq'=seqs))
+	return(data.frame('name'=names,'seq'=seqs,stringsAsFactors=FALSE))
 }
 
 
@@ -515,7 +517,6 @@ write.fa<-function(names,dna,fileName,isGz=grepl('.gz$',fileName)){
 	if(isGz)fileName<-gzfile(fileName)
 	writeLines(output,sep="\n",con=fileName)
 	if(isGz)close(fileName)
-	return(NULL)
 }
 
 #' Writes a fastq file
@@ -534,7 +535,6 @@ write.fastq<-function(names,seqs,quals,fileName,isGz=grepl('.gz$',fileName)){
 	if(isGz)fileName<-gzfile(fileName)
 	writeLines(output,sep="\n",con=fileName)
 	if(isGz)close(fileName)
-	return(NULL)
 }
 
 
