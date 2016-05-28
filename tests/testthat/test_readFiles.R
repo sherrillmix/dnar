@@ -29,8 +29,12 @@ test_that("Test read.fastq",{
   writeLines(fastq,gzHandle)
   close(gzHandle)
   expect_equal(read.fastq(tmpGz),out)
+  expect_lt(file.size(tmpGz),file.size(tmpFile))
 })
 
+test_that("Test read.phd",{
+
+})
 
 test_that("Test readFaDir",{
   tmpDir<-tempdir()
@@ -85,14 +89,27 @@ test_that("Test generateFakeFasta",{
 test_that("Test write.fa",{
   fa<-generateFakeFasta(100,10:300)
   fa$noGreater<-sub('^>','',fa$name)
-  tmp<-tempfile()
-  write.fa(fa$noGreater,fa$seq,tmp)
-  expect_equal(read.fa(tmp)$seq,fa$seq)
-  expect_equal(read.fa(tmp)$name,fa$noGreater)
+  tmpFile<-tempfile()
+  write.fa(fa$noGreater,fa$seq,tmpFile)
+  expect_equal(read.fa(tmpFile)$seq,fa$seq)
+  expect_equal(read.fa(tmpFile)$name,fa$noGreater)
   fa<-generateFakeFasta(100,10:300,c('A','C','T','G','\n'))
   fa$noGreater<-sub('^>','',fa$name)
   tmpGz<-tempfile(fileext='.gz')
   write.fa(fa$name,fa$seq,tmpGz)
   expect_equal(read.fa(tmpGz)$seq,gsub('\n','',fa$seq))
   expect_equal(read.fa(tmpGz)$name,fa$noGreater)
+  expect_lt(file.size(tmpGz),file.size(tmpFile))
+})
+
+
+test_that("Test write.fastq",{
+  out<-data.frame('name'=c('seq1','seq2'),'seq'=c('GATTTGGGGTTCAAAGCAGTATCGATCAAATAGTAAATCCATTTGTTCAACTCACAGTTT','GACCGGAACT'),'qual'=c("!''*((((***+))%%%++)(%%%%).1***-+*''))**55CCF>>>>>>CCCCCCC65","!''*(!!!*!"),stringsAsFactors=FALSE)
+  tmpFile<-tempfile()
+  write.fastq(out$name,out$seq,out$qual,tmpFile)
+  expect_equal(read.fastq(tmpFile),out)
+  tmpGz<-tempfile(fileext='.gz')
+  write.fastq(out$name,out$seq,out$qual,tmpGz)
+  expect_equal(read.fastq(tmpGz),out)
+  expect_lt(file.size(tmpGz),file.size(tmpFile))
 })

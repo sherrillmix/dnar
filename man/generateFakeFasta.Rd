@@ -5,7 +5,7 @@
 \title{Generate fake name and sequence data}
 \usage{
 generateFakeFasta(nSeq = 10000, nChar = 100:1000, bases = c("A", "C", "T",
-  "G", "-", "N"))
+  "G", "-", "N"), generateQuals = FALSE, qualRange = 1:40, baseQual = 33)
 }
 \arguments{
 \item{nSeq}{number of sequences to generate}
@@ -13,9 +13,15 @@ generateFakeFasta(nSeq = 10000, nChar = 100:1000, bases = c("A", "C", "T",
 \item{nChar}{possible lengths of sequences}
 
 \item{bases}{possible bases}
+
+\item{generateQuals}{if TRUE generate qualities for each sequence}
+
+\item{qualRange}{The range of possible qualities}
+
+\item{baseQual}{integer to subtract from quality characters to convert into quality space}
 }
 \value{
-data.frame with nSeq rows and columns name and seq
+data.frame with nSeq rows and columns name and seq (and qual if generateQuals is TRUE)
 }
 \description{
 Generate fake name and sequence data

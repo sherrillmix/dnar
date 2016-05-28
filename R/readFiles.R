@@ -26,8 +26,20 @@ read.fastq<-function(fileName,convert=FALSE,baseQual=33){
 	if(length(plusLines)!=length(atLines))stop(simpleError('Problem finding @ + lines'))
 	output<-data.frame('name'=sub('^@','',x[atLines]), 'seq'=x[atLines+1], 'qual'=x[atLines+3],stringsAsFactors=FALSE)
 	if(any(nchar(output$seq)!=nchar(output$qual)))stop(simpleError('Sequence and qual lengths do not match'))
-	if(convert)output$qual<-unlist(lapply(x[atLines + 3],function(x)paste(as.integer(charToRaw(x))-baseQual,collapse=' ')))
+	if(convert)output$qual<-sapply(qualToInts(output$qual,baseQual),paste,collapse=' ')
 	return(output)
+}
+
+#' Convert fastq chars to integer quals
+#'
+#' @param quals A vector of strings with one character per quality
+#' @param baseQual integer to subtract from quality characters to convert into quality space
+#' @export
+#' @return list with a vector of integer qualities for each string
+#' @examples
+#' qualToInts(c('!@#$','ABCI+'))
+qualToInts<-function(quals,baseQual=33){
+	lapply(quals,function(x)as.integer(charToRaw(x))-baseQual)
 }
 
 #' Read a sanger phred .phd file
@@ -116,16 +128,24 @@ read.fa<-function(fileName,assumeSingleLine=FALSE,...){
 #' @param nSeq number of sequences to generate
 #' @param nChar possible lengths of sequences
 #' @param bases possible bases
+#' @param generateQuals if TRUE generate qualities for each sequence
+#' @param qualRange The range of possible qualities
+#' @param baseQual integer to subtract from quality characters to convert into quality space
 #' @export
-#' @return data.frame with nSeq rows and columns name and seq
+#' @return data.frame with nSeq rows and columns name and seq (and qual if generateQuals is TRUE)
 #' @examples
 #' generateFakeFasta(10,10:20)
-generateFakeFasta<-function(nSeq=10000,nChar=100:1000,bases=c('A','C','T','G','-','N')){
+generateFakeFasta<-function(nSeq=10000,nChar=100:1000,bases=c('A','C','T','G','-','N'),generateQuals=FALSE,qualRange=1:40,baseQual=33){
 	nChars<-sample(nChar,nSeq,TRUE)
 	names<-sprintf('>%d_%s',1:nSeq,replicate(nSeq,paste(sample(c(letters,LETTERS),30,TRUE),collapse='')))
 	seqs<-sapply(nChars,function(x)paste(sample(bases,x,TRUE),collapse=''))
-	return(data.frame('name'=names,'seq'=seqs,stringsAsFactors=FALSE))
+	out<-data.frame('name'=names,'seq'=seqs,stringsAsFactors=FALSE)
+	if(generateQuals){
+		out$qual<-sapply(nChars,function(x)paste(rawToChar(as.raw(sample(qualRange,x,TRUE)+baseQual)),collapse=''))
+	}
+	return(out)
 }
+
 
 
 #' Call samtools view on a sam/bam file
