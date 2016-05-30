@@ -42,6 +42,18 @@ qualToInts<-function(quals,baseQual=33){
 	lapply(quals,function(x)as.integer(charToRaw(x))-baseQual)
 }
 
+#' Convert fastq chars to integer quals
+#'
+#' @param ints A vector of integers convert to quals
+#' @param baseQual integer to subtract from quality characters to convert into quality space
+#' @export
+#' @return a string with one character per quality
+#' @examples
+#' intsToQual(1:40)
+intsToQual<-function(ints,baseQual=33){
+	paste(rawToChar(as.raw(ints+baseQual)),collapse='')
+}
+
 #' Read a sanger phred .phd file
 #'
 #' @param fileName name of file
