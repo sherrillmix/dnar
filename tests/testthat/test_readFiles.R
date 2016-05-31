@@ -32,6 +32,18 @@ test_that("Test read.fastq",{
   expect_lt(file.size(tmpGz),file.size(tmpFile))
 })
 
+test_that("Test intsToQual",{
+	expect_equal(intsToQual(2:5),'#$%&')
+	expect_equal(intsToQual(2:4,34),'$%&')
+})
+
+test_that("Test qualToInts",{
+	expect_equal(qualToInts('#$%&'),list(2:5))
+	expect_equal(qualToInts('$%&',34),list(2:4))
+	expect_equal(qualToInts(c(intsToQual(1:40),intsToQual(20:10))),list(1:40,20:10))
+	expect_equal(qualToInts(c(intsToQual(1:40,10),intsToQual(20:10,10)),10),list(1:40,20:10))
+})
+
 test_that("Test read.phd",{
 
 })
