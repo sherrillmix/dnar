@@ -30,6 +30,8 @@ test_that("Test read.fastq",{
   close(gzHandle)
   expect_equal(read.fastq(tmpGz),out)
   expect_lt(file.size(tmpGz),file.size(tmpFile))
+  #replace first G with Z
+  expect_warning(read.fastq(textConnection(sub('G','Z',fastq))),'character')
 })
 
 test_that("Test intsToQual",{

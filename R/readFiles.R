@@ -22,7 +22,7 @@ read.fastq<-function(fileName,convert=FALSE,baseQual=33){
 	#make sure matching + and @
 	plusLines<-plusLines[plusLines %in% (atLines+2)]
 	atLines<-atLines[atLines %in% (plusLines-2)]
-	if(any(grep('[^ACTGN]',x[atLines+1])))warning('Non ATCGN chars found in sequence')
+	if(any(grep('[^ACTGN]',x[atLines+1])))warning('Non ATCGN characters found in sequence')
 	if(length(plusLines)!=length(atLines))stop(simpleError('Problem finding @ + lines'))
 	output<-data.frame('name'=sub('^@','',x[atLines]), 'seq'=x[atLines+1], 'qual'=x[atLines+3],stringsAsFactors=FALSE)
 	if(any(nchar(output$seq)!=nchar(output$qual)))stop(simpleError('Sequence and qual lengths do not match'))
