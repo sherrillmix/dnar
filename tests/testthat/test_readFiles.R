@@ -96,6 +96,10 @@ test_that("Test generateFakeFasta",{
   expect_true(!any(grepl('[^AZ]',fasta$seq)))
   expect_true(all(nchar(fasta$seq) %in% c(90:110)))
   expect_equal(length(unique(fasta$name)),1000)
+  fastq<-generateFakeFasta(100,90:110,generateQuals=TRUE,qualRange=2:39)
+  expect_equal(nrow(fastq),100)
+  expect_equal(nchar(fastq$seq),nchar(fastq$qual))
+  expect_true(all(unlist(qualToInts(fastq$qual)) %in% 2:39))
 })
 
 test_that("Test write.fa",{

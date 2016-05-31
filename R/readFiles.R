@@ -147,14 +147,13 @@ read.fa<-function(fileName,assumeSingleLine=FALSE,...){
 #' @return data.frame with nSeq rows and columns name and seq (and qual if generateQuals is TRUE)
 #' @examples
 #' generateFakeFasta(10,10:20)
+#' generateFakeFasta(10,10:20,generateQuals=TRUE)
 generateFakeFasta<-function(nSeq=10000,nChar=100:1000,bases=c('A','C','T','G','-','N'),generateQuals=FALSE,qualRange=1:40,baseQual=33){
 	nChars<-sample(nChar,nSeq,TRUE)
 	names<-sprintf('>%d_%s',1:nSeq,replicate(nSeq,paste(sample(c(letters,LETTERS),30,TRUE),collapse='')))
 	seqs<-sapply(nChars,function(x)paste(sample(bases,x,TRUE),collapse=''))
 	out<-data.frame('name'=names,'seq'=seqs,stringsAsFactors=FALSE)
-	if(generateQuals){
-		out$qual<-sapply(nChars,function(x)paste(rawToChar(as.raw(sample(qualRange,x,TRUE)+baseQual)),collapse=''))
-	}
+	if(generateQuals)out$qual<-sapply(nChars,function(x)intsToQual(sample(qualRange,x,TRUE),baseQual))
 	return(out)
 }
 

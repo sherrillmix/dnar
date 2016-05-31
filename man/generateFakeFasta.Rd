@@ -28,5 +28,6 @@ Generate fake name and sequence data
 }
 \examples{
 generateFakeFasta(10,10:20)
+generateFakeFasta(10,10:20,generateQuals=TRUE)
 }
 
