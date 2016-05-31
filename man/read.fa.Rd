@@ -21,7 +21,7 @@ Read a fasta file
 }
 \examples{
 file<-tempfile()
-x<-generateFakeFasta(100,bases=c('A','C','T','G','\\n','-'))
+x<-generateFasta(100,bases=c('A','C','T','G','\\n','-'))
 write.fa(x$name,x$seq,file)
 y<-read.fa(file)
 }

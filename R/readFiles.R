@@ -82,7 +82,7 @@ read.phd<-function(fileName,trimQual=-Inf){
 #' tmpDir<-tempdir()
 #' files<-file.path(tmpDir,sprintf('%d.fa',1:9))
 #' for(ii in files){
-#'	  tmp<-generateFakeFasta(5,10:20,c('A','C','T','G'))
+#'	  tmp<-generateFasta(5,10:20,c('A','C','T','G'))
 #'	  write.fa(tmp$name,tmp$seq,ii)
 #' }
 #' seqs<-readFaDir(tmpDir)
@@ -108,7 +108,7 @@ readFaDir<-function(dir='.',suffix='\\.(fn?a|fasta)$',recursive=FALSE,vocal=FALS
 #' @return  data.frame with columns name and seq
 #' @examples
 #' file<-tempfile()
-#' x<-generateFakeFasta(100,bases=c('A','C','T','G','\n','-'))
+#' x<-generateFasta(100,bases=c('A','C','T','G','\n','-'))
 #' write.fa(x$name,x$seq,file)
 #' y<-read.fa(file)
 read.fa<-function(fileName,assumeSingleLine=FALSE,...){
@@ -146,9 +146,9 @@ read.fa<-function(fileName,assumeSingleLine=FALSE,...){
 #' @export
 #' @return data.frame with nSeq rows and columns name and seq (and qual if generateQuals is TRUE)
 #' @examples
-#' generateFakeFasta(10,10:20)
-#' generateFakeFasta(10,10:20,generateQuals=TRUE)
-generateFakeFasta<-function(nSeq=10000,nChar=100:1000,bases=c('A','C','T','G','-','N'),generateQuals=FALSE,qualRange=1:40,baseQual=33){
+#' generateFasta(10,10:20)
+#' generateFasta(10,10:20,generateQuals=TRUE)
+generateFasta<-function(nSeq=10000,nChar=100:1000,bases=c('A','C','T','G','-','N'),generateQuals=FALSE,qualRange=1:40,baseQual=33){
 	nChars<-sample(nChar,nSeq,TRUE)
 	names<-sprintf('>%d_%s',1:nSeq,replicate(nSeq,paste(sample(c(letters,LETTERS),30,TRUE),collapse='')))
 	seqs<-sapply(nChars,function(x)paste(sample(bases,x,TRUE),collapse=''))
@@ -561,6 +561,7 @@ write.fa<-function(names,dna,fileName,isGz=grepl('.gz$',fileName)){
 #' @export
 #' @return NULL
 write.fastq<-function(names,seqs,quals,fileName,isGz=grepl('.gz$',fileName)){
+	if(length(names)!=length(seqs)||length(seqs)!=length(quals))stop(simpleError('Fastq input seqs, names and quals not equal lengths'))
 	names1<-paste('@',names,sep='')
 	names2<-paste('+',names,sep='')
 	output<-paste(names1,seqs,names2,quals,sep="\n")

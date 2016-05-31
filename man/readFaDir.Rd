@@ -28,7 +28,7 @@ Read in a bunch of fasta files in a target directory
 tmpDir<-tempdir()
 files<-file.path(tmpDir,sprintf('\%d.fa',1:9))
 for(ii in files){
-  tmp<-generateFakeFasta(5,10:20,c('A','C','T','G'))
+  tmp<-generateFasta(5,10:20,c('A','C','T','G'))
   write.fa(tmp$name,tmp$seq,ii)
 }
 seqs<-readFaDir(tmpDir)
