@@ -54,18 +54,30 @@ intsToQual<-function(ints,baseQual=33){
 	paste(rawToChar(as.raw(ints+baseQual)),collapse='')
 }
 
-#' Read a sanger phred .phd file
+#' Read a single-read Sanger phred .phd file
 #'
 #' @param fileName name of file
 #' @param trimQual trim bases with quality lower than trimQual from start and end
 #' @export
 #' @return vector of sequence and space seperated qualities
+#' @examples
+#' phd<-'Some
+#' extra lines
+#' BEGIN_DNA
+#' c 9 6
+#' t 9 18
+#' c 10 26
+#' c 19 38
+#' END_DNA
+#' more
+#' extra lines'
+#' read.phd(textConnection(phd))
 read.phd<-function(fileName,trimQual=-Inf){
 	tmp<-readLines(fileName)
 	skip<-grep('BEGIN_DNA',tmp)[1]
 	lastLine<-grep('END_DNA',tmp)[1]
 	thisData<-do.call(rbind,strsplit(tmp[(skip+1):(lastLine-1)],'[ \t]'))
-	lims<-range(which(as.numeric(thisData[,2])>trimQual))
+	lims<-range(which(as.numeric(thisData[,2])>=trimQual))
 	return(c('seq'=paste(thisData[lims[1]:lims[2],1],collapse=''),'qual'=paste(thisData[lims[1]:lims[2],2],collapse=' ')))
 }
 

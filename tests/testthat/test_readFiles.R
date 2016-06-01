@@ -47,7 +47,16 @@ test_that("Test qualToInts",{
 })
 
 test_that("Test read.phd",{
-
+  tmpFile<-tempfile()
+  phd<-'Some\nextra lines\nBEGIN_DNA\nc 9 6\nt 9 18\nc 10 26\nc 19 38\nA 40 39\nC 15 45\nEND_DNA\nmore\nextra lines'
+  expect_equal(read.phd(textConnection(phd))[['seq']],'ctccAC')
+  expect_equal(read.phd(textConnection(phd))[['qual']],'9 9 10 19 40 15') 
+  expect_equal(read.phd(textConnection(phd),19)[['seq']],'cA')
+  expect_equal(read.phd(textConnection(phd),19)[['qual']],'19 40') 
+  expect_equal(read.phd(textConnection(phd),20)[['seq']],'A')
+  expect_equal(read.phd(textConnection(phd),20)[['qual']],'40') 
+  writeLines(phd,tmpFile)
+  expect_equal(read.phd(textConnection(phd)),read.phd(tmpFile)) 
 })
 
 test_that("Test readFaDir",{

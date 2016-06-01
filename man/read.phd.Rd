@@ -2,7 +2,7 @@
 % Please edit documentation in R/readFiles.R
 \name{read.phd}
 \alias{read.phd}
-\title{Read a sanger phred .phd file}
+\title{Read a single-read Sanger phred .phd file}
 \usage{
 read.phd(fileName, trimQual = -Inf)
 }
@@ -15,6 +15,19 @@ read.phd(fileName, trimQual = -Inf)
 vector of sequence and space seperated qualities
 }
 \description{
-Read a sanger phred .phd file
+Read a single-read Sanger phred .phd file
+}
+\examples{
+phd<-'Some
+extra lines
+BEGIN_DNA
+c 9 6
+t 9 18
+c 10 26
+c 19 38
+END_DNA
+more
+extra lines'
+read.phd(textConnection(phd))
 }
 
