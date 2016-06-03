@@ -259,6 +259,7 @@ fillZeros<-function(cover,posCol='pos',countCols=colnames(cover)[grep('counts',c
 	filler[,posCol]<-missingPos
 	out<-rbind(cover,filler)
 	out<-out[order(out[,posCol]),]
+	rownames(out)<-NULL
 	return(out)
 }
 

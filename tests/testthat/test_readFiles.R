@@ -129,6 +129,12 @@ test_that("Test write.fa",{
   expect_lt(file.size(tmpGz),file.size(tmpFile))
 })
 
+test_that("Test fillZeros",{
+	cover<-data.frame('pos'=c(2,10,11,14),'counts1'=1:4,'xx'=1)
+	out<-data.frame('pos'=2:14,'counts1'=rep(c(1,0,2,3,0,4),c(1,7,1,1,2,1)),'xx'=1)
+	expect_equal(fillZeros(cover),out)
+	expect_error(fillZeros(cbind(cover,'yy'=2:5)),'nonunique')
+})
 
 test_that("Test write.fastq",{
   out<-data.frame('name'=c('seq1','seq2'),'seq'=c('GATTTGGGGTTCAAAGCAGTATCGATCAAATAGTAAATCCATTTGTTCAACTCACAGTTT','GACCGGAACT'),'qual'=c("!''*((((***+))%%%++)(%%%%).1***-+*''))**55CCF>>>>>>CCCCCCC65","!''*(!!!*!"),stringsAsFactors=FALSE)
