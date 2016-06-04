@@ -2,23 +2,21 @@
 % Please edit documentation in R/readFiles.R
 \name{fillZeros}
 \alias{fillZeros}
-\title{Fill zeros in cover data}
+\title{Fill missing position with zeros}
 \usage{
-fillZeros(cover, posCol = "pos", countCols = colnames(cover)[grep("counts",
-  colnames(cover))])
+fillZeros(pos, data, fillValue = 0)
 }
 \arguments{
-\item{cover}{output from pullRegion with missing zero positions}
+\item{pos}{a vector integer position where any missing integers will be filled in}
 
-\item{posCol}{name of position column}
+\item{data}{a data.frame of data with missing rows to be filled with zeros}
 
-\item{countCols}{vector of column names for columns containing counts}
+\item{fillValue}{value to fill in missing data with}
 }
 \value{
-filled in data.frame
+a 2 element list with a vector of positions and a data.frame of filled data
 }
 \description{
-Fill zeros in cover data
+Fill missing position with zeros
 }
-\keyword{internal}
 

@@ -130,10 +130,19 @@ test_that("Test write.fa",{
 })
 
 test_that("Test fillZeros",{
+	expect_equal(fillZeros(c(1:4,7,9),data.frame('x'=1:6,'aa'=letters[1:6],stringsAsFactors=FALSE)),list('pos'=1:9,'data'=data.frame('x'=c(1:4,0,0,5,0,6),'aa'=c('a','b','c','d',0,0,'e',0,'f'),stringsAsFactors=FALSE)))
+	expect_equal(fillZeros(c(1:4,7,9),data.frame('x'=letters[1:6]),'a')[['data']],data.frame('x'=c('a','b','c','d','a','a','e','a','f')))
+	expect_equal(fillZeros(c(13,sample(14:999,40),1000),data.frame('x'=1:42))[['pos']],13:1000)
+	expect_error(fillZeros(c(1:4,7,9),data.frame('x'=1:7)),'length')
+	expect_error(fillZeros(c(1:4,7,9,10),data.frame('x'=1:6)),'length')
+	expect_equal(fillZeros(-c(1:4,7,9),data.frame('x'=1:6)),list('pos'=-9:-1,'data'=data.frame('x'=rev(c(1:4,0,0,5,0,6)))))
+})
+
+test_that("Test fillCover",{
 	cover<-data.frame('pos'=c(2,10,11,14),'counts1'=1:4,'xx'=1)
 	out<-data.frame('pos'=2:14,'counts1'=rep(c(1,0,2,3,0,4),c(1,7,1,1,2,1)),'xx'=1)
-	expect_equal(fillZeros(cover),out)
-	expect_error(fillZeros(cbind(cover,'yy'=2:5)),'nonunique')
+	expect_equal(fillCover(cover),out)
+	expect_error(fillCover(cbind(cover,'yy'=2:5)),'nonunique')
 })
 
 test_that("Test write.fastq",{

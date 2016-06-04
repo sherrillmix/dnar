@@ -239,6 +239,35 @@ read.sam<-function(fileName,nrows=-1,skips=-1,condense=TRUE){
 }
 
 
+#' Fill missing position with zeros
+#'
+#' @param pos a vector integer position where any missing integers will be filled in
+#' @param data a data.frame of data with missing rows to be filled with zeros
+#' @param fillValue value to fill in missing data with
+#' @return a 2 element list with a vector of positions and a data.frame of filled data
+#' @export
+fillZeros<-function(pos,data,fillValue=0){
+	if(length(pos)!=nrow(data))stop(simpleError('pos and data length differ in fillZeros'))
+	posOrder<-order(pos)
+	pos<-pos[posOrder]
+	data<-data[posOrder,,drop=FALSE]
+	diffs<-diff(pos)
+	missingZeros<-which(diffs>1)
+	if(any(missingZeros)){
+		missingPos<-unlist(mapply(function(start,end)start:end,pos[missingZeros]+1,pos[missingZeros+1]-1,SIMPLIFY=FALSE))
+		filler<-data[rep(1,length(missingPos)),,drop=FALSE]
+		filler[,]<-fillValue
+		data<-rbind(data,filler)
+		pos<-c(pos,missingPos)
+		posOrder<-order(pos)
+		pos<-pos[posOrder]
+		data<-data[posOrder,,drop=FALSE]
+		rownames(data)<-NULL
+	}
+	return(list('pos'=pos,'data'=data))
+}
+
+
 #' Fill zeros in cover data
 #'
 #' @param cover output from pullRegion with missing zero positions
@@ -246,9 +275,9 @@ read.sam<-function(fileName,nrows=-1,skips=-1,condense=TRUE){
 #' @param countCols vector of column names for columns containing counts
 #' @keywords internal 
 #' @return filled in data.frame
-fillZeros<-function(cover,posCol='pos',countCols=colnames(cover)[grep('counts',colnames(cover))]){
+fillCover<-function(cover,posCol='pos',countCols=colnames(cover)[grep('counts',colnames(cover))]){
 	repeatedCols<-!colnames(cover) %in% c(posCol,countCols)
-	if(any(apply(cover[,repeatedCols,drop=FALSE],2,function(x)length(unique(x)))>1))stop(simpleError('Found nonunique extra columns in fillZeros'))
+	if(any(apply(cover[,repeatedCols,drop=FALSE],2,function(x)length(unique(x)))>1))stop(simpleError('Found nonunique extra columns in fillCover'))
 	cover<-cover[order(cover[,posCol]),]
 	diffs<-diff(cover[,posCol])
 	missingZeros<-which(diffs>1)
@@ -543,7 +572,7 @@ pullRegion<-function(reg,files,bam2depthBinary='./bam2depth',fillMissingZeros=TR
 		filler$pos<-unlist(region[,c('start','end')])
 		if(!region$start %in% cover$pos)cover<-rbind(filler[1,],cover)
 		if(!region$end %in% cover$pos)cover<-rbind(cover,filler[2,])
-		cover<-fillZeros(cover)
+		cover<-fillCover(cover)
 	}
 	return(cover)
 }
