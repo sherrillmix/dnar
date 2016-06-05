@@ -139,8 +139,8 @@ test_that("Test fillZeros",{
 })
 
 test_that("Test fillCover",{
-	cover<-data.frame('pos'=c(2,10,11,14),'counts1'=1:4,'xx'=1)
-	out<-data.frame('pos'=2:14,'counts1'=rep(c(1,0,2,3,0,4),c(1,7,1,1,2,1)),'xx'=1)
+	cover<-data.frame('pos'=c(2,10,11,14),'counts1'=1:4,'counts2'=2:5,'xx'=1)
+	out<-data.frame('pos'=2:14,'counts1'=rep(c(1,0,2,3,0,4),c(1,7,1,1,2,1)),'counts2'=rep(c(2,0,3,4,0,5),c(1,7,1,1,2,1)),'xx'=1)
 	expect_equal(fillCover(cover),out)
 	expect_error(fillCover(cbind(cover,'yy'=2:5)),'nonunique')
 })

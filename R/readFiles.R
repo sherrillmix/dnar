@@ -278,16 +278,10 @@ fillZeros<-function(pos,data,fillValue=0){
 fillCover<-function(cover,posCol='pos',countCols=colnames(cover)[grep('counts',colnames(cover))]){
 	repeatedCols<-!colnames(cover) %in% c(posCol,countCols)
 	if(any(apply(cover[,repeatedCols,drop=FALSE],2,function(x)length(unique(x)))>1))stop(simpleError('Found nonunique extra columns in fillCover'))
-	cover<-cover[order(cover[,posCol]),]
-	diffs<-diff(cover[,posCol])
-	missingZeros<-which(diffs>1)
-	if(!any(missingZeros))return(cover)
-	missingPos<-unlist(mapply(function(start,end)start:end,cover[missingZeros,posCol]+1,cover[missingZeros+1,posCol]-1,SIMPLIFY=FALSE))
-	filler<-cover[rep(1,length(missingPos)),]
-	filler[,countCols]<-0
-	filler[,posCol]<-missingPos
-	out<-rbind(cover,filler)
-	out<-out[order(out[,posCol]),]
+	filled<-fillZeros(cover[,posCol],cover[,countCols,drop=FALSE])
+	out<-cover[rep(1,nrow(filled[['data']])),]
+	out[,countCols]<-filled[['data']]
+	out[,posCol]<-filled[['pos']]
 	rownames(out)<-NULL
 	return(out)
 }
