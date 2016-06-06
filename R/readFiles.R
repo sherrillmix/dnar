@@ -246,6 +246,8 @@ read.sam<-function(fileName,nrows=-1,skips=-1,condense=TRUE){
 #' @param fillValue value to fill in missing data with
 #' @return a 2 element list with a vector of positions and a data.frame of filled data
 #' @export
+#' @examples
+#' fillZeros(c(1:3,6:7,9),data.frame('count'=1:6))
 fillZeros<-function(pos,data,fillValue=0){
 	if(length(pos)!=nrow(data))stop(simpleError('pos and data length differ in fillZeros'))
 	posOrder<-order(pos)

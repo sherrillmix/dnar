@@ -19,4 +19,7 @@ a 2 element list with a vector of positions and a data.frame of filled data
 \description{
 Fill missing position with zeros
 }
+\examples{
+fillZeros(c(1:3,6:7,9),data.frame('count'=1:6))
+}
 
