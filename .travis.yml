@@ -4,5 +4,9 @@ sudo: required
 r_packages:
   - covr
 
+bioc_packages:
+  - IRanges
+  - GenomicRanges
+
 after_success:
   - Rscript -e 'library(covr); codecov()'
