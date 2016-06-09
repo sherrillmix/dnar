@@ -29,4 +29,20 @@ checkOverlap(chrs, starts, ends, tChrs, tStarts, tEnds, tNames, sep = "|")
 \description{
 Check overlap between two sets of coordinates
 }
+\examples{
+queries<-data.frame(
+  'chr'=letters[rep(1:3,each=2)],
+  'start'=c(1,1000,-1,1000,-10000,1),
+  'end'=c(1010,2000,50,1050,10000,1)
+)
+targets<-data.frame('chr'=letters[rep(1:2,each=2)],
+  'start'=c(1,1111,1,1000),
+  'end'=c(1000,9999,2,1000),
+  'name'=letters[1:4]
+)
+checkOverlap(
+  queries$chr,queries$start,queries$end,
+  targets$chr,targets$start,targets$end,targets$name
+)
+}
 

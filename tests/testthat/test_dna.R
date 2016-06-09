@@ -126,6 +126,8 @@ test_that("Test checkOverlap",{
 	targets<-data.frame('chr'=letters[rep(1:2,each=2)],'start'=c(1,1111,1,1000),'end'=c(1000,9999,2,1000),'name'=letters[1:4])
 	out<-checkOverlap(queries$chr,queries$start,queries$end,targets$chr,targets$start,targets$end,targets$name)
 	expect_equal(out,c('a','a|b','c','d','',''))
+	out<-checkOverlap(queries$chr,queries$start,queries$end,targets$chr,targets$start,targets$end,targets$name,sep=' ')
+	expect_equal(out,c('a','a b','c','d','',''))
 })
 
 test_that("Test gap2NoGap",{
