@@ -2,7 +2,7 @@ Package: dnar
 Type: Package
 Title: Miscellaneous functions to deal with bioinformatic analyses
 Version: 0.1
-Date: 2016-06-06
+Date: 2016-06-08
 Author: Scott Sherrill-Mix
 Maintainer: Scott Sherrill-Mix <sherrillmix@upenn.edu>
 Description: A package of accumulated functions to help with bioinformatics
@@ -14,6 +14,8 @@ Suggests:
 Depends:
     R (>= 3.1.0)
 Imports:
+	 IRanges,
+	 GenomicRanges,
     parallel,
     bitops,
     digest,

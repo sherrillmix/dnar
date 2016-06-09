@@ -2,15 +2,18 @@
 % Please edit documentation in R/dna.R
 \name{checkOverlap}
 \alias{checkOverlap}
-\title{Check overlap between two sets of coordinates (ranges package may be better/quicker option)}
+\title{Check overlap between two sets of coordinates}
 \usage{
-checkOverlap(starts, ends, tStarts, tEnds, tNames, allCover = FALSE,
-  allCoverFuzz = 0, sep = "|")
+checkOverlap(chrs, starts, ends, tChrs, tStarts, tEnds, tNames, sep = "|")
 }
 \arguments{
+\item{chrs}{Chromosomes of query}
+
 \item{starts}{Start coordinates of query}
 
 \item{ends}{End coordinates of query}
+
+\item{tChrs}{Chromsomes of target}
 
 \item{tStarts}{Start coordinates of target}
 
@@ -18,16 +21,12 @@ checkOverlap(starts, ends, tStarts, tEnds, tNames, allCover = FALSE,
 
 \item{tNames}{Target names}
 
-\item{allCover}{If TRUE entire start and end of base must fall within targets +- allCoverFuzz}
-
-\item{allCoverFuzz}{Extra overlap to consider on each end of target when using allCover}
-
 \item{sep}{Matches are pasted together separated by this}
 }
 \value{
 '|' separated vector of tNames within overlap or '' if no overlapping target
 }
 \description{
-Check overlap between two sets of coordinates (ranges package may be better/quicker option)
+Check overlap between two sets of coordinates
 }
 

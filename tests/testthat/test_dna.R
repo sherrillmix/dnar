@@ -121,6 +121,13 @@ test_that("Test aa2dna",{
 })
 
 
+test_that("Test checkOverlap",{
+	queries<-data.frame('chr'=letters[rep(1:3,each=2)],'start'=c(1,1000,-1,1000,-10000,1),'end'=c(1010,2000,50,1050,10000,1))
+	targets<-data.frame('chr'=letters[rep(1:2,each=2)],'start'=c(1,1111,1,1000),'end'=c(1000,9999,2,1000),'name'=letters[1:4])
+	out<-checkOverlap(queries$chr,queries$start,queries$end,targets$chr,targets$start,targets$end,targets$name)
+	expect_equal(out,c('a','a|b','c','d','',''))
+})
+
 test_that("Test gap2NoGap",{
 	expect_equal(gap2NoGap("AA--CC--TT",1:10), c(1,2,2,2,3,4,4,4,5,6))
 	expect_equal(gap2NoGap("AA**CC..TT",1:10), c(1,2,2,2,3,4,4,4,5,6))

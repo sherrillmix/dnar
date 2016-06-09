@@ -254,50 +254,27 @@ aa2dna<-function(aas){
 	return(out)
 }
 
-#' Check overlap between two sets of coordinates (ranges package may be better/quicker option)
+#' Check overlap between two sets of coordinates
 #'
+#' @param chrs Chromosomes of query
 #' @param starts Start coordinates of query
 #' @param ends End coordinates of query
+#' @param tChrs Chromsomes of target
 #' @param tStarts Start coordinates of target
 #' @param tEnds End coordinates of target
 #' @param tNames Target names 
-#' @param allCover If TRUE entire start and end of base must fall within targets +- allCoverFuzz
-#' @param allCoverFuzz Extra overlap to consider on each end of target when using allCover
 #' @param sep Matches are pasted together separated by this
 #' @export
 #' @return '|' separated vector of tNames within overlap or '' if no overlapping target
-checkOverlap<-function(starts,ends,tStarts,tEnds,tNames,allCover=FALSE,allCoverFuzz=0,sep='|'){
-	overlapNames<-apply(cbind(as.numeric(starts),as.numeric(ends)),1,function(x,tStarts,tEnds,tNames){
-		if(!allCover)thisNames<-tNames[x[1]<=tEnds&x[2]>=tStarts]
-		else thisNames<-tNames[tStarts-allCoverFuzz<=x[1]&tEnds+allCoverFuzz>=x[2]]
-		if(length(thisNames)==0)return('')
-		else return(paste(unique(thisNames),collapse=sep))
-	},as.numeric(tStarts),as.numeric(tEnds),tNames)
+checkOverlap<-function(chrs,starts,ends,tChrs,tStarts,tEnds,tNames,sep='|'){
+	queries<-GenomicRanges::GRanges(seqnames=chrs,ranges=IRanges::IRanges(starts,end=ends))
+	targets<-GenomicRanges::GRanges(seqnames=tChrs,ranges=IRanges::IRanges(tStarts,end=tEnds))
+	overlaps<-GenomicRanges::findOverlaps(queries,targets)
+	pasted<-tapply(tNames[overlaps@to],overlaps@from,paste,collapse=sep)
+	overlapNames<-pasted[as.character(1:length(chrs))]
+	overlapNames[is.na(overlapNames)]<-''
+	overlapNames<-as.vector(unname(overlapNames))
 	return(overlapNames)
-}
-
-#' Check overlap between two sets of coordinates (ranges package may be better/quicker option)
-#'
-#' @param starts Start coordinates of query
-#' @param ends End coordinates of query
-#' @param tStarts Start coordinates of target
-#' @param tEnds End coordinates of target
-#' @param tNames Target names 
-#' @param qChrom Chromosomes of the queries
-#' @param tChrom Chromosomes of the targets
-#' @param vocal If TRUE report working on each chromosome
-#' @param ... Additional arguments for checkOverlap
-#' @export
-#' @return '|' separated vector of tNames within overlap or '' if no overlapping target
-checkOverlapMulti<-function(starts,ends,tStarts,tEnds,tNames,qChrom,tChrom,vocal=FALSE,...){
-	results<-rep(NA,length(qChrom))
-	for(i in unique(qChrom)){
-		if(vocal)message('Working on ',i)
-		selector<-qChrom==i
-		tSelector<-tChrom==i
-		if(any(selector)&any(tSelector))results[selector]<-checkOverlap(starts[selector],ends[selector],tStarts[tSelector],tEnds[tSelector],tNames[tSelector],...)
-	}
-	return(results)
 }
 
 #' Convert gapped coordinates to what the coordinates would be without gaps
