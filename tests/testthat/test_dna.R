@@ -113,7 +113,6 @@ test_that("Test aa2codons",{
 	expect_equal(lapply(aa2codons(c('Methionine','Alanine','Alanine'),type='name',regex=FALSE),sort),lapply(aa2codons(c('M','A','A'),regex=FALSE),sort)) 
 })
 
-
 test_that("Test aa2dna",{
 	expect_error(aa2dna(c('1','G')),'Unknown')
 	expect_equal(grep(aa2dna(c('MAAX')),c('ATGGCTGCTTAG','ATGGCTGCTTAA','GTGGCTGCTTAA','ATGGCTGCTTAC','TTTTTATGGCTGCTTAGTTTT')),c(1,2,5)) 
@@ -234,6 +233,14 @@ test_that("Test trimNs",{
 	expect_equal(trimNs(c('A','NTNNNNNNNNNNNN','NNNAANNNNNNNNNNNNNNAANNNNNNN'),2),c('','','AANNNNNNNNNNNNNNAA'))
 	expect_equal(trimNs(c('ZZZNNNANNNZZ!Z',''),2,c('Z','!')),c('NNNANNN',''))
 	expect_equal(trimNs(c('[-^ANNA-N^^^]]'),2,c('[',']','^','-')),c('ANNA'))
+})
+
+test_that("Test_cigarToBlock",{
+	expect_equal(cigarToBlock('100M',2),data.frame(qStarts='1',tStarts='2',sizes='100',stringsAsFactors=FALSE))
+	expect_equal(cigarToBlock(c('100M','10H10M1000H'),1:2),data.frame(qStarts=c('1','1'),tStarts=c('1','2'),sizes=c('100','10'),stringsAsFactors=FALSE))
+	expect_error(cigarToBlock('100M',1:2),'length')
+	expect_error(cigarToBlock(c('100M','10M'),1),'length')
+	expect_error(cigarToBlock(c('100M','10M1Z'),1:2),'operation')
 })
 
 test_that("Test blat2exons",{

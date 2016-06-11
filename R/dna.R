@@ -518,7 +518,7 @@ cigarToBlock<-function(cigars,starts,startEnds=FALSE,seqs=NULL,tSeq=NULL){
 	nAligns<-length(starts)
 	if(nAligns!=length(cigars))stop(simpleError('Cigars and starts not same length'))
 	supportedOps<-c('M','I','D','N','S','H')
-	if(any(grep(sprintf('[^0-9%s]',paste(supportedOps,collapse='')),cigars)))stop(simpleError(sprintf('Only %s cigar operations supported',paste(supportedOps,collapse=''))))
+	if(any(grep(sprintf('[^0-9%s]',paste(supportedOps,collapse='')),cigars)))stop(simpleError(sprintf('Unknown operation. Only %s cigar operations supported',paste(supportedOps,collapse=''))))
 	tPos<-starts
 	qPos<-rep(1,nAligns)
 	stillWorking<-rep(TRUE,nAligns)
