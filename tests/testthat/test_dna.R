@@ -237,7 +237,27 @@ test_that("Test trimNs",{
 
 test_that("Test_cigarToBlock",{
 	expect_equal(cigarToBlock('100M',2),data.frame(qStarts='1',tStarts='2',sizes='100',stringsAsFactors=FALSE))
-	expect_equal(cigarToBlock(c('100M','10H10M1000H'),1:2),data.frame(qStarts=c('1','1'),tStarts=c('1','2'),sizes=c('100','10'),stringsAsFactors=FALSE))
+	expect_equal(cigarToBlock(
+			c('100M','10H10M1000H','10M10I20M10D2M','10S10M10H','100M10000N100M'),
+			1:5
+		),data.frame(
+			qStarts=c('1','1','1,21,41','11','1,101'),
+			tStarts=c('1','2','3,13,43','4','5,10105'),
+			sizes=c('100','10','10,20,2','10','100,100'),
+		stringsAsFactors=FALSE)
+	)
+	out<-data.frame(
+		start=c(1,2,3,13,43,4,5,10105),
+		end=c(100,11,12,32,44,13,104,10204),
+		id=c(1,2,3,3,3,4,5,5),
+		qStart=c(1,1,1,21,41,11,1,101),
+		qEnd=c(100,10,10,40,42,20,100,200)
+	)
+	expect_equal(cigarToBlock(
+			c('100M','10H10M1000H','10M10I20M10D2M','10S10M10H','100M10000N100M'),
+			1:5,
+			startEnds=TRUE
+	),out)
 	expect_error(cigarToBlock('100M',1:2),'length')
 	expect_error(cigarToBlock(c('100M','10M'),1),'length')
 	expect_error(cigarToBlock(c('100M','10M1Z'),1:2),'operation')

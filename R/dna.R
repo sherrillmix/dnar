@@ -573,7 +573,11 @@ cigarToBlock<-function(cigars,starts,startEnds=FALSE,seqs=NULL,tSeq=NULL){
 	tStarts<-sub('^,','',tStarts)
 	blockSizes<-sub('^,','',blockSizes)
 	if(isAlign)return(aligns)
-	if(startEnds)return(startEndsOut)
+	if(startEnds){
+		startEndsOut<-startEndsOut[order(startEndsOut$id,startEndsOut$start),]
+		rownames(startEndsOut)<-NULL
+		return(startEndsOut)
+	}
 	else return(data.frame('qStarts'=qStarts,'tStarts'=tStarts,'sizes'=blockSizes,stringsAsFactors=FALSE))
 }
 
