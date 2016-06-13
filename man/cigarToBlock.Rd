@@ -4,7 +4,7 @@
 \alias{cigarToBlock}
 \title{Convert cigar and starts to qStarts, tStarts, blockSizes as in blat}
 \usage{
-cigarToBlock(cigars, starts, startEnds = FALSE, seqs = NULL, tSeq = NULL)
+cigarToBlock(cigars, starts, startEnds = FALSE)
 }
 \arguments{
 \item{cigars}{vector of SAM cigar strings}
@@ -12,13 +12,9 @@ cigarToBlock(cigars, starts, startEnds = FALSE, seqs = NULL, tSeq = NULL)
 \item{starts}{vector of starting positions in target}
 
 \item{startEnds}{if FALSE single line with comma separated starts, if TRUE data.frame with single start, end and id column}
-
-\item{seqs}{vector of query sequences (only if alignments desired)}
-
-\item{tSeq}{single target sequence (only if alignments desired)}
 }
 \value{
-dataframe with qStarts,tStarts,sizes if !startEnds or dataframe with starts, ends and ids if startEnds or dataframe with pairwise query alignments, qAlign, and target alignments, tAlign if provided seqs and tSeq
+dataframe with qStarts,tStarts,sizes if !startEnds or dataframe with starts, ends and ids if startEnds
 }
 \description{
 Convert cigar and starts to qStarts, tStarts, blockSizes as in blat

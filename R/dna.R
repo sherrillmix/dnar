@@ -509,11 +509,9 @@ trimNs<-function(seqs,nonNStretch=c(10,10),nChars=c("N")){
 #' @param cigars vector of SAM cigar strings
 #' @param starts vector of starting positions in target
 #' @param startEnds if FALSE single line with comma separated starts, if TRUE data.frame with single start, end and id column
-#' @param seqs vector of query sequences (only if alignments desired)
-#' @param tSeq single target sequence (only if alignments desired)
 #' @export
-#' @return dataframe with qStarts,tStarts,sizes if !startEnds or dataframe with starts, ends and ids if startEnds or dataframe with pairwise query alignments, qAlign, and target alignments, tAlign if provided seqs and tSeq
-cigarToBlock<-function(cigars,starts,startEnds=FALSE,seqs=NULL,tSeq=NULL){
+#' @return dataframe with qStarts,tStarts,sizes if !startEnds or dataframe with starts, ends and ids if startEnds
+cigarToBlock<-function(cigars,starts,startEnds=FALSE){
 	#M=match, I=insertion in query, D=deletion in query, N="intron" deletion in query, S=soft clipping (clip sequence), H=hard clipping (sequence was already clipped)
 	nAligns<-length(starts)
 	if(nAligns!=length(cigars))stop(simpleError('Cigars and starts not same length'))
@@ -524,13 +522,6 @@ cigarToBlock<-function(cigars,starts,startEnds=FALSE,seqs=NULL,tSeq=NULL){
 	stillWorking<-rep(TRUE,nAligns)
 	qStarts<-tStarts<-rep('',nAligns)
 	blockSizes<-tStarts<-rep('',nAligns)
-	isAlign<-FALSE
-	if(!is.null(seqs)&&!is.null(tSeq)){
-		if(length(seqs)!=nAligns)stop(simpleError('Cigars and seqs not same length'))
-		tSeq<-tSeq[1]
-		isAlign<-TRUE
-		aligns<-data.frame('qAlign'=rep('',nAligns),'tAlign'=rep('',nAligns),stringsAsFactors=FALSE)
-	}
 	if(startEnds){
 		startEndsOut<-data.frame('start'=-1,'end'=-1,'id'=-1,'qStart'=-1,'qEnd'=-1)[0,]
 		ids<-1:length(starts)
@@ -554,17 +545,10 @@ cigarToBlock<-function(cigars,starts,startEnds=FALSE,seqs=NULL,tSeq=NULL){
 				}
 			}
 			if(i %in% c('M','D','N')){
-				if(isAlign)aligns[stillWorking,][matches,c('tAlign')]<-sprintf('%s%s',aligns[stillWorking,][matches,c('tAlign')],substring(tSeq,tPos[stillWorking][matches],tPos[stillWorking][matches]+num-1))
 				tPos[stillWorking][matches]<-num+tPos[stillWorking][matches]
 			}
 			if(i %in% c('M','I','S')){
-				if(isAlign)aligns[stillWorking,][matches,c('qAlign')]<-sprintf('%s%s',aligns[stillWorking,][matches,c('qAlign')],substring(seqs[stillWorking][matches],qPos[stillWorking][matches],qPos[stillWorking][matches]+num-1))
 				qPos[stillWorking][matches]<-num+qPos[stillWorking][matches]
-			}
-			if(i!='M'&&isAlign){
-				if(isAlign)if(any(num>N_DUMMY_GAPS))stop(simpleError('Gap larger than ',N_DUMMY_GAPS))
-				if(i %in% c('D','N'))aligns[stillWorking,][matches,c('qAlign')]<-sprintf('%s%s',aligns[stillWorking,][matches,c('qAlign')],substring(dummyGaps,1,num))
-				if(i %in% c('I','S'))aligns[stillWorking,][matches,c('tAlign')]<-sprintf('%s%s',aligns[stillWorking,][matches,c('tAlign')],substring(dummyGaps,1,num))
 			}
 			stillWorking[stillWorking]<-nchar(cigars[stillWorking])>0
 		}
@@ -572,7 +556,6 @@ cigarToBlock<-function(cigars,starts,startEnds=FALSE,seqs=NULL,tSeq=NULL){
 	qStarts<-sub('^,','',qStarts)
 	tStarts<-sub('^,','',tStarts)
 	blockSizes<-sub('^,','',blockSizes)
-	if(isAlign)return(aligns)
 	if(startEnds){
 		startEndsOut<-startEndsOut[order(startEndsOut$id,startEndsOut$start),]
 		rownames(startEndsOut)<-NULL
@@ -614,12 +597,12 @@ blockToAlign<-function(seqs,tSeqs,qStarts,tStarts,sizes){
 	qSeqs<-sapply(1:length(seqs),function(ii){
 		x<-qPieces[qPieces$name==ii,]
 		thisGaps<-gaps[[ii]]
-		return(paste(c(x$seq,thisGaps$qSeq)[order(c(x$start,thisGaps$qGapStartAfter+.5))],collapse=''))
+		return(paste(c(x$seq,thisGaps$qSeq)[order(c(x$start,thisGaps$qStartAfter+.5))],collapse=''))
 	})
 	tSeqs<-sapply(1:length(seqs),function(ii){
 		x<-tPieces[tPieces$name==ii,]
 		thisGaps<-gaps[[ii]]
-		return(paste(c(x$seq,thisGaps$tSeq)[order(c(x$start,thisGaps$tGapStartAfter+.5))],collapse=''))
+		return(paste(c(x$seq,thisGaps$tSeq)[order(c(x$start,thisGaps$tStartAfter+.5))],collapse=''))
 	})
 	return(data.frame('qSeq'=qSeqs,'tSeq'=tSeqs,stringsAsFactors=FALSE))
 }
