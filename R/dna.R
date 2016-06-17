@@ -576,8 +576,8 @@ cigarToBlock<-function(cigars,starts,startEnds=FALSE){
 blockToAlign<-function(seqs,tSeqs,qStarts,tStarts,sizes){
 	nSeqs<-length(seqs)
 	if(length(tSeqs)==1)tSeqs<-rep(tSeqs,length(seqs))
-	if(length(tSeqs)!=length(seqs))stop(simpleError('Target seqs not same length as seqs and not a single sequence'))
-	if(!all.equal(length(seqs),length(qStarts),length(tStarts),length(sizes)))stop(simpleError('All arguments not same length'))
+	if(length(tSeqs)!=nSeqs)stop(simpleError('Target seqs not same length as seqs and not a single sequence'))
+	if(length(qStarts)!=nSeqs||length(tStarts)!=nSeqs||length(sizes)!=nSeqs)stop(simpleError('All arguments to blockToAlign not same length'))
 	tPieces<-blat2exons(1:length(seqs),1:length(seqs),tStarts,sizes)
 	tPieces$seq<-substring(tSeqs[tPieces$name],tPieces$start,tPieces$end)
 	qPieces<-blat2exons(1:length(seqs),1:length(seqs),qStarts,sizes)
@@ -714,8 +714,8 @@ blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),len
 	if(adjustStart!=0)startsList<-lapply(startsList,function(x)as.numeric(x)+adjustStart)
 	exonCounts<-exonCountsStrand<-sapply(startsList,length)
 	endsList<-strsplit(ends,',')
+	if(any(exonCounts!=sapply(endsList,length)))stop(simpleError("Split starts and ends not equal length"))
 	if(lengths)endsList<-mapply(function(x,y)as.numeric(x)+as.numeric(y)-1,endsList,startsList,SIMPLIFY=FALSE)
-	if(any(exonCounts!=sapply(endsList,length)))stop(simpleError("Starts and ends not equal"))
 	#make sure extraCols and extraSplits are dataframes
 	if(is.vector(extraSplits))extraSplits<-data.frame(extraSplits,stringsAsFactors=FALSE)
 	if(is.vector(extraCols))extraCols<-data.frame(extraCols,stringsAsFactors=FALSE)

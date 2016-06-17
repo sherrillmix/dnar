@@ -263,6 +263,17 @@ test_that("Test_cigarToBlock",{
 	expect_error(cigarToBlock(c('100M','10M1Z'),1:2),'operation')
 })
 
+test_that("Test_blockToAlign",{
+	expect_equal(blockToAlign('ABC','BCD','1','1','1'),data.frame('qSeq'='A','tSeq'='B',stringsAsFactors=FALSE))
+	expect_equal(blockToAlign('ABC','BCD','1,3','1,2','1,1'),data.frame('qSeq'='ABC','tSeq'='B-C',stringsAsFactors=FALSE))
+	expect_equal(blockToAlign(c('ABC','FGH'),c('BCD','ABCDE'),c('1,3','1'),c('1,2',3),c('1,1','3')),data.frame('qSeq'=c('ABC','FGH'),'tSeq'=c('B-C','CDE'),stringsAsFactors=FALSE))
+	expect_error(blockToAlign('A',c('A','A'),'1','1','1'),'length')
+	expect_error(blockToAlign(c('A','A'),'A','1','1','1'),'length')
+	expect_error(blockToAlign('A','A',c('1','2'),'1','1'),'length')
+	expect_error(blockToAlign('A','A','1',c('1','2'),'1'),'length')
+	expect_error(blockToAlign('A','A','1','1',c('1','2')),'length')
+})
+
 test_that("Test blat2exons",{
 	out<-data.frame(
 		chrom=rep(c('chr1','chr2'),c(5,3)),
@@ -293,7 +304,8 @@ test_that("Test blat2exons",{
 	expect_equal(blat2exons(blat$chr,blat$qName,blat$starts,blat$blocks,blat$strand,extraSplits=extraSplits,extraCols=extraCols),cbind(out,extraColsOut,extraSplitsOut))
 	expect_error(blat2exons(blat$chr,blat$qName,blat$starts,blat$blocks,c(blat$strand,'+')),'length')
 	expect_error(blat2exons(blat$chr,c(blat$qName,'asd'),blat$starts,blat$blocks,c(blat$strand)),'length')
-
+	expect_error(blat2exons('x','x','1,1','1'),'[Ss]plit.*length')
+	expect_error(blat2exons('x','x','1','1,1'),'[Ss]plit.*length')
 })
 
 test_that("Test findIntrons",{
