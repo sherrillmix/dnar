@@ -489,3 +489,24 @@ table2vector<-function(tab){
 escapeRegexBracketChars<-function(regexChars,escapeChars=c('^','-','[',']','\\')){
 	return(sprintf('%s%s',ifelse(regexChars %in% escapeChars,'\\',''),regexChars))
 }
+
+#' Convenience function to fill values down a column
+#'
+#' Takes a vector of values and fills any empty strings or NAs with the last non-empty value.
+#'
+#' @param x a vector to be filled
+#' @param emptyStrings a vector of strings to be considered empty. Defaults to empty string and NA.
+#' @export
+#' @return a vector of the same length as x with empty entries filled
+#' @examples
+#' fillDown(c(1:5,NA,NA,6,NA,7))
+#' fillDown(c('a','c','d',' ',NA),c(' ',NA))
+fillDown<-function(x,emptyStrings=c(NA,'')){
+  #depending on %in% to catch NAs if necessary
+  isEmpty<-x %in% emptyStrings
+  if(isEmpty[1])stop(simpleError('First value empty'))
+  ids<-1:length(x)
+  ids[isEmpty]<-0
+  ids<-cummax(ids)
+  return(x[ids])
+}

@@ -253,3 +253,11 @@ test_that('Test table2vector',{
 	expect_equal(escapeRegexBracketChars(c(']','\\','-','A','b')),c('\\]','\\\\','\\-','A','b'))
 	expect_equal(escapeRegexBracketChars(c('a','b','c'),c('a','c')),c('\\a','b','\\c'))
 })
+
+test_that("Test fillDown",{
+  expect_equal(fillDown(c(1:5,NA,NA,6,NA,7)),c(1:5,5,5,6,6,7))
+  expect_equal(fillDown(c('a','c','d',' ',NA,'')),c('a','c','d',' ',' ',' '))
+  expect_equal(fillDown(c('a','c','d',' ',NA,''),c(' ',NA)),c('a','c','d','d','d',''))
+  expect_equal(fillDown(c('a','c','d','',NA,''),c('')),c('a','c','d','d',NA,NA))
+  expect_error(fillDown(c(NA,'c','d','')),'[Ff]irst')
+})
