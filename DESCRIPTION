@@ -14,12 +14,10 @@ Suggests:
 Depends:
     R (>= 3.1.0)
 Imports:
-	 IRanges,
-	 GenomicRanges,
     parallel,
     bitops,
     digest,
-	 utils,
-	 graphics,
-	 stats
+    utils,
+    graphics,
+    stats
 RoxygenNote: 5.0.1
