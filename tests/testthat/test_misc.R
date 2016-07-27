@@ -257,6 +257,7 @@ test_that('Test table2vector',{
 test_that("Test fillDown",{
   expect_equal(fillDown(c(1:5,NA,NA,6,NA,7)),c(1:5,5,5,6,6,7))
   expect_equal(fillDown(c('a','c','d',' ',NA,'')),c('a','c','d',' ',' ',' '))
+  expect_equal(fillDown(c('a','c','d','Z',NA,'Z'),'Z'),c('a','c','d','d',NA,NA ))
   expect_equal(fillDown(c('a','c','d',' ',NA,''),c(' ',NA)),c('a','c','d','d','d',''))
   expect_equal(fillDown(c('a','c','d','',NA,''),c('')),c('a','c','d','d',NA,NA))
   expect_error(fillDown(c(NA,'c','d','')),'[Ff]irst')

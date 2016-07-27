@@ -19,6 +19,6 @@ Takes a vector of values and fills any empty strings or NAs with the last non-em
 }
 \examples{
 fillDown(c(1:5,NA,NA,6,NA,7))
-fillDown(c('a','c','d',' ',NA),c(' ',NA))
+fillDown(c('a','c','d','Z',NA),'Z')
 }
 

@@ -500,7 +500,7 @@ escapeRegexBracketChars<-function(regexChars,escapeChars=c('^','-','[',']','\\')
 #' @return a vector of the same length as x with empty entries filled
 #' @examples
 #' fillDown(c(1:5,NA,NA,6,NA,7))
-#' fillDown(c('a','c','d',' ',NA),c(' ',NA))
+#' fillDown(c('a','c','d','Z',NA),'Z')
 fillDown<-function(x,emptyStrings=c(NA,'')){
   #depending on %in% to catch NAs if necessary
   isEmpty<-x %in% emptyStrings
