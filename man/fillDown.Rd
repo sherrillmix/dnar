@@ -4,12 +4,14 @@
 \alias{fillDown}
 \title{Convenience function to fill values down a column}
 \usage{
-fillDown(x, emptyStrings = c(NA, ""))
+fillDown(x, emptyStrings = c(NA, ""), errorIfFirstEmpty = TRUE)
 }
 \arguments{
 \item{x}{a vector to be filled}
 
 \item{emptyStrings}{a vector of strings to be considered empty. Defaults to empty string and NA.}
+
+\item{errorIfFirstEmpty}{if TRUE then throw an error if the first entry is empty}
 }
 \value{
 a vector of the same length as x with empty entries filled

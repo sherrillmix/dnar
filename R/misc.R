@@ -496,15 +496,18 @@ escapeRegexBracketChars<-function(regexChars,escapeChars=c('^','-','[',']','\\')
 #'
 #' @param x a vector to be filled
 #' @param emptyStrings a vector of strings to be considered empty. Defaults to empty string and NA.
+#' @param errorIfFirstEmpty if TRUE then throw an error if the first entry is empty
 #' @export
 #' @return a vector of the same length as x with empty entries filled
 #' @examples
 #' fillDown(c(1:5,NA,NA,6,NA,7))
 #' fillDown(c('a','c','d','Z',NA),'Z')
-fillDown<-function(x,emptyStrings=c(NA,'')){
+fillDown<-function(x,emptyStrings=c(NA,''),errorIfFirstEmpty=TRUE){
   #depending on %in% to catch NAs if necessary
   isEmpty<-x %in% emptyStrings
-  if(isEmpty[1])stop(simpleError('First value empty'))
+  if(isEmpty[1]&errorIfFirstEmpty)stop(simpleError('First value empty'))
+  #if first is empty and we don't want errors then have to just fill down from it anyway
+  isEmpty[1]<-FALSE
   ids<-1:length(x)
   ids[isEmpty]<-0
   ids<-cummax(ids)

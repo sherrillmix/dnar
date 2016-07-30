@@ -261,4 +261,5 @@ test_that("Test fillDown",{
   expect_equal(fillDown(c('a','c','d',' ',NA,''),c(' ',NA)),c('a','c','d','d','d',''))
   expect_equal(fillDown(c('a','c','d','',NA,''),c('')),c('a','c','d','d',NA,NA))
   expect_error(fillDown(c(NA,'c','d','')),'[Ff]irst')
+  expect_equal(fillDown(c(NA,'','c','d',''),errorIfFirstEmpty=FALSE),c(NA,NA,'c','d','d'))
 })
