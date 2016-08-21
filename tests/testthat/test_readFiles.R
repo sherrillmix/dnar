@@ -35,15 +35,15 @@ test_that("Test read.fastq",{
 })
 
 test_that("Test intsToQual",{
-	expect_equal(intsToQual(2:5),'#$%&')
-	expect_equal(intsToQual(2:4,34),'$%&')
+  expect_equal(intsToQual(2:5),'#$%&')
+  expect_equal(intsToQual(2:4,34),'$%&')
 })
 
 test_that("Test qualToInts",{
-	expect_equal(qualToInts('#$%&'),list(2:5))
-	expect_equal(qualToInts('$%&',34),list(2:4))
-	expect_equal(qualToInts(c(intsToQual(1:40),intsToQual(20:10))),list(1:40,20:10))
-	expect_equal(qualToInts(c(intsToQual(1:40,10),intsToQual(20:10,10)),10),list(1:40,20:10))
+  expect_equal(qualToInts('#$%&'),list(2:5))
+  expect_equal(qualToInts('$%&',34),list(2:4))
+  expect_equal(qualToInts(c(intsToQual(1:40),intsToQual(20:10))),list(1:40,20:10))
+  expect_equal(qualToInts(c(intsToQual(1:40,10),intsToQual(20:10,10)),10),list(1:40,20:10))
 })
 
 test_that("Test read.phd",{ tmpFile<-tempfile()
@@ -129,19 +129,19 @@ test_that("Test write.fa",{
 })
 
 test_that("Test fillZeros",{
-	expect_equal(fillZeros(c(1:4,7,9),data.frame('x'=1:6,'aa'=letters[1:6],stringsAsFactors=FALSE)),list('pos'=1:9,'data'=data.frame('x'=c(1:4,0,0,5,0,6),'aa'=c('a','b','c','d',0,0,'e',0,'f'),stringsAsFactors=FALSE)))
-	expect_equal(fillZeros(c(1:4,7,9),data.frame('x'=letters[1:6]),'a')[['data']],data.frame('x'=c('a','b','c','d','a','a','e','a','f')))
-	expect_equal(fillZeros(c(13,sample(14:999,40),1000),data.frame('x'=1:42))[['pos']],13:1000)
-	expect_error(fillZeros(c(1:4,7,9),data.frame('x'=1:7)),'length')
-	expect_error(fillZeros(c(1:4,7,9,10),data.frame('x'=1:6)),'length')
-	expect_equal(fillZeros(-c(1:4,7,9),data.frame('x'=1:6)),list('pos'=-9:-1,'data'=data.frame('x'=rev(c(1:4,0,0,5,0,6)))))
+  expect_equal(fillZeros(c(1:4,7,9),data.frame('x'=1:6,'aa'=letters[1:6],stringsAsFactors=FALSE)),list('pos'=1:9,'data'=data.frame('x'=c(1:4,0,0,5,0,6),'aa'=c('a','b','c','d',0,0,'e',0,'f'),stringsAsFactors=FALSE)))
+  expect_equal(fillZeros(c(1:4,7,9),data.frame('x'=letters[1:6]),'a')[['data']],data.frame('x'=c('a','b','c','d','a','a','e','a','f')))
+  expect_equal(fillZeros(c(13,sample(14:999,40),1000),data.frame('x'=1:42))[['pos']],13:1000)
+  expect_error(fillZeros(c(1:4,7,9),data.frame('x'=1:7)),'length')
+  expect_error(fillZeros(c(1:4,7,9,10),data.frame('x'=1:6)),'length')
+  expect_equal(fillZeros(-c(1:4,7,9),data.frame('x'=1:6)),list('pos'=-9:-1,'data'=data.frame('x'=rev(c(1:4,0,0,5,0,6)))))
 })
 
 test_that("Test fillCover",{
-	cover<-data.frame('pos'=c(2,10,11,14),'counts1'=1:4,'counts2'=2:5,'xx'=1)
-	out<-data.frame('pos'=2:14,'counts1'=rep(c(1,0,2,3,0,4),c(1,7,1,1,2,1)),'counts2'=rep(c(2,0,3,4,0,5),c(1,7,1,1,2,1)),'xx'=1)
-	expect_equal(fillCover(cover),out)
-	expect_error(fillCover(cbind(cover,'yy'=2:5)),'nonunique')
+  cover<-data.frame('pos'=c(2,10,11,14),'counts1'=1:4,'counts2'=2:5,'xx'=1)
+  out<-data.frame('pos'=2:14,'counts1'=rep(c(1,0,2,3,0,4),c(1,7,1,1,2,1)),'counts2'=rep(c(2,0,3,4,0,5),c(1,7,1,1,2,1)),'xx'=1)
+  expect_equal(fillCover(cover),out)
+  expect_error(fillCover(cbind(cover,'yy'=2:5)),'nonunique')
 })
 
 test_that("Test readBlast",{
