@@ -299,7 +299,7 @@ fillCover<-function(cover,posCol='pos',countCols=colnames(cover)[grep('counts',c
 #' @return dataframe of blat data
 read.blast<-function(fileName,skips=0,nrows=-1,calcScore=TRUE){
 	x<-utils::read.table(fileName,skip=skips,sep="\t",stringsAsFactors=FALSE,colClasses=c(rep('character',2),rep('numeric',10)),nrows=nrows)
-	colnames(x)<-c('qName','tName','percID','alignLength','mismatch','nGap','qStart','qEnd','tStart','tEnd','eValue','hspBit')
+	colnames(x)<-c('qName','tName','percID','alignLength','mismatch','nGap','qStart','qEnd','tStart','tEnd','eValue','bit')
 	#Score equation from blat's webpage
 	if(calcScore)x$score<-x$alignLength-x$mismatch-x$nGap
 	return(x)
