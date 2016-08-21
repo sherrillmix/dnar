@@ -46,8 +46,7 @@ test_that("Test qualToInts",{
 	expect_equal(qualToInts(c(intsToQual(1:40,10),intsToQual(20:10,10)),10),list(1:40,20:10))
 })
 
-test_that("Test read.phd",{
-  tmpFile<-tempfile()
+test_that("Test read.phd",{ tmpFile<-tempfile()
   phd<-'Some\nextra lines\nBEGIN_DNA\nc 9 6\nt 9 18\nc 10 26\nc 19 38\nA 40 39\nC 15 45\nEND_DNA\nmore\nextra lines'
   expect_equal(read.phd(textConnection(phd))[['seq']],'ctccAC')
   expect_equal(read.phd(textConnection(phd))[['qual']],'9 9 10 19 40 15') 
@@ -143,6 +142,13 @@ test_that("Test fillCover",{
 	out<-data.frame('pos'=2:14,'counts1'=rep(c(1,0,2,3,0,4),c(1,7,1,1,2,1)),'counts2'=rep(c(2,0,3,4,0,5),c(1,7,1,1,2,1)),'xx'=1)
 	expect_equal(fillCover(cover),out)
 	expect_error(fillCover(cbind(cover,'yy'=2:5)),'nonunique')
+})
+
+test_that("Test readBlast",{
+	blastString<-"read1	target1	34.56	100	2	1	101	200	400	500	1e-11	96
+read2	target2	100	1000	2	1	101	1100	400	2000	1e-21	123"
+  out<-data.frame('qName'=c('read1','read2'),'tName'=c('target1','target2'),'percID'=c(34.56,100),'alignLength'=c(100,1000),'mismatch'=c(2,2),'nGap'=c(1,1),'qStart'=101,'qEnd'=c(200,1100),'tStart'=c(400,400),'tEnd'=c(500,2000),'eValue'=c(1e-11,1e-21),'hspBit'=c(96,123),score=c(97,997),stringsAsFactors=FALSE)
+	expect_equal(read.blast(textConnection(blastString)),out)
 })
 
 test_that("Test write.fastq",{
