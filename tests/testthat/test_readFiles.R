@@ -145,10 +145,12 @@ test_that("Test fillCover",{
 })
 
 test_that("Test readBlast",{
-	blastString<-"read1	target1	34.56	100	2	1	101	200	400	500	1e-11	96
-read2	target2	100	1000	200	10	102	1100	401	2000	1e-21	123"
+  blastString<-c(
+    "read1	target1	34.56	100	2	1	101	200	400	500	1e-11	96",
+    "read2	target2	100	1000	200	10	102	1100	401	2000	1e-21	123"
+  )
   out<-data.frame('qName'=c('read1','read2'),'tName'=c('target1','target2'),'percID'=c(34.56,100),'alignLength'=c(100,1000),'mismatch'=c(2,200),'nGap'=c(1,10),'qStart'=101:102,'qEnd'=c(200,1100),'tStart'=400:401,'tEnd'=c(500,2000),'eValue'=c(1e-11,1e-21),'bit'=c(96,123),score=c(97,790),stringsAsFactors=FALSE)
-	expect_equal(read.blast(textConnection(blastString)),out)
+  expect_equal(read.blast(textConnection(blastString)),out)
 })
 
 test_that("Test write.fastq",{
