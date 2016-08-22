@@ -151,6 +151,14 @@ test_that("Test readBlast",{
   )
   out<-data.frame('qName'=c('read1','read2'),'tName'=c('target1','target2'),'percID'=c(34.56,100),'alignLength'=c(100,1000),'mismatch'=c(2,200),'nGap'=c(1,10),'qStart'=101:102,'qEnd'=c(200,1100),'tStart'=400:401,'tEnd'=c(500,2000),'eValue'=c(1e-11,1e-21),'bit'=c(96,123),score=c(97,790),stringsAsFactors=FALSE)
   expect_equal(read.blast(textConnection(blastString)),out)
+  tmp<-tempfile()
+  writeLines(blastString,tmp)
+  expect_equal(read.blast(tmp),out)
+  tmpGz<-tempfile(fileext='.gz')
+  gzHandle<-gzfile(tmpGz)
+  writeLines(blastString,gzHandle)
+  close(gzHandle)
+  expect_equal(read.blast(tmpGz),out)
 })
 
 test_that("Test write.fastq",{

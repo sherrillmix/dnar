@@ -21,4 +21,12 @@ dataframe of blat data
 \description{
 Read a tab-delimited blast file
 }
+\examples{
+blastString<-c(
+  "read1	target1	34.56	100	2	1	101	200	400	500	1e-11	96",
+  "read2	target2	100	1000	200	10	102	1100	401	2000	1e-21	123"
+)
+read.blast(textConnection(blastString))
+
+}
 

@@ -297,6 +297,13 @@ fillCover<-function(cover,posCol='pos',countCols=colnames(cover)[grep('counts',c
 #' @param calcScore if TRUE, calculate score column
 #' @export
 #' @return dataframe of blat data
+#' @examples
+#' blastString<-c(
+#'   "read1	target1	34.56	100	2	1	101	200	400	500	1e-11	96",
+#'   "read2	target2	100	1000	200	10	102	1100	401	2000	1e-21	123"
+#' )
+#' read.blast(textConnection(blastString))
+#' 
 read.blast<-function(fileName,skips=0,nrows=-1,calcScore=TRUE){
 	x<-utils::read.table(fileName,skip=skips,sep="\t",stringsAsFactors=FALSE,colClasses=c(rep('character',2),rep('numeric',10)),nrows=nrows)
 	colnames(x)<-c('qName','tName','percID','alignLength','mismatch','nGap','qStart','qEnd','tStart','tEnd','eValue','bit')
