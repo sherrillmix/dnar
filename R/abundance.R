@@ -25,13 +25,13 @@ shannon<-function(x,base=exp(1),standardize=TRUE){
 #' @return Rao diversity
 #' rao(1:3,as.matrix(dist(1:3)))
 rao<-function(x,dist){
-	if(any(dim(dist)!=length(x)))stop(simpleError('Distance and proportion vectors do not match'))
-	zeros<-x==0
-	x<-x[!zeros]
-	dist<-dist[!zeros,!zeros]
-	props<-x/sum(x)
-	propTable<-outer(props,props)
-	return(sum(propTable*dist))
+  if(any(dim(dist)!=length(x)))stop(simpleError('Distance and proportion vectors do not match'))
+  zeros<-x==0
+  x<-x[!zeros]
+  dist<-dist[!zeros,!zeros]
+  props<-x/sum(x)
+  propTable<-outer(props,props)
+  return(sum(propTable*dist))
 }
 
 #' Calculate Jensen Shannon divergence between two probability distributions
@@ -44,14 +44,14 @@ rao<-function(x,dist){
 #' @examples
 #' jensenShannon(1:4,4:1)
 jensenShannon<-function(x,y,base=2){
-	if(length(x)!=length(y))stop(simpleError('Length of x and y differ'))
-	propX<-x/ifelse(sum(x)==0,1,sum(x))
-	propY<-y/ifelse(sum(y)==0,1,sum(y))
-	out<-shannon((propX+propY)/2,base,FALSE)-shannon(propX,base,FALSE)/2-shannon(propY,base,FALSE)/2
-	#if(method=='shannon')out<-shannon((propX+propY)/2,base,FALSE)-shannon(propX,base,FALSE)/2-shannon(propY,base,FALSE)/2
-	#if(method=='kullback')out<-.5*kullback(propX,(propY+propX)/2,base,FALSE)+.5*kullback(propY,(propY+propX)/2,base,FALSE)
-	#if(round(shannonCalc,5)!=round(kullbackCalc,5))stop(simpleError('Problem calculating shannon jensen'))
-	return(out)
+  if(length(x)!=length(y))stop(simpleError('Length of x and y differ'))
+  propX<-x/ifelse(sum(x)==0,1,sum(x))
+  propY<-y/ifelse(sum(y)==0,1,sum(y))
+  out<-shannon((propX+propY)/2,base,FALSE)-shannon(propX,base,FALSE)/2-shannon(propY,base,FALSE)/2
+  #if(method=='shannon')out<-shannon((propX+propY)/2,base,FALSE)-shannon(propX,base,FALSE)/2-shannon(propY,base,FALSE)/2
+  #if(method=='kullback')out<-.5*kullback(propX,(propY+propX)/2,base,FALSE)+.5*kullback(propY,(propY+propX)/2,base,FALSE)
+  #if(round(shannonCalc,5)!=round(kullbackCalc,5))stop(simpleError('Problem calculating shannon jensen'))
+  return(out)
 }
 
 #' Calculate Kullback-Leibler divergence between two probability distributions
@@ -67,16 +67,16 @@ jensenShannon<-function(x,y,base=2){
 #' @examples
 #' kullback(1:3,3:1)
 kullback<-function(x,y,base=2,standardize=TRUE){
-	selector<-y<=0&x<=0
-	x<-x[!selector];y<-y[!selector]
-	if(standardize){
-		propX<-x/sum(x)
-		propY<-y/sum(y)
-	}else{
-		propX<-x
-		propY<-y
-	}
-	sum(propX*log(propX/propY,base))
+  selector<-y<=0&x<=0
+  x<-x[!selector];y<-y[!selector]
+  if(standardize){
+    propX<-x/sum(x)
+    propY<-y/sum(y)
+  }else{
+    propX<-x
+    propY<-y
+  }
+  sum(propX*log(propX/propY,base))
 }
 
 #' Calculate chao diversity index
@@ -87,8 +87,8 @@ kullback<-function(x,y,base=2,standardize=TRUE){
 #' @examples
 #' chao(c(1,1,1,2,3,5,100))
 chao<-function(counts){
-	counts<-counts[counts>0]
-	return(length(counts)+sum(counts==1)*(sum(counts==1)-1)/2/(sum(counts==2)+1))
+  counts<-counts[counts>0]
+  return(length(counts)+sum(counts==1)*(sum(counts==1)-1)/2/(sum(counts==2)+1))
 }
 
 #' Calculate rarefaction using boostrapping
@@ -108,23 +108,23 @@ chao<-function(counts){
 #' rarefy(1:20,reps=100)
 #' rarefy(1:20,reps=100,chaoAdjust=TRUE)
 rarefy<-function(counts,samples=unique(round(sum(counts)*seq(.1,1,.1))),reps=1000,chaoAdjust=FALSE,replace=FALSE,minObs=1,statFunc=stats::quantile,...){
-	species<-rep(1:length(counts),counts)
-	output<-lapply(samples,function(sample,reps,species){
-		numSpecies<-sapply(1:reps,function(rep,species,sample,chaoAdjust){
-			thisSpecies<-sample(species,sample,replace=replace)
-			if(chaoAdjust){
-				return(chao(table(thisSpecies)))	
-			} else{
+  species<-rep(1:length(counts),counts)
+  output<-lapply(samples,function(sample,reps,species){
+    numSpecies<-sapply(1:reps,function(rep,species,sample,chaoAdjust){
+      thisSpecies<-sample(species,sample,replace=replace)
+      if(chaoAdjust){
+        return(chao(table(thisSpecies)))
+      } else{
         speciesTable<-table(thisSpecies)
         return(length(speciesTable[speciesTable>=minObs]))
       }
-		},species,sample,chaoAdjust)
-		estimate<-statFunc(numSpecies,...)
-		return(estimate)
-	},reps,species)
-	output<-as.data.frame(do.call(rbind,output))
-	rownames(output)<-samples
-	return(output)
+    },species,sample,chaoAdjust)
+    estimate<-statFunc(numSpecies,...)
+    return(estimate)
+  },reps,species)
+  output<-as.data.frame(do.call(rbind,output))
+  rownames(output)<-samples
+  return(output)
 }
 
 #' Calculate rarefaction using formula
@@ -138,16 +138,16 @@ rarefy<-function(counts,samples=unique(round(sum(counts)*seq(.1,1,.1))),reps=100
 #' @examples
 #' rareEquation(1:20)
 rareEquation<-function(counts,samples=unique(round(sum(counts)*seq(.1,1,.1))),minObs=1){
-	counts<-counts[counts>0]
-	if(length(samples)>1){
-		out<-sapply(samples,function(xx)rareEquation(counts,xx))
-	}else{
+  counts<-counts[counts>0]
+  if(length(samples)>1){
+    out<-sapply(samples,function(xx)rareEquation(counts,xx))
+  }else{
     expectMisses<-do.call(cbind,lapply(0:(minObs-1),function(ii)exp(lchoose(sum(counts)-counts,samples-ii)+lchoose(counts,ii)-lchoose(sum(counts),samples))))
     expectMiss<-apply(expectMisses,1,sum)
-		out<-sum(1-expectMiss)
-	}
-	names(out)<-samples
-	return(out)
+    out<-sum(1-expectMiss)
+  }
+  names(out)<-samples
+  return(out)
 }
 
 #' Calculate the probability of observing observedX species from nGroups groups with groupsize members with n observations
@@ -159,7 +159,7 @@ rareEquation<-function(counts,samples=unique(round(sum(counts)*seq(.1,1,.1))),mi
 #' @return probability of observing observedX species from nGroups groups with groupsize members with n observations
 #' pRare(4,10,10,10)
 pRare<-function(observedX,n,nGroups,groupSize){
-	choose(nGroups,observedX)*chooseAtLeastOneFromEach(n,observedX,groupSize)/choose(nGroups*groupSize,n)
+  choose(nGroups,observedX)*chooseAtLeastOneFromEach(n,observedX,groupSize)/choose(nGroups*groupSize,n)
 }
 
 #' Calculate the number of combinations possible from nGroups groups with groupsize members and n observations
@@ -173,17 +173,17 @@ pRare<-function(observedX,n,nGroups,groupSize){
 #' @examples
 #' chooseAtLeastOneFromEach(10,10,2)
 chooseAtLeastOneFromEach<-function(n,nGroups,groupSize){
-	if(nGroups<=0|groupSize<=0)return(0)
-	if(nGroups>n)return(0)
-	if(nGroups>1){
-		children<-sapply(1:(nGroups-1),function(x)chooseAtLeastOneFromEach(n,nGroups-x,groupSize))
-		nChildren<-sapply(1:(nGroups-1),function(x)choose(nGroups,x))
-	}else{
-		nChildren<-0
-		children<-0
-	}
-	answer<-choose(nGroups*groupSize,n)-sum(children*nChildren)
-	return(answer)
+  if(nGroups<=0|groupSize<=0)return(0)
+  if(nGroups>n)return(0)
+  if(nGroups>1){
+    children<-sapply(1:(nGroups-1),function(x)chooseAtLeastOneFromEach(n,nGroups-x,groupSize))
+    nChildren<-sapply(1:(nGroups-1),function(x)choose(nGroups,x))
+  }else{
+    nChildren<-0
+    children<-0
+  }
+  answer<-choose(nGroups*groupSize,n)-sum(children*nChildren)
+  return(answer)
 }
 
 
