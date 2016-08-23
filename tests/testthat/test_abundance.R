@@ -62,22 +62,32 @@ test_that("Test chao",{
 })
 
 test_that("Test rarefy",{
-	expect_equal(rarefy(rep(1,100),0,reps=1000)[,3],0)
-	expect_equal(rarefy(rep(1,100),1,reps=1000)[,3],1)
-	expect_equal(rarefy(rep(1,100),100,reps=1000)[,1],100)
-	expect_equal(rarefy(100,100,reps=1000)[,3],1)
+	expect_equal(sum(rarefy(rep(1,100),0,reps=1000)),0)
+	expect_equal(unique(unlist(rarefy(rep(1,100),1,reps=1000))),1)
+	expect_equal(unique(unlist(rarefy(rep(1,100),100,reps=1000))),100)
+	expect_equal(unique(unlist(rarefy(100,100,reps=1000))),1)
+	expect_equal(unique(unlist(rarefy(rep(9,10),90,reps=1000,minObs=10))),0)
+	expect_equal(unique(unlist(rarefy(rep(9,10),90,reps=1000,minObs=9))),10)
 	out<-data.frame('50%'=1:2,'2.5%'=1:2,'97.5%'=1:2,row.names=c(1,100),check.names=FALSE)
-	expect_equal(rarefy(c(50,50),c(1,100),reps=1000),out)
-	expect_equal(rarefy(c(50,50),2,reps=1000,chao=TRUE)[,3],3)
+	expect_equal(rarefy(c(50,50),c(1,100),reps=1000,probs=c(.5,.025,.975)),out)
+	expect_equal(rarefy(c(50,50),2,reps=1000,chao=TRUE)[,'100%'],3)
+	expect_gt(rarefy(1:100,20,reps=1000,chao=TRUE)[,'100%'],100)
 })
 
 test_that("Test rareEquation",{
 	expect_equal(rareEquation(rep(1,100),0:100),structure(0:100,.Names=0:100))
 	expect_equal(rareEquation(c(50,50),51),c('51'=2))
 	expect_equal(rareEquation(2,3),c('3'=NaN))
-	expect_equal(as.vector(round(rareEquation(1:20,40))),as.vector(round(rarefy(1:20,40,reps=1000)[,1])))
+	expect_equal(as.vector(round(rareEquation(1:20,40))),as.vector(round(rarefy(1:20,40,reps=1000)[,'50%'])))
 	#example calc from http://ww2.tnstate.edu/ganter/B412%20ExtraRarefaction.html
 	expect_equal(round(rareEquation(c(42,23,16,14,6,5),25),2),c('25'=5.53))
+	expect_lt(abs(unlist(rarefy(c(50,50),3,reps=1000,statFunc=mean))-rareEquation(c(50,50),3)),.1)
+	expect_lt(abs(unlist(rarefy(rep(50,50),40,reps=1000,statFunc=mean))-rareEquation(rep(50,50),40)),.3)
+	expect_lt(abs(unlist(rarefy(1:10,10,reps=1000,statFunc=mean))-rareEquation(1:10,10)),.3)
+	expect_lt(abs(unlist(rarefy(1:10,10,reps=1000,statFunc=mean,minObs=3))-rareEquation(1:10,10,minObs=3)),.2)
+	expect_lt(abs(unlist(rarefy(1:100,200,reps=1000,statFunc=mean,minObs=5))-rareEquation(1:100,200,minObs=5)),.5)
+	expect_equal(rareEquation(1:10,200),c('200'=NaN))
+	expect_equal(rareEquation(1:10,-1),c('-1'=NaN))
 })
 
 test_that("Test pRare",{

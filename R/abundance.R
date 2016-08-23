@@ -37,7 +37,7 @@ rao<-function(x,dist){
 #' Calculate Jensen Shannon divergence between two probability distributions
 #'
 #' @param x Vector of counts or proportions of N elements
-#' @param y Second vector of counts or proportions of N elements 
+#' @param y Second vector of counts or proportions of N elements
 #' @param base Base of logarithm
 #' @export
 #' @return Jensen-Shannon divergence
@@ -59,7 +59,7 @@ jensenShannon<-function(x,y,base=2){
 #' Undefined if zero counts/proportions
 #'
 #' @param x Vector of counts or proportions of N elements
-#' @param y Second vector of counts or proportions of N elements 
+#' @param y Second vector of counts or proportions of N elements
 #' @param base Base of logarithm
 #' @param standardize If TRUE divide x and y by sum(x) and sum(y)
 #' @export
@@ -92,29 +92,34 @@ chao<-function(counts){
 }
 
 #' Calculate rarefaction using boostrapping
-#' 
+#'
 #' @param counts Counts of species
 #' @param samples Vector of numbers of draws to calculate rarefaction at
 #' @param reps How many random samples to take at each step
-#' @param quants Quantiles to return
 #' @param chaoAdjust If TRUE calculate chao-predicted species number on each random draw
 #' @param replace If TRUE sample with replacements. If FALSE sample without replacement.
+#' @param minObs Minimum number of counts to be counted as present e.g. minobs=2 discards singletons (ignored if chaoAdjust=TRUE)
+#' @param statFunc Function to apply to counts e.g. mean or median
+#' @param ... Additional arguments to statFunc
 #' @export
 #' @return Dataframe of calculated quantiles with rownames of the number of samples drawn
 #' @seealso \code{\link{rareEquation}}, \code{\link{chao}}
 #' @examples
 #' rarefy(1:20,reps=100)
 #' rarefy(1:20,reps=100,chaoAdjust=TRUE)
-rarefy<-function(counts,samples=unique(round(sum(counts)*seq(.1,1,.1))),reps=1000,quants=c(.5,.025,.975),chaoAdjust=FALSE,replace=FALSE){
+rarefy<-function(counts,samples=unique(round(sum(counts)*seq(.1,1,.1))),reps=1000,chaoAdjust=FALSE,replace=FALSE,minObs=1,statFunc=stats::quantile,...){
 	species<-rep(1:length(counts),counts)
 	output<-lapply(samples,function(sample,reps,species){
 		numSpecies<-sapply(1:reps,function(rep,species,sample,chaoAdjust){
 			thisSpecies<-sample(species,sample,replace=replace)
 			if(chaoAdjust){
 				return(chao(table(thisSpecies)))	
-			} else return(length(unique(thisSpecies)))
-		},species,sample,chaoAdjust)	
-		estimate<-stats::quantile(numSpecies,quants)
+			} else{
+        speciesTable<-table(thisSpecies)
+        return(length(speciesTable[speciesTable>=minObs]))
+      }
+		},species,sample,chaoAdjust)
+		estimate<-statFunc(numSpecies,...)
 		return(estimate)
 	},reps,species)
 	output<-as.data.frame(do.call(rbind,output))
@@ -126,23 +131,24 @@ rarefy<-function(counts,samples=unique(round(sum(counts)*seq(.1,1,.1))),reps=100
 #'
 #' @param counts Counts of species
 #' @param samples Vector of numbers of draws to calculate rarefaction at
+#' @param minObs Minimum number of counts to be counted as present e.g. minObs=2 discards singletons
 #' @export
 #' @return Vector with predicted rarefied counts for entries and the sampled number of reads for names
 #' @seealso \code{\link{rarefy}}
 #' @examples
 #' rareEquation(1:20)
-rareEquation<-function(counts,samples=unique(round(sum(counts)*seq(.1,1,.1)))){
+rareEquation<-function(counts,samples=unique(round(sum(counts)*seq(.1,1,.1))),minObs=1){
 	counts<-counts[counts>0]
 	if(length(samples)>1){
 		out<-sapply(samples,function(xx)rareEquation(counts,xx))
 	}else{
-		out<-sum(1-exp(lchoose(sum(counts)-counts,samples)-lchoose(sum(counts),samples)))
+    expectMisses<-do.call(cbind,lapply(0:(minObs-1),function(ii)exp(lchoose(sum(counts)-counts,samples-ii)+lchoose(counts,ii)-lchoose(sum(counts),samples))))
+    expectMiss<-apply(expectMisses,1,sum)
+		out<-sum(1-expectMiss)
 	}
 	names(out)<-samples
 	return(out)
 }
-
-
 
 #' Calculate the probability of observing observedX species from nGroups groups with groupsize members with n observations
 #'

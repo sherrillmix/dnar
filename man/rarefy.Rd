@@ -5,8 +5,8 @@
 \title{Calculate rarefaction using boostrapping}
 \usage{
 rarefy(counts, samples = unique(round(sum(counts) * seq(0.1, 1, 0.1))),
-  reps = 1000, quants = c(0.5, 0.025, 0.975), chaoAdjust = FALSE,
-  replace = FALSE)
+  reps = 1000, chaoAdjust = FALSE, replace = FALSE, minObs = 1,
+  statFunc = stats::quantile, ...)
 }
 \arguments{
 \item{counts}{Counts of species}
@@ -15,11 +15,15 @@ rarefy(counts, samples = unique(round(sum(counts) * seq(0.1, 1, 0.1))),
 
 \item{reps}{How many random samples to take at each step}
 
-\item{quants}{Quantiles to return}
-
 \item{chaoAdjust}{If TRUE calculate chao-predicted species number on each random draw}
 
 \item{replace}{If TRUE sample with replacements. If FALSE sample without replacement.}
+
+\item{minObs}{Minimum number of counts to be counted as present e.g. minobs=2 discards singletons (ignored if chaoAdjust=TRUE)}
+
+\item{statFunc}{Function to apply to counts e.g. mean or median}
+
+\item{...}{Additional arguments to statFunc}
 }
 \value{
 Dataframe of calculated quantiles with rownames of the number of samples drawn

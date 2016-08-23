@@ -4,12 +4,15 @@
 \alias{rareEquation}
 \title{Calculate rarefaction using formula}
 \usage{
-rareEquation(counts, samples = unique(round(sum(counts) * seq(0.1, 1, 0.1))))
+rareEquation(counts, samples = unique(round(sum(counts) * seq(0.1, 1, 0.1))),
+  minObs = 1)
 }
 \arguments{
 \item{counts}{Counts of species}
 
 \item{samples}{Vector of numbers of draws to calculate rarefaction at}
+
+\item{minObs}{Minimum number of counts to be counted as present e.g. minObs=2 discards singletons}
 }
 \value{
 Vector with predicted rarefied counts for entries and the sampled number of reads for names
