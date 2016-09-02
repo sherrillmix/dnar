@@ -140,7 +140,7 @@ rarefy<-function(counts,samples=unique(round(sum(counts)*seq(.1,1,.1))),reps=100
 rareEquation<-function(counts,samples=unique(round(sum(counts)*seq(.1,1,.1))),minObs=1){
   counts<-counts[counts>0]
   if(length(samples)>1){
-    out<-sapply(samples,function(xx)rareEquation(counts,xx))
+    out<-sapply(samples,function(xx)rareEquation(counts,xx,minObs=minObs))
   }else{
     expectMisses<-do.call(cbind,lapply(0:(minObs-1),function(ii)exp(lchoose(sum(counts)-counts,samples-ii)+lchoose(counts,ii)-lchoose(sum(counts),samples))))
     expectMiss<-apply(expectMisses,1,sum)

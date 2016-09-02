@@ -88,6 +88,8 @@ test_that("Test rareEquation",{
   expect_lt(abs(unlist(rarefy(1:100,200,reps=1000,statFunc=mean,minObs=5))-rareEquation(1:100,200,minObs=5)),.5)
   expect_equal(rareEquation(1:10,200),c('200'=NaN))
   expect_equal(rareEquation(1:10,-1),c('-1'=NaN))
+  expect_equal(rareEquation(1:100,1:99,minObs=100),structure(rep(0,99),.Names=1:99))
+  expect_equal(rareEquation(1:100,sum(1:100),minObs=100),structure(1,.Names=sum(1:100)))
 })
 
 test_that("Test pRare",{
