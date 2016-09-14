@@ -263,3 +263,11 @@ test_that("Test fillDown",{
   expect_error(fillDown(c(NA,'c','d','')),'[Ff]irst')
   expect_equal(fillDown(c(NA,'','c','d',''),errorIfFirstEmpty=FALSE),c(NA,NA,'c','d','d'))
 })
+
+test_that("Test withAs",{
+  x<-data.frame('a'=1:10,'b'=2:11,'zzz'=letters[1:10])
+  zz<-10
+  expect_equal(with(x,a+b),withAs(xx$a+xx$b,xx=x))
+  expect_equal(withAs(xx$a+yy$b,xx=x,yy=x),withAs(xx$a+xx$b,xx=x))
+  expect_equal(with(x,a+b+zz),withAs(xx$a+xx$b+zz,xx=x))
+})
