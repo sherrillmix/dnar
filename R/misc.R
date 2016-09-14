@@ -525,13 +525,14 @@ fillDown<-function(x,emptyStrings=c(NA,''),errorIfFirstEmpty=TRUE){
 #' @export
 #' @return the value of the evaluated \code{expr}
 #' @examples
-#' c<-3:12
+#' d<-3:12
 #' longNameDataFrame<-data.frame('a'=1:10,'b'=2:11)
-#' with(longNameDataFrame,a+b+c)
-#' withAs(longNameDataFrame,'xx',xx$a+xx$b+c)
-withAs<-function(data,as,expr){
+#' with(longNameDataFrame,a+b+d)
+#' withAs(xx$a+xx$b+c,xx=longNameDataFrame)
+withAs<-function(expr,...){
   env<-new.env(parent=parent.frame())
-  assign(as,data,envir=env)
+  dotVars<-match.call(expand.dots=FALSE)$'...'
+  if(any(names(dotVars)==''))stop(simpleError('Unassigned variables passed to withAs'))
+  mapply(function(as,val)assign(as,eval(val,envir=parent.frame()),env),names(dotVars),dotVars)
   return(eval(substitute(expr), env))
 }
-
