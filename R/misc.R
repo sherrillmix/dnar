@@ -21,16 +21,16 @@ isError<-function(x){
 #' @examples
 #' indexMatrix(c(1,2,3),c(1,2,1),matrix(1:9,nrow=3,byrow=TRUE))
 indexMatrix<-function(rows,cols,mat,returnIndex=FALSE){
-	mat<-as.matrix(mat)
-	if(is.character(rows)){tmp<-1:nrow(mat);names(tmp)<-rownames(mat);rows<-tmp[rows]}
-	if(is.character(cols)){tmp<-1:ncol(mat);names(tmp)<-colnames(mat);cols<-tmp[cols]}
-	if(any(is.na(rows))||any(is.na(cols)))stop(simpleError('NAs in indices'))
-	if(length(rows)!=length(cols))stop(simpleError("rows and cols different lengths"))
-	if(min(rows)<1|max(rows)>nrow(mat))stop(simpleError("rows outside matrix bounds"))
-	if(min(cols)<1|max(cols)>ncol(mat))stop(simpleError("cols outside matrix bounds"))
-	index<-(cols-1)*nrow(mat)+rows
-	if(returnIndex)return(as.vector(index)) #as.vector to remove names
-	else return(as.vector(mat[index]))
+  mat<-as.matrix(mat)
+  if(is.character(rows)){tmp<-1:nrow(mat);names(tmp)<-rownames(mat);rows<-tmp[rows]}
+  if(is.character(cols)){tmp<-1:ncol(mat);names(tmp)<-colnames(mat);cols<-tmp[cols]}
+  if(any(is.na(rows))||any(is.na(cols)))stop(simpleError('NAs in indices'))
+  if(length(rows)!=length(cols))stop(simpleError("rows and cols different lengths"))
+  if(min(rows)<1|max(rows)>nrow(mat))stop(simpleError("rows outside matrix bounds"))
+  if(min(cols)<1|max(cols)>ncol(mat))stop(simpleError("cols outside matrix bounds"))
+  index<-(cols-1)*nrow(mat)+rows
+  if(returnIndex)return(as.vector(index)) #as.vector to remove names
+  else return(as.vector(mat[index]))
 }
 
 #' Convenience function for selecting multiple elements from a matrix by x,y position
@@ -56,7 +56,7 @@ object.sizes<-function(env=.GlobalEnv)sort(sapply(ls(envir=env),function(x)utils
 #' @return Generates stopping error before returning
 #' tryCatch(stopError('Error: we had ',sum(1:10),' problems'),error=function(e)print(e))
 stopError<-function(...){
-	stop(simpleError(paste(...,sep='')))
+  stop(simpleError(paste(...,sep='')))
 }
 
 #' Get the conservative edge of a confidence interval
@@ -76,8 +76,8 @@ stopError<-function(...){
 #' fish2<-fisher.test(mat2)
 #' conservativeBoundary(fish2$conf.int,1)
 conservativeBoundary<-function(boundaries,base=0){
-	boundaries<-sort(boundaries)
-	return(ifelse(all(boundaries>base),boundaries[1],ifelse(all(boundaries<base),boundaries[2],base)))
+  boundaries<-sort(boundaries)
+  return(ifelse(all(boundaries>base),boundaries[1],ifelse(all(boundaries<base),boundaries[2],base)))
 }
 
 
@@ -93,11 +93,11 @@ conservativeBoundary<-function(boundaries,base=0){
 #' lagNA(1:10,-3)
 #' lagNA(1:10,-3,-99)
 lagNA<-function(x,lag=1,fill=NA){
-	out<-x	
-	if(abs(lag)>=length(x))return(rep(fill,length(x)))
-	if(lag>0)out<-c(out[-(1:lag)],rep(fill,lag))
-	if(lag<0)out<-c(rep(fill,abs(lag)),out[-(length(x)+(-1:lag)+1)])
-	return(out)
+  out<-x  
+  if(abs(lag)>=length(x))return(rep(fill,length(x)))
+  if(lag>0)out<-c(out[-(1:lag)],rep(fill,lag))
+  if(lag<0)out<-c(rep(fill,abs(lag)),out[-(length(x)+(-1:lag)+1)])
+  return(out)
 }
 
 #' Calculating a moving average/max/min statistic over a vector
@@ -113,8 +113,8 @@ lagNA<-function(x,lag=1,fill=NA){
 #' movingStat(1:20,min)
 #' movingStat(rnorm(100),mean,5)
 movingStat<-function(vec,statFunc=max,spacer=2){
-	n<-length(vec)
-	sapply(1:n,function(x)statFunc(vec[max(1,x-spacer):min(n,x+spacer)]))
+  n<-length(vec)
+  sapply(1:n,function(x)statFunc(vec[max(1,x-spacer):min(n,x+spacer)]))
 }
 
 #' Convenience function to check all args are same length
@@ -123,9 +123,9 @@ movingStat<-function(vec,statFunc=max,spacer=2){
 #' @export
 #' @return logical indicating whether all input are the same length
 allSameLength<-function(...){
-	args<-list(...)
-	ns<-sapply(args,length)
-	return(all(ns==ns[1]))
+  args<-list(...)
+  ns<-sapply(args,length)
+  return(all(ns==ns[1]))
 }
 
 
@@ -136,9 +136,9 @@ allSameLength<-function(...){
 #' @export
 #' @return logical indicating whether any argument contains NA
 anyArgsNA<-function(...,recursive=FALSE){
-	args<-list(...)
-	hasNa<-anyNA(args,recursive=recursive)
-	return(hasNa)
+  args<-list(...)
+  hasNa<-anyNA(args,recursive=recursive)
+  return(hasNa)
 }
 
 #' Cache an operation to disk or load if cache file present
@@ -167,30 +167,30 @@ anyArgsNA<-function(...,recursive=FALSE){
 #' cacheOperation(cache,function(x)sum(x^y),1:10,OVERWRITE=TRUE)
 #' cacheOperation(cache,mean,x=1:100,OVERWRITE=TRUE,EXCLUDE='x')
 cacheOperation<-function(cacheFile,operation,...,OVERWRITE=FALSE,VOCAL=TRUE,EXCLUDE=NULL){
-	#avoid evaluation EXCLUDEd args until necessary since they're probably big
-	unevalArgs<-match.call(expand.dots=FALSE)$'...'
-	varSelector<-if(is.null(names(unevalArgs)))rep(TRUE,length(unevalArgs)) else !names(unevalArgs) %in% EXCLUDE
-	allArgs<-lapply(unevalArgs[varSelector],eval)
-	#try to prevent function scope from changing things
-	md5<-digest::digest(lapply(c(operation,allArgs),function(x)if(is.function(x))deparse(x)else x))
-	if(file.exists(cacheFile)){
-		tmp<-new.env()
-		load(cacheFile,envir=tmp)
-		if(with(tmp,md5)==md5){
-			if(VOCAL)message('Cache ',cacheFile,' does exist. Loading data')
-			return(with(tmp,out))
-		}else{
-			if(!OVERWRITE)stop(simpleError(sprintf('Input does not match cache for %s. Please delete cache file',cacheFile)))
-			if(VOCAL)message('Cache hash does not match args. Rerunning operation')
-		}
-	}
+  #avoid evaluation EXCLUDEd args until necessary since they're probably big
+  unevalArgs<-match.call(expand.dots=FALSE)$'...'
+  varSelector<-if(is.null(names(unevalArgs)))rep(TRUE,length(unevalArgs)) else !names(unevalArgs) %in% EXCLUDE
+  allArgs<-lapply(unevalArgs[varSelector],eval)
+  #try to prevent function scope from changing things
+  md5<-digest::digest(lapply(c(operation,allArgs),function(x)if(is.function(x))deparse(x)else x))
+  if(file.exists(cacheFile)){
+    tmp<-new.env()
+    load(cacheFile,envir=tmp)
+    if(with(tmp,md5)==md5){
+      if(VOCAL)message('Cache ',cacheFile,' does exist. Loading data')
+      return(with(tmp,out))
+    }else{
+      if(!OVERWRITE)stop(simpleError(sprintf('Input does not match cache for %s. Please delete cache file',cacheFile)))
+      if(VOCAL)message('Cache hash does not match args. Rerunning operation')
+    }
+  }
 
-	if(VOCAL)message('Cache ',cacheFile,' does not exist. Running operation')
-	#make sure we have all the args if we excluded some
-	if(!is.null(EXCLUDE))allArgs<-list(...)
-	out<-do.call(operation,allArgs)
-	save(md5,out,file=cacheFile)
-	return(out)
+  if(VOCAL)message('Cache ',cacheFile,' does not exist. Running operation')
+  #make sure we have all the args if we excluded some
+  if(!is.null(EXCLUDE))allArgs<-list(...)
+  out<-do.call(operation,allArgs)
+  save(md5,out,file=cacheFile)
+  return(out)
 }
 
 #' Check predictions of glm by cross validation
@@ -207,22 +207,22 @@ cacheOperation<-function(cacheFile,operation,...,OVERWRITE=FALSE,VOCAL=TRUE,EXCL
 #' z<-data.frame('x'=1:11,y=c(rnorm(10,1:10),100))
 #' cv.glm.par(glm(y~x,data=z))
 cv.glm.par<-function(model,data=eval(modelCall$data),K=nrow(data),nCores=1,subsets=NULL,vocal=FALSE){
-	modelCall<-model$call
-	n<-nrow(data)
-	if(is.null(subsets))subsets<-split(1:n,sample(rep(1:K,length.out=n)))
-	preds<-parallel::mclapply(subsets,function(outGroup){
-		if(vocal)cat('.')
-		subsetData<-data[-outGroup,,drop=FALSE]
-		predData<-data[outGroup,,drop=FALSE]
-		thisModel<-modelCall
-		thisModel$data<-subsetData
-		return(stats::predict(eval(thisModel),predData))
-	},mc.cores=nCores)
-	pred<-unlist(preds)[order(unlist(subsets))]
-	subsetId<-rep(1:K,sapply(subsets,length))[order(unlist(subsets))]
-	out<-data.frame(pred,subsetId)
-	rownames(out)<-NULL
-	return(out)
+  modelCall<-model$call
+  n<-nrow(data)
+  if(is.null(subsets))subsets<-split(1:n,sample(rep(1:K,length.out=n)))
+  preds<-parallel::mclapply(subsets,function(outGroup){
+    if(vocal)cat('.')
+    subsetData<-data[-outGroup,,drop=FALSE]
+    predData<-data[outGroup,,drop=FALSE]
+    thisModel<-modelCall
+    thisModel$data<-subsetData
+    return(stats::predict(eval(thisModel),predData))
+  },mc.cores=nCores)
+  pred<-unlist(preds)[order(unlist(subsets))]
+  subsetId<-rep(1:K,sapply(subsets,length))[order(unlist(subsets))]
+  out<-data.frame(pred,subsetId)
+  rownames(out)<-NULL
+  return(out)
 }
 
 #' A function to break an mclapply into parts, save to disk and run independently
@@ -240,43 +240,43 @@ cv.glm.par<-function(model,data=eval(modelCall$data),K=nrow(data),nCores=1,subse
 #' cleanMclapply(1:10,2,sqrt)
 #' cleanMclapply(1:10,2,function(x,y)x^y,y=3)
 cleanMclapply<-function(x,mc.cores,applyFunc,...,extraCode='',nSplits=mc.cores,VOCAL=TRUE,envir=.GlobalEnv){
-	#otherwise global variables can get pulled along with function environment
-	environment(applyFunc)<-new.env()
-	if(nSplits<mc.cores)nSplits<-mc.cores
-	splits<-unique(round(seq(0,length(x),length.out=nSplits+1)))
-	if(length(splits)<nSplits+1)nSplits<-length(splits)-1 #not enough items to fill so set lower
-	dotVars<-match.call(expand.dots=FALSE)$'...'
-	extraArgs<-lapply(dotVars,eval,envir=envir)
-	files<-c()
-	outFiles<-c()
-	scriptFiles<-c()
-	logFiles<-c()
-	for(ii in 1:nSplits){
-		if(VOCAL)message("Writing core ",ii," data")
-		thisInRdat<-tempfile()
-		thisRScript<-tempfile()
-		thisOutRdat<-tempfile()
-		thisLog<-tempfile()
-		THISDATA__<-x[(splits[ii]+1):splits[ii+1]]
-		SAVEDATA__<-c('THISDATA__'=list(THISDATA__),'applyFunc'=applyFunc,extraArgs)
-		save(SAVEDATA__,file=thisInRdat)
-		script<-sprintf('load("%s")\n%s\nout<-with(SAVEDATA__,lapply(THISDATA__,applyFunc%s%s))\nsave(out,file="%s");',thisInRdat,paste(extraCode,collapse=';'),ifelse(length(extraArgs)>0,',',''),paste(names(extraArgs),names(extraArgs),sep='=',collapse=','),thisOutRdat)
-		writeLines(script,thisRScript)
-		outFiles<-c(outFiles,thisOutRdat)		
-		scriptFiles<-c(scriptFiles,thisRScript)		
-		logFiles<-c(logFiles,thisLog)		
-	}
-	if(VOCAL)message("Running")
-	if(VOCAL)message("Logs: ",paste(logFiles,collapse=', '))
-	exitCode<-parallel::mclapply(mapply(c,scriptFiles,logFiles,SIMPLIFY=FALSE),function(x){out<-system(sprintf("R CMD BATCH --no-save --no-restore %s %s",x[1],x[2]));if(VOCAL)cat('.');return(out)},mc.cores=mc.cores)
-	if(VOCAL)cat('\n')
-	if(any(exitCode!=0)){
-		if(VOCAL)message(paste(utils::tail(readLines(logFiles[exitCode!=0][1]),30),collapse='\n'))
-		stop(simpleError('Problem running multi R code'))
-	}
-	if(VOCAL)message("Loading split outputs")
-	out<-do.call(c,lapply(outFiles,function(outFile){load(outFile);return(out)}))
-	return(out)
+  #otherwise global variables can get pulled along with function environment
+  environment(applyFunc)<-new.env()
+  if(nSplits<mc.cores)nSplits<-mc.cores
+  splits<-unique(round(seq(0,length(x),length.out=nSplits+1)))
+  if(length(splits)<nSplits+1)nSplits<-length(splits)-1 #not enough items to fill so set lower
+  dotVars<-match.call(expand.dots=FALSE)$'...'
+  extraArgs<-lapply(dotVars,eval,envir=envir)
+  files<-c()
+  outFiles<-c()
+  scriptFiles<-c()
+  logFiles<-c()
+  for(ii in 1:nSplits){
+    if(VOCAL)message("Writing core ",ii," data")
+    thisInRdat<-tempfile()
+    thisRScript<-tempfile()
+    thisOutRdat<-tempfile()
+    thisLog<-tempfile()
+    THISDATA__<-x[(splits[ii]+1):splits[ii+1]]
+    SAVEDATA__<-c('THISDATA__'=list(THISDATA__),'applyFunc'=applyFunc,extraArgs)
+    save(SAVEDATA__,file=thisInRdat)
+    script<-sprintf('load("%s")\n%s\nout<-with(SAVEDATA__,lapply(THISDATA__,applyFunc%s%s))\nsave(out,file="%s");',thisInRdat,paste(extraCode,collapse=';'),ifelse(length(extraArgs)>0,',',''),paste(names(extraArgs),names(extraArgs),sep='=',collapse=','),thisOutRdat)
+    writeLines(script,thisRScript)
+    outFiles<-c(outFiles,thisOutRdat)    
+    scriptFiles<-c(scriptFiles,thisRScript)    
+    logFiles<-c(logFiles,thisLog)    
+  }
+  if(VOCAL)message("Running")
+  if(VOCAL)message("Logs: ",paste(logFiles,collapse=', '))
+  exitCode<-parallel::mclapply(mapply(c,scriptFiles,logFiles,SIMPLIFY=FALSE),function(x){out<-system(sprintf("R CMD BATCH --no-save --no-restore %s %s",x[1],x[2]));if(VOCAL)cat('.');return(out)},mc.cores=mc.cores)
+  if(VOCAL)cat('\n')
+  if(any(exitCode!=0)){
+    if(VOCAL)message(paste(utils::tail(readLines(logFiles[exitCode!=0][1]),30),collapse='\n'))
+    stop(simpleError('Problem running multi R code'))
+  }
+  if(VOCAL)message("Loading split outputs")
+  out<-do.call(c,lapply(outFiles,function(outFile){load(outFile);return(out)}))
+  return(out)
 }
 
 
@@ -292,15 +292,15 @@ cleanMclapply<-function(x,mc.cores,applyFunc,...,extraCode='',nSplits=mc.cores,V
 #' @examples
 #' orderIn(c('z','c','a','t'),letters)
 orderIn<-function(query,target,strict=FALSE,orderFunc=order,...){
-	if(any(!query %in% target)){
-		if(strict){
-			stop(simpleError('Query not in target'))
-		}else{
-			target<-c(target,unique(query[!query %in% target]))
-		}
-	}
-	newOrder<-orderFunc(sapply(query,function(x)min(which(x==target))),...)
-	return(newOrder)
+  if(any(!query %in% target)){
+    if(strict){
+      stop(simpleError('Query not in target'))
+    }else{
+      target<-c(target,unique(query[!query %in% target]))
+    }
+  }
+  newOrder<-orderFunc(sapply(query,function(x)min(which(x==target))),...)
+  return(newOrder)
 }
 
 
@@ -315,12 +315,12 @@ orderIn<-function(query,target,strict=FALSE,orderFunc=order,...){
 #' fillList(list(c('a'=1,'b'=2),c('c'=3)))
 #' fillList(list(c('a'=1,'b'=2),c('c'=3)),namesList='a')
 fillList<-function(x,namesList=unique(unlist(lapply(x,names))),fill=NA){
-	output<-lapply(x,function(x){
-		x<-x[names(x) %in% namesList]
-		x[namesList[!namesList %in% names(x)]]<-fill
-		return(x)
-	})	
-	return(output)
+  output<-lapply(x,function(x){
+    x<-x[names(x) %in% namesList]
+    x[namesList[!namesList %in% names(x)]]<-fill
+    return(x)
+  })  
+  return(output)
 }
 
 
@@ -335,18 +335,18 @@ fillList<-function(x,namesList=unique(unlist(lapply(x,names))),fill=NA){
 #' points(rep(5,5),convertLineToUser(0:4,1),xpd=NA)
 #' points(convertLineToUser(0:4,2),rep(5,5),xpd=NA)
 convertLineToUser<-function(line,axis=1){
-	if(!(axis %in% 1:4))stop(simpleError('Undefined axis'))
-	axisPair<-sort((c(axis-1,axis+1)%%4)+1)
-	isHeight<-(axis%%2)==1
-	isSecond<-axis>2
-	thisMar<-graphics::par('mar')[axis]
-	marWidth<-thisMar/sum(graphics::par('mar')[axisPair])*(graphics::par('fin')-graphics::par('pin'))[isHeight+1]
-	widthPerLine<-marWidth/thisMar
-	#find base line + add in if plot doesn't cover whole device e.g. graphics::par(mfrow=c(2,1))
-	base<-ifelse(isSecond,graphics::par('fin')[isHeight+1]-widthPerLine*thisMar,widthPerLine*thisMar) + graphics::par('fig')[1+isHeight*2]*graphics::par('din')[isHeight+1]
-	func<-if(isHeight)graphics::grconvertY else graphics::grconvertX
-	out<-func(base+line*widthPerLine*ifelse(isSecond,1,-1),'inches','user')
-	return(out)
+  if(!(axis %in% 1:4))stop(simpleError('Undefined axis'))
+  axisPair<-sort((c(axis-1,axis+1)%%4)+1)
+  isHeight<-(axis%%2)==1
+  isSecond<-axis>2
+  thisMar<-graphics::par('mar')[axis]
+  marWidth<-thisMar/sum(graphics::par('mar')[axisPair])*(graphics::par('fin')-graphics::par('pin'))[isHeight+1]
+  widthPerLine<-marWidth/thisMar
+  #find base line + add in if plot doesn't cover whole device e.g. graphics::par(mfrow=c(2,1))
+  base<-ifelse(isSecond,graphics::par('fin')[isHeight+1]-widthPerLine*thisMar,widthPerLine*thisMar) + graphics::par('fig')[1+isHeight*2]*graphics::par('din')[isHeight+1]
+  func<-if(isHeight)graphics::grconvertY else graphics::grconvertX
+  out<-func(base+line*widthPerLine*ifelse(isSecond,1,-1),'inches','user')
+  return(out)
 }
 
 #' Convert from user coordinates to axis line
@@ -362,20 +362,20 @@ convertLineToUser<-function(line,axis=1){
 #' mtext('Test2',2,convertUserToLine(0,2))
 #' points(0,5.5,xpd=NA)
 convertUserToLine<-function(usr,axis=1){
-	if(!(axis %in% 1:4))stop(simpleError('Undefined axis'))
-	axisPair<-sort((c(axis-1,axis+1)%%4)+1)
-	isHeight<-(axis%%2)==1
-	isSecond<-axis>2
-	thisMar<-graphics::par('mar')[axis]
-	marWidth<-thisMar/sum(graphics::par('mar')[axisPair])*(graphics::par('fin')-graphics::par('pin'))[isHeight+1]
-	widthPerLine<-marWidth/thisMar
-	#find base line + add in if plot doesn't cover whole device e.g. graphics::par(mfrow=c(2,1))
-	plotWidth<-graphics::par('fin')[isHeight+1]
-	func<-if(isHeight)graphics::grconvertY else graphics::grconvertX
-	usrInches<-func(usr,'user','inches')
-	base<-ifelse(isSecond,graphics::par('fin')[isHeight+1]-widthPerLine*thisMar,widthPerLine*thisMar) + graphics::par('fig')[1+isHeight*2]*graphics::par('din')[isHeight+1]
-	out<-(usrInches-base)/widthPerLine*ifelse(isSecond,1,-1)
-	return(out)
+  if(!(axis %in% 1:4))stop(simpleError('Undefined axis'))
+  axisPair<-sort((c(axis-1,axis+1)%%4)+1)
+  isHeight<-(axis%%2)==1
+  isSecond<-axis>2
+  thisMar<-graphics::par('mar')[axis]
+  marWidth<-thisMar/sum(graphics::par('mar')[axisPair])*(graphics::par('fin')-graphics::par('pin'))[isHeight+1]
+  widthPerLine<-marWidth/thisMar
+  #find base line + add in if plot doesn't cover whole device e.g. graphics::par(mfrow=c(2,1))
+  plotWidth<-graphics::par('fin')[isHeight+1]
+  func<-if(isHeight)graphics::grconvertY else graphics::grconvertX
+  usrInches<-func(usr,'user','inches')
+  base<-ifelse(isSecond,graphics::par('fin')[isHeight+1]-widthPerLine*thisMar,widthPerLine*thisMar) + graphics::par('fig')[1+isHeight*2]*graphics::par('din')[isHeight+1]
+  out<-(usrInches-base)/widthPerLine*ifelse(isSecond,1,-1)
+  return(out)
 }
 
 #' Find coords for arrow plotting
@@ -393,12 +393,12 @@ convertUserToLine<-function(usr,axis=1){
 #' plot(1:10)
 #' polygon(arrow(1:5,3:7*1.5,2:6))
 arrow<-function(left,right,y,arrowLength=diff(graphics::par('usr')[1:2])*.05,shaft=.2,point=.4,concat=TRUE){
-	if(any(left>right))stop(simpleError('Left border > right border of arrow'))
-	arrowX<-right-arrowLength
-	arrowX<-ifelse(arrowX<left,left+(right-left)/10,arrowX)
-	coords<-mapply(function(left,right,y,arrowX){data.frame('x'=c(left,arrowX,arrowX,right,arrowX,arrowX,left),'y'=y+c(shaft,shaft,point,0,-point,-shaft,-shaft))},left,right,y,arrowX,SIMPLIFY=FALSE)
-	if(concat)coords<-do.call(rbind,lapply(coords,function(x)return(rbind(x,c(NA,NA)))))
-	return(coords)
+  if(any(left>right))stop(simpleError('Left border > right border of arrow'))
+  arrowX<-right-arrowLength
+  arrowX<-ifelse(arrowX<left,left+(right-left)/10,arrowX)
+  coords<-mapply(function(left,right,y,arrowX){data.frame('x'=c(left,arrowX,arrowX,right,arrowX,arrowX,left),'y'=y+c(shaft,shaft,point,0,-point,-shaft,-shaft))},left,right,y,arrowX,SIMPLIFY=FALSE)
+  if(concat)coords<-do.call(rbind,lapply(coords,function(x)return(rbind(x,c(NA,NA)))))
+  return(coords)
 }
 
 #' Stack regions into smallest number of lines (using greedy algorithm)
@@ -411,19 +411,19 @@ arrow<-function(left,right,y,arrowLength=diff(graphics::par('usr')[1:2])*.05,sha
 #' stackRegions(1:10,1:10+2)
 #' stackRegions(1:10,1:10+5)
 stackRegions<-function(starts,ends){
-	if(any(ends<starts))stop(simpleError('Ends less than starts'))
-	nReg<-length(starts)
-	if(nReg!=length(ends))stop(simpleError('Starts and ends must be same length'))
-	startEnds<-data.frame('id'=1:nReg,start=starts,end=ends)
-	startEnds<-startEnds[order(startEnds$start,startEnds$end),]
-	lineNum<-rep(NA,nReg)
-	linePos<-rep(min(starts)-1,nReg)
-	for(i in 1:nReg){
-		selectLine<-min(which(linePos<startEnds$start[i]))
-		lineNum[i]<-selectLine
-		linePos[selectLine]<-max(startEnds$end[i],linePos[selectLine])
-	}
-	return(lineNum[order(startEnds$id)])
+  if(any(ends<starts))stop(simpleError('Ends less than starts'))
+  nReg<-length(starts)
+  if(nReg!=length(ends))stop(simpleError('Starts and ends must be same length'))
+  startEnds<-data.frame('id'=1:nReg,start=starts,end=ends)
+  startEnds<-startEnds[order(startEnds$start,startEnds$end),]
+  lineNum<-rep(NA,nReg)
+  linePos<-rep(min(starts)-1,nReg)
+  for(i in 1:nReg){
+    selectLine<-min(which(linePos<startEnds$start[i]))
+    lineNum[i]<-selectLine
+    linePos[selectLine]<-max(startEnds$end[i],linePos[selectLine])
+  }
+  return(lineNum[order(startEnds$id)])
 }
 
 
@@ -440,14 +440,14 @@ stackRegions<-function(starts,ends){
 #' wilsonInt(0,100)
 #' wilsonInt(100,1)
 wilsonInt<-function(nTrue,nFalse,alpha=.05){
-	nTrue<-nTrue[1]
-	nFalse<-nFalse[1]
-	if(nTrue<0|nFalse<0)stop(simpleError('Counts less than zero'))
-	n<-nTrue+nFalse
-	prop<-nTrue/n
-	z<-stats::qnorm(1-alpha/2)
-	plusMinus<-z*sqrt(prop*(1-prop)/n+z^2/4/n^2)
-	return((prop+1/2/n*z^2+c(-plusMinus,plusMinus))/(1+1/n*z^2))
+  nTrue<-nTrue[1]
+  nFalse<-nFalse[1]
+  if(nTrue<0|nFalse<0)stop(simpleError('Counts less than zero'))
+  n<-nTrue+nFalse
+  prop<-nTrue/n
+  z<-stats::qnorm(1-alpha/2)
+  plusMinus<-z*sqrt(prop*(1-prop)/n+z^2/4/n^2)
+  return((prop+1/2/n*z^2+c(-plusMinus,plusMinus))/(1+1/n*z^2))
 }
 
 
@@ -460,8 +460,8 @@ wilsonInt<-function(nTrue,nFalse,alpha=.05){
 #' mostAbundant(c(1:10,1))
 #' mostAbundant(c('d',rep(letters,10)))
 mostAbundant<-function(values){
-	tmp<-table(values)
-	return(names(tmp)[which.max(tmp)])
+  tmp<-table(values)
+  return(names(tmp)[which.max(tmp)])
 }
 
 #' Convenience function for converting 1-d table to named vector
@@ -472,8 +472,8 @@ mostAbundant<-function(values){
 #' @examples
 #' table2vector(1:10)
 table2vector<-function(tab){
-	if(length(dim(tab))>1)stop(simpleError('table2vector only works with 1 dimensional tables'))
-	return(structure(as.vector(tab),.Names=names(tab)))
+  if(length(dim(tab))>1)stop(simpleError('table2vector only works with 1 dimensional tables'))
+  return(structure(as.vector(tab),.Names=names(tab)))
 }
 
 #' Convenience function to escape characters for insertion into regex brackets
@@ -487,7 +487,7 @@ table2vector<-function(tab){
 #' @examples
 #' escapeRegexBracketChars(c(']','\\','-','A','B'))
 escapeRegexBracketChars<-function(regexChars,escapeChars=c('^','-','[',']','\\')){
-	return(sprintf('%s%s',ifelse(regexChars %in% escapeChars,'\\',''),regexChars))
+  return(sprintf('%s%s',ifelse(regexChars %in% escapeChars,'\\',''),regexChars))
 }
 
 #' Convenience function to fill values down a column
