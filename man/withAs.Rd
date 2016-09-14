@@ -4,12 +4,12 @@
 \alias{withAs}
 \title{Alternative with() function with explicit naming}
 \usage{
-withAs(expr, ...)
+withAs(..., expr = NULL)
 }
 \arguments{
-\item{expr}{expression to evaluate.}
-
 \item{...}{data to be used in expression. Argument names are used as temporary variable names. So \code{xx=data.frame('a'=1:10)} will result in a data.frame called \code{xx} with column \code{a} in the evaluating environment.}
+
+\item{expr}{expression to evaluate. if expr is not defined by name then the last unnamed argument is used.}
 }
 \value{
 the value of the evaluated \code{expr}
@@ -21,6 +21,8 @@ An alternative to the \code{with} function in base R where \code{data} is repres
 d<-3:12
 longNameDataFrame<-data.frame('a'=1:10,'b'=2:11)
 with(longNameDataFrame,a+b+d)
-withAs(xx$a+xx$b+d,xx=longNameDataFrame)
+withAs(xx=longNameDataFrame,xx$a+xx$b+d)
+anotherDf<-data.frame('c'=2:12)
+withAs(xx=longNameDataFrame,zz=anotherDf,xx$a+xx$b+zz$c)
 }
 
