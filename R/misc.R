@@ -519,12 +519,16 @@ fillDown<-function(x,emptyStrings=c(NA,''),errorIfFirstEmpty=TRUE){
 #'
 #' An alternative to the \code{with} function in base R where \code{data} is represented by a temporary variable within a new environment rather than evaluating \code{expr} directly within \code{data}. This can help explicitly show which variables are contained within \code{data} from those outside.
 #'
-#' @param ...
+#' @param data a data.frame or list to use for constructing an environment.
 #' @param as a string giving a temporary variable name for data to be renamed as
 #' @param expr expression to evaluate.
 #' @export
-#' @retun
+#' @return the value of the evaluated \code{expr}
 #' @examples
+#' c<-3:12
+#' longNameDataFrame<-data.frame('a'=1:10,'b'=2:11)
+#' with(longNameDataFrame,a+b+c)
+#' withAs(longNameDataFrame,'xx',xx$a+xx$b+c)
 withAs<-function(data,as,expr){
   env<-new.env(parent=parent.frame())
   assign(as,data,envir=env)
