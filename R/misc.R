@@ -513,3 +513,21 @@ fillDown<-function(x,emptyStrings=c(NA,''),errorIfFirstEmpty=TRUE){
   ids<-cummax(ids)
   return(x[ids])
 }
+
+
+#' Alternative with() function with explicit naming
+#'
+#' An alternative to the \code{with} function in base R where \code{data} is represented by a temporary variable within a new environment rather than evaluating \code{expr} directly within \code{data}. This can help explicitly show which variables are contained within \code{data} from those outside.
+#'
+#' @param ...
+#' @param as a string giving a temporary variable name for data to be renamed as
+#' @param expr expression to evaluate.
+#' @export
+#' @retun
+#' @examples
+withAs<-function(data,as,expr){
+  env<-new.env(parent=parent.frame())
+  assign(as,data,envir=env)
+  return(eval(substitute(expr), env))
+}
+
