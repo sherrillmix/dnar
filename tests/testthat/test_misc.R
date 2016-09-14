@@ -265,9 +265,16 @@ test_that("Test fillDown",{
 })
 
 test_that("Test withAs",{
+  expect_equal(with(data.frame('a'=1:9,'b'=0:8),a+b),withAs(xx$a+xx$b,'xx'=data.frame('a'=1:9,'b'=0:8)))
   x<-data.frame('a'=1:10,'b'=2:11,'zzz'=letters[1:10])
-  zz<-10
+  z<-10
+  expect_equal(withAs(xx$a+xx$b,xx=x),1:10+2:11)
   expect_equal(with(x,a+b),withAs(xx$a+xx$b,xx=x))
   expect_equal(withAs(xx$a+yy$b,xx=x,yy=x),withAs(xx$a+xx$b,xx=x))
-  expect_equal(with(x,a+b+zz),withAs(xx$a+xx$b+zz,xx=x))
+  expect_equal(with(x,a+b+z),withAs(xx$a+xx$b+z,xx=x))
+  xx<-data.frame('a'=-1:-10,'b'=-2:-11)
+  expect_equal(with(x,a+b+z),withAs(xx$a+xx$b+z,xx=x))
+  expect_error(withAs(x^10,1:10),'[Uu]nassigned')
+  expect_error(withAs(x^10,xx=x,1:10),'[Uu]nassigned')
+  expect_error(withAs(notARealVariableNameAtAll,xx=x),'not found')
 })

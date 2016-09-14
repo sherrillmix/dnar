@@ -519,20 +519,21 @@ fillDown<-function(x,emptyStrings=c(NA,''),errorIfFirstEmpty=TRUE){
 #'
 #' An alternative to the \code{with} function in base R where \code{data} is represented by a temporary variable within a new environment rather than evaluating \code{expr} directly within \code{data}. This can help explicitly show which variables are contained within \code{data} from those outside.
 #'
-#' @param data a data.frame or list to use for constructing an environment.
-#' @param as a string giving a temporary variable name for data to be renamed as
 #' @param expr expression to evaluate.
+#' @param ... data to be used in expression. Argument names are used as temporary variable names. So \code{xx=data.frame('a'=1:10)} will result in a data.frame called \code{xx} with column \code{a} in the evaluating environment.
 #' @export
 #' @return the value of the evaluated \code{expr}
 #' @examples
 #' d<-3:12
 #' longNameDataFrame<-data.frame('a'=1:10,'b'=2:11)
 #' with(longNameDataFrame,a+b+d)
-#' withAs(xx$a+xx$b+c,xx=longNameDataFrame)
+#' withAs(xx$a+xx$b+d,xx=longNameDataFrame)
 withAs<-function(expr,...){
-  env<-new.env(parent=parent.frame())
+  parent<-parent.frame()
+  env<-new.env(parent=parent)
   dotVars<-match.call(expand.dots=FALSE)$'...'
-  if(any(names(dotVars)==''))stop(simpleError('Unassigned variables passed to withAs'))
-  mapply(function(as,val)assign(as,eval(val,envir=parent.frame()),env),names(dotVars),dotVars)
+  if(is.null(names(dotVars))||any(names(dotVars)==''))stop(simpleError('Unassigned variables passed to withAs'))
+  #make sure to get parent above and not within the mapply
+  mapply(function(as,val)assign(as,eval(val,envir=parent),env),names(dotVars),dotVars)
   return(eval(substitute(expr), env))
 }
