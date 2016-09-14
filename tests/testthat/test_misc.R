@@ -269,6 +269,7 @@ test_that("Test withAs",{
   x<-data.frame('a'=1:10,'b'=2:11,'zzz'=letters[1:10])
   z<-10
   expect_equal(withAs(xx$a+xx$b,xx=x),1:10+2:11)
+  expect_equal(withAs(xx$a+xx$b,xx=x[1:5,]),1:5+2:6)
   expect_equal(with(x,a+b),withAs(xx$a+xx$b,xx=x))
   expect_equal(withAs(xx$a+yy$b,xx=x,yy=x),withAs(xx$a+xx$b,xx=x))
   expect_equal(with(x,a+b+z),withAs(xx$a+xx$b+z,xx=x))
