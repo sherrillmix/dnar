@@ -111,6 +111,8 @@ test_that("Test cacheOperation",{
   expect_equal(cacheOperation(cache,median,1:11,OVERWRITE=TRUE),median(1:11))
   expect_equal(cacheOperation(cache,mean,x=1:10,OVERWRITE=TRUE,EXCLUDE='x'),mean(1:10))
   expect_equal(cacheOperation(cache,mean,x=1:20,EXCLUDE='x'),mean(1:10)) #incorrect answer but expected when the md5 check is excluded
+  expect_error(sapply(1:2,function(x){internalVar<-1:20;cacheOperation(cache,sqrt,internalVar,OVERWRITE=TRUE)}),NA)
+  expect_equal(lapply(1:2,function(x){internalVar<-1:10;cacheOperation(cache,sqrt,internalVar,OVERWRITE=TRUE)}),list(sqrt(1:10),sqrt(1:10)))
 })
 
 test_that("Test cv.glm.par",{

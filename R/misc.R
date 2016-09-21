@@ -167,10 +167,11 @@ anyArgsNA<-function(...,recursive=FALSE){
 #' cacheOperation(cache,function(x)sum(x^y),1:10,OVERWRITE=TRUE)
 #' cacheOperation(cache,mean,x=1:100,OVERWRITE=TRUE,EXCLUDE='x')
 cacheOperation<-function(cacheFile,operation,...,OVERWRITE=FALSE,VOCAL=TRUE,EXCLUDE=NULL){
+  parent<-parent.frame()
   #avoid evaluation EXCLUDEd args until necessary since they're probably big
   unevalArgs<-match.call(expand.dots=FALSE)$'...'
   varSelector<-if(is.null(names(unevalArgs)))rep(TRUE,length(unevalArgs)) else !names(unevalArgs) %in% EXCLUDE
-  allArgs<-lapply(unevalArgs[varSelector],eval)
+  allArgs<-lapply(unevalArgs[varSelector],eval,envir=parent)
   #try to prevent function scope from changing things
   md5<-digest::digest(lapply(c(operation,allArgs),function(x)if(is.function(x))deparse(x)else x))
   if(file.exists(cacheFile)){
@@ -188,7 +189,7 @@ cacheOperation<-function(cacheFile,operation,...,OVERWRITE=FALSE,VOCAL=TRUE,EXCL
   if(VOCAL)message('Cache ',cacheFile,' does not exist. Running operation')
   #make sure we have all the args if we excluded some
   if(!is.null(EXCLUDE))allArgs<-list(...)
-  out<-do.call(operation,allArgs)
+  out<-do.call(operation,allArgs,envir=parent)
   save(md5,out,file=cacheFile)
   return(out)
 }
