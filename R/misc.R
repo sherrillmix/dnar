@@ -543,3 +543,45 @@ withAs<-function(...,expr=NULL){
   mapply(function(as,val)assign(as,eval(val,envir=parent),env),names(dotVars),dotVars)
   return(eval(substitute(expr), env))
 }
+
+
+#' Add a pretty log axis to a plot
+#'
+#' Adds a log axis to the current plot with \code{log='x'} or \code{log='y'} with ticks and labels specified with powers of 10
+#'
+#' @param side an integer specifying which side of the plot the axis is to be drawn on.  The axis is placed as follows: 1=below, 2=left, 3=above and 4=right. 
+#' @param exponent If true label sides using exponents of 10. Otherwise just use normal numbers
+#' @param addExtra If true add additional labels at 5 or 2 if there are few labels 
+#' @param minorTcl Length of the minor unlabelled ticks. NA to suppress
+#' @param axisMin The minimum to extend ticks to
+#' @param ... Additional arguments to \code{axis}
+#' @export
+#' @return An invisible list containing the minor and major axis label positions
+#' @examples
+#' plot(1:1000,yaxt='n',log='xy',xaxt='n')
+#' logAxis(las=1)
+#' logAxis(1,las=1,exponent=FALSE)
+logAxis<-function(side=2,exponent=TRUE,addExtra=!exponent,minorTcl=-.2,axisMin=-Inf,...){
+  if(side %in% c(2,4)){
+    minX<-max(10^graphics::par('usr')[3],axisMin)
+    maxX<-10^graphics::par('usr')[4]
+  }else{
+    minX<-max(10^graphics::par('usr')[1],axisMin)
+    maxX<-10^graphics::par('usr')[2]
+  }
+  if(log10(maxX)-log10(minX)>400)stop(simpleError('Huge range in logged axis'))
+  allTicks<-unlist(lapply(floor(log10(minX)):ceiling(log10(maxX)),function(x)1:9*10^x))
+  allTicks<-allTicks[allTicks<=maxX & allTicks>=minX]
+  graphics::axis(side,allTicks,rep('',length(allTicks)),tcl=minorTcl)
+  prettyY<-seq(ceiling(log10(minX)),floor(log10(maxX)),1)
+  graphics::axis(side,10^prettyY,rep('',length(prettyY)),tcl=minorTcl*2)
+  if(length(prettyY)>7)prettyY<-pretty(prettyY)
+  if(addExtra){
+    if(length(prettyY)<5)prettyY<-unique(c(prettyY,prettyY+log10(5),prettyY-log10(2)))
+    if(length(prettyY)<5)prettyY<-unique(c(prettyY,prettyY+log10(2),prettyY-log10(5)))
+  }
+  if(exponent) labs<-ifelse(prettyY==0,1,sapply(prettyY,function(x)as.expression(bquote(10^.(x)))))
+  else labs<-10^prettyY
+  graphics::axis(side,10^prettyY,labs,...)
+  return(invisible(list('minor'=allTicks,'major'=10^prettyY)))
+}
