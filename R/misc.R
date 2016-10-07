@@ -574,14 +574,22 @@ logAxis<-function(side=2,exponent=TRUE,addExtra=!exponent,minorTcl=-.2,axisMin=-
   allTicks<-unlist(lapply(floor(log10(minX)):ceiling(log10(maxX)),function(x)1:9*10^x))
   allTicks<-allTicks[allTicks<=maxX & allTicks>=minX]
   graphics::axis(side,allTicks,rep('',length(allTicks)),tcl=minorTcl)
-  prettyY<-seq(ceiling(log10(minX)),floor(log10(maxX)),1)
+  if(ceiling(log10(minX))<=floor(log10(maxX)))prettyY<-seq(ceiling(log10(minX)),floor(log10(maxX)),1)
+  else prettyY<-c()
   graphics::axis(side,10^prettyY,rep('',length(prettyY)),tcl=minorTcl*2)
   if(length(prettyY)>7)prettyY<-pretty(prettyY)
+  if(length(prettyY)==0)prettyY<-c(ceiling(log10(minX)),floor(log10(maxX)))
   if(addExtra){
-    if(length(prettyY)<5)prettyY<-unique(c(prettyY,prettyY+log10(5),prettyY-log10(2)))
-    if(length(prettyY)<5)prettyY<-unique(c(prettyY,prettyY+log10(2),prettyY-log10(5)))
+    origPretty<-prettyY
+    if(sum(prettyY>=log10(minX)&prettyY<=log10(maxX))<4)prettyY<-unique(c(prettyY,origPretty+log10(5),origPretty-log10(10/5)))
+    if(sum(prettyY>=log10(minX)&prettyY<=log10(maxX))<4)prettyY<-unique(c(prettyY,origPretty+log10(2),origPretty-log10(10/2)))
+    if(sum(prettyY>=log10(minX)&prettyY<=log10(maxX))<4)prettyY<-unique(c(prettyY,origPretty+log10(3),origPretty-log10(10/3)))
+    if(sum(prettyY>=log10(minX)&prettyY<=log10(maxX))<4)prettyY<-unique(c(prettyY,origPretty+log10(7),origPretty-log10(10/7)))
   }
-  if(exponent) labs<-ifelse(prettyY==0,1,sapply(prettyY,function(x)as.expression(bquote(10^.(x)))))
+  if(exponent){
+    if(any(prettyY%%1!=0))labs<-ifelse(prettyY==0,1,sapply(prettyY,function(x)as.expression(bquote(.(10^(x%%1))%*%10^.(floor(x))))))
+    else labs<-sapply(prettyY,function(x)as.expression(bquote(.(10^(x%%1))%*%10^.(floor(x)))))
+  }
   else labs<-10^prettyY
   graphics::axis(side,10^prettyY,labs,...)
   return(invisible(list('minor'=allTicks,'major'=10^prettyY)))
