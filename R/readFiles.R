@@ -3,6 +3,7 @@
 #' @param fileName name of fastq file
 #' @param convert if TRUE convert condensed quals to space separated numeric quals
 #' @param baseQual integer to subtract from quality characters to convert into quality space
+#' @param ... additional arguments to \code{readLines}
 #' @export
 #' @return dataframe with name, seq, qual
 #' @examples
@@ -13,10 +14,10 @@
 #'   "!''*((((***+))%%%++)(%%%%).1***-+*''))**55CCF>>>>>>CCCCCCC65"
 #' )
 #' read.fastq(textConnection(fastq))
-read.fastq<-function(fileName,convert=FALSE,baseQual=33){
+read.fastq<-function(fileName,convert=FALSE,baseQual=33,...){
 	#assuming no comments and seq and qual on a single line each
 	#assuming any line starting with @ 2 lines later by + is the block and no extra chars (who designed this format?)
-	x<-readLines(fileName)
+	x<-readLines(fileName,...)
 	plusLines<-grep('^\\+',x)
 	atLines<-grep('^@',x)
 	#make sure matching + and @

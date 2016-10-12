@@ -13,6 +13,7 @@ test_that("Test read.fastq",{
   )
   out<-data.frame('name'=c('seq1','seq2'),'seq'=c('GATTTGGGGTTCAAAGCAGTATCGATCAAATAGTAAATCCATTTGTTCAACTCACAGTTT','GACCGGAACT'),'qual'=c("!''*((((***+))%%%++)(%%%%).1***-+*''))**55CCF>>>>>>CCCCCCC65","!''*(!!!*!"),stringsAsFactors=FALSE)
   expect_equal(read.fastq(textConnection(fastq)),out)
+  expect_equal(read.fastq(textConnection(fastq),n=4),out[1,])
   tmpFile<-tempfile()
   writeLines(fastq,tmpFile)
   expect_equal(read.fastq(tmpFile),out)
