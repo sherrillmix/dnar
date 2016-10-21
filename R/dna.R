@@ -448,7 +448,7 @@ parseRegion<-function(reg){
 #' pasteRegion(c('chr1','chr2'),c(100,1235),c(200,2346))
 #' pasteRegion(c('chr1','chr2'),c(100,1235),c(200,2346),c('*','-'))
 pasteRegion<-function(chrs,starts,ends,strands=''){
-	sprintf('%s:%s-%s%s',chrs,trimws(format(starts,scientific=FALSE)),trimws(format(ends,scientific=FALSE)),strands)
+	sprintf('%s:%s-%s%s',chrs,sub('^[ \t\r\n]+','',format(starts,scientific=FALSE)),sub('^[ \t\r\n]+','',format(ends,scientific=FALSE)),strands)
 }
 
 #' Test sam flags for values
