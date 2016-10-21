@@ -1,12 +1,19 @@
 language: r
 sudo: required
+cache: packages
+
+#bioc_packages:
+#  - IRanges
+#  - GenomicRanges
 
 r_packages:
   - covr
 
-bioc_packages:
-  - IRanges
-  - GenomicRanges
+r:
+  - 3.1
+  - oldrel
+  - release
+  - devel
 
 after_success:
-  - Rscript -e 'library(covr); codecov()'
+  - Rscript -e 'covr::codecov()'
