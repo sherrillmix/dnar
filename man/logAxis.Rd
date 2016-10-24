@@ -29,6 +29,7 @@ Adds a log axis to the current plot with \code{log='x'} or \code{log='y'} with t
 \examples{
 plot(1:1000,yaxt='n',log='xy',xaxt='n')
 logAxis(las=1)
+plot(1:1000,yaxt='n',log='xy',xaxt='n')
 logAxis(1,las=1,exponent=FALSE)
 }
 

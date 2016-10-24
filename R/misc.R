@@ -561,6 +561,7 @@ withAs<-function(...,expr=NULL){
 #' @examples
 #' plot(1:1000,yaxt='n',log='xy',xaxt='n')
 #' logAxis(las=1)
+#' plot(1:1000,yaxt='n',log='xy',xaxt='n')
 #' logAxis(1,las=1,exponent=FALSE)
 logAxis<-function(side=2,exponent=TRUE,addExtra=!exponent,minorTcl=-.2,axisMin=-Inf,...){
   if(side %in% c(2,4)){
@@ -587,8 +588,8 @@ logAxis<-function(side=2,exponent=TRUE,addExtra=!exponent,minorTcl=-.2,axisMin=-
     if(sum(prettyY>=log10(minX)&prettyY<=log10(maxX))<4)prettyY<-unique(c(prettyY,origPretty+log10(7),origPretty-log10(10/7)))
   }
   if(exponent){
-    if(any(prettyY%%1!=0))labs<-ifelse(prettyY==0,1,sapply(prettyY,function(x)as.expression(bquote(.(10^(x%%1))%*%10^.(floor(x))))))
-    else labs<-sapply(prettyY,function(x)as.expression(bquote(.(10^(x%%1))%*%10^.(floor(x)))))
+    if(any(prettyY%%1!=0))labs<-sapply(prettyY,function(x)as.expression(bquote(.(10^(x%%1))%*%10^.(floor(x)))))
+    else labs<-ifelse(prettyY==0,1,sapply(prettyY,function(x)as.expression(bquote(10^.(floor(x))))))
   }
   else labs<-10^prettyY
   graphics::axis(side,10^prettyY,labs,...)
