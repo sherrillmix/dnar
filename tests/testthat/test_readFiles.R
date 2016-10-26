@@ -160,6 +160,8 @@ test_that("Test readBlast",{
   writeLines(blastString,gzHandle)
   close(gzHandle)
   expect_equal(read.blast(tmpGz),out)
+  expect_equal(read.blast(textConnection('')),NULL)
+  expect_error(read.blast('NOT A REAL FILE'),'cannot open')
 })
 
 test_that("Test write.fastq",{
