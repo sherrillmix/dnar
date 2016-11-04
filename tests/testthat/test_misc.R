@@ -302,5 +302,7 @@ test_that("Test logAxis",{
     expect_error(logAxis(1),NA)
     plot(50:51,log='x')
     expect_error(logAxis(1),NA)
+    plot(0:10+1,log='y')
+    expect_error(logAxis(2,offset=1),NA)
   dev.off()
 })
