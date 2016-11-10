@@ -565,13 +565,10 @@ withAs<-function(...,expr=NULL){
 #' plot(1:1000,yaxt='n',log='xy',xaxt='n')
 #' logAxis(1,las=1,exponent=FALSE)
 logAxis<-function(side=2,exponent=TRUE,addExtra=!exponent,minorTcl=-.2,axisMin=-Inf,offset=0,...){
-  if(side %in% c(2,4)){
-    minX<-max(10^graphics::par('usr')[3],axisMin)
-    maxX<-10^graphics::par('usr')[4]
-  }else{
-    minX<-max(10^graphics::par('usr')[1],axisMin)
-    maxX<-10^graphics::par('usr')[2]
-  }
+  if(side %in% c(2,4)) parX<-sort(graphics::par('usr')[3:4])
+  else parX<-sort(graphics::par('usr')[1:2])
+  minX<-max(10^parX[1],axisMin)
+  maxX<-10^parX[2]
   if(log10(maxX)-log10(minX)>400)stop(simpleError('Huge range in logged axis'))
   allTicks<-unlist(lapply(floor(log10(minX)):ceiling(log10(maxX)),function(x)1:9*10^x))
   allTicks<-allTicks[allTicks<=maxX & allTicks>=minX]
