@@ -128,6 +128,7 @@ test_that("Test cv.glm.par",{
 test_that("Test cleanMclapply",{
   expect_equal(cleanMclapply(1:10,2,function(x)x^2),as.list((1:10)^2))
   expect_equal(cleanMclapply(1:100,2,function(x)log(x^2)),lapply(1:100,function(x)log(x^2)))
+  expect_error(cleanMclapply(1:10,2,function(x)NOTAREALFUNCTION(x),VOCAL=FALSE),"[Pp]roblem")
   y<-10
   env<-environment()
   expect_error(cleanMclapply(1:10,2,function(x)x^2+y),"[Pp]roblem")

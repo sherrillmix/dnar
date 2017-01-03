@@ -252,6 +252,10 @@ cleanMclapply<-function(x,mc.cores,applyFunc,...,extraCode='',nSplits=mc.cores,V
   outFiles<-c()
   scriptFiles<-c()
   logFiles<-c()
+  allInRdat<-tempfile()
+  if(VOCAL)message('Writing extra arguments')
+  EXTRAARGS__<-extraArgs
+  save(EXTRAARGS__,file=allInRdat)
   for(ii in 1:nSplits){
     if(VOCAL)message("Writing core ",ii," data")
     thisInRdat<-tempfile()
@@ -259,9 +263,18 @@ cleanMclapply<-function(x,mc.cores,applyFunc,...,extraCode='',nSplits=mc.cores,V
     thisOutRdat<-tempfile()
     thisLog<-tempfile()
     THISDATA__<-x[(splits[ii]+1):splits[ii+1]]
-    SAVEDATA__<-c('THISDATA__'=list(THISDATA__),'applyFunc'=applyFunc,extraArgs)
+    SAVEDATA__<-c('THISDATA__'=list(THISDATA__),'applyFunc'=applyFunc)
     save(SAVEDATA__,file=thisInRdat)
-    script<-sprintf('load("%s")\n%s\nout<-with(SAVEDATA__,lapply(THISDATA__,applyFunc%s%s))\nsave(out,file="%s");',thisInRdat,paste(extraCode,collapse=';'),ifelse(length(extraArgs)>0,',',''),paste(names(extraArgs),names(extraArgs),sep='=',collapse=','),thisOutRdat)
+    script<-sprintf(
+      'load("%s")\nload("%s")\n%s\nout<-with(EXTRAARGS__,with(SAVEDATA__,lapply(THISDATA__,applyFunc%s%s)))\nsave(out,file="%s")',
+      allInRdat,
+      thisInRdat,
+      paste(extraCode,collapse=';'),
+      ifelse(length(extraArgs)>0,',',''),
+      paste(names(extraArgs),names(extraArgs),
+      sep='=',collapse=','),
+      thisOutRdat
+    )
     writeLines(script,thisRScript)
     outFiles<-c(outFiles,thisOutRdat)    
     scriptFiles<-c(scriptFiles,thisRScript)    
