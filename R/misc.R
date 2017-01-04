@@ -248,6 +248,8 @@ cleanMclapply<-function(x,mc.cores,applyFunc,...,extraCode='',nSplits=mc.cores,V
   if(length(splits)<nSplits+1)nSplits<-length(splits)-1 #not enough items to fill so set lower
   dotVars<-match.call(expand.dots=FALSE)$'...'
   extraArgs<-lapply(dotVars,eval,envir=envir)
+  if(is.null(names(extraArgs)))names(extraArgs)<-rep('',length(extraArgs))
+  names(extraArgs)[names(extraArgs)=='']<-sprintf('POSITIONAL_%d__',1:sum(names(extraArgs)==''))
   files<-c()
   outFiles<-c()
   scriptFiles<-c()
@@ -271,8 +273,10 @@ cleanMclapply<-function(x,mc.cores,applyFunc,...,extraCode='',nSplits=mc.cores,V
       thisInRdat,
       paste(extraCode,collapse=';'),
       ifelse(length(extraArgs)>0,',',''),
-      paste(names(extraArgs),names(extraArgs),
-      sep='=',collapse=','),
+      paste(ifelse(grepl('POSITIONAL_[0-9]+__',names(extraArgs)),
+        names(extraArgs),
+        paste(names(extraArgs),names(extraArgs),sep='=')
+      ),collapse=','),
       thisOutRdat
     )
     writeLines(script,thisRScript)
