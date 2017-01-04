@@ -242,7 +242,7 @@ cv.glm.par<-function(model,data=eval(modelCall$data),K=nrow(data),nCores=1,subse
 #' cleanMclapply(1:10,2,function(x,y)x^y,y=3)
 cleanMclapply<-function(x,mc.cores,applyFunc,...,extraCode='',nSplits=mc.cores,VOCAL=TRUE,envir=.GlobalEnv){
   #otherwise global variables can get pulled along with function environment
-  environment(applyFunc)<-new.env()
+  environment(applyFunc)<-envir
   if(nSplits<mc.cores)nSplits<-mc.cores
   splits<-unique(round(seq(0,length(x),length.out=nSplits+1)))
   if(length(splits)<nSplits+1)nSplits<-length(splits)-1 #not enough items to fill so set lower
