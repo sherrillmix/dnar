@@ -229,18 +229,18 @@ cv.glm.par<-function(model,data=eval(modelCall$data),K=nrow(data),nCores=1,subse
 #' A function to break an mclapply into parts, save to disk and run independently
 #' 
 #' @param x vector/list to apply over
-#' @param mc.cores number of cores to use
 #' @param applyFunc function to apply
-#' @param extraCode character vector of setup code (each command self-contained within a cell or concatenated with ;)
 #' @param ... arguments for mclapply
-#' @param nSplits number of splits to make (if > mc.cores then R will restart more frequently)
+#' @param mc.cores number of cores to use
+#' @param extraCode character vector of setup code (each command self-contained within a cell or concatenated with ;)
+#' @param nSplits number of splits to make (if > mc.cores then R will restart more frequently and load less data at once)
 #' @param VOCAL if TRUE then output status information
 #' @param envir environment to look for variables in
 #' @export
 #' @return the concatenated outputs from applyFunc 
 #' cleanMclapply(1:10,2,sqrt)
 #' cleanMclapply(1:10,2,function(x,y)x^y,y=3)
-cleanMclapply<-function(x,mc.cores,applyFunc,...,extraCode='',nSplits=mc.cores,VOCAL=TRUE,envir=.GlobalEnv){
+cleanMclapply<-function(x,applyFunc,...,mc.cores=parallel::detectCores(),extraCode='',nSplits=mc.cores,VOCAL=TRUE,envir=.GlobalEnv){
   #otherwise global variables can get pulled along with function environment
   environment(applyFunc)<-envir
   if(nSplits<mc.cores)nSplits<-mc.cores

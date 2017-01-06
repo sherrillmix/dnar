@@ -126,21 +126,21 @@ test_that("Test cv.glm.par",{
 
 
 test_that("Test cleanMclapply",{
-  expect_equal(cleanMclapply(1:10,2,function(x)x^2),as.list((1:10)^2))
-  expect_equal(cleanMclapply(1:100,2,function(x)log(x^2)),lapply(1:100,function(x)log(x^2)))
-  expect_error(cleanMclapply(1:10,2,function(x)NOTAREALFUNCTION(x),VOCAL=FALSE),"[Pp]roblem")
+  expect_equal(cleanMclapply(1:10,function(x)x^2,mc.cores=2),as.list((1:10)^2))
+  expect_equal(cleanMclapply(1:100,function(x)log(x^2),mc.cores=2),lapply(1:100,function(x)log(x^2)))
+  expect_error(cleanMclapply(1:10,function(x)NOTAREALFUNCTION(x),VOCAL=FALSE,mc.cores=2),"[Pp]roblem")
   y<-10
   z<-function()3
   env<-environment()
-  expect_error(cleanMclapply(1:10,2,function(x)x^2+y),"[Pp]roblem")
-  expect_error(cleanMclapply(1:10,2,function(x)x^2+z()),"[Pp]roblem")
-  expect_equal(cleanMclapply(1:10,2,function(x,y)x^2+y,y,envir=env),as.list((1:10)^2+10))
-  expect_equal(cleanMclapply(1:10,2,function(x,y,z)x^2+y-z,y,20,envir=env),as.list((1:10)^2+10-20))
-  expect_equal(cleanMclapply(1:10,2,function(x,y,z)x^2+y-z,z=20,y,envir=env),as.list((1:10)^2+10-20))
-  expect_equal(cleanMclapply(1:10,2,function(x,y)x^2+y,y=y,envir=env),as.list((1:10)^2+10))
-  expect_equal(cleanMclapply(1:10,2,function(x)x^2+y-z,extraCode='y<-10;z<-5'),as.list((1:10)^2+10-5))
-  expect_message(cleanMclapply(1:10,2,function(x)x^2),'Logs')
-  expect_message(cleanMclapply(1:10,2,function(x)x^2,VOCAL=FALSE),NA)
+  expect_error(cleanMclapply(1:10,function(x)x^2+y,mc.cores=2),"[Pp]roblem")
+  expect_error(cleanMclapply(1:10,function(x)x^2+z(),mc.cores=2),"[Pp]roblem")
+  expect_equal(cleanMclapply(1:10,function(x,y)x^2+y,y,envir=env,mc.cores=2),as.list((1:10)^2+10))
+  expect_equal(cleanMclapply(1:10,function(x,y,z)x^2+y-z,y,20,mc.cores=2,envir=env),as.list((1:10)^2+10-20))
+  expect_equal(cleanMclapply(1:10,function(x,y,z)x^2+y-z,mc.cores=2,z=20,y,envir=env),as.list((1:10)^2+10-20))
+  expect_equal(cleanMclapply(1:10,mc.cores=2,function(x,y)x^2+y,y=y,envir=env),as.list((1:10)^2+10))
+  expect_equal(cleanMclapply(1:10,function(x)x^2+y-z,extraCode='y<-10;z<-5',mc.cores=2),as.list((1:10)^2+10-5))
+  expect_message(cleanMclapply(1:10,function(x)x^2,mc.cores=2),'Logs')
+  expect_message(cleanMclapply(1:10,function(x)x^2,VOCAL=FALSE,mc.cores=2),NA)
 })
 
 test_that("Test orderIn",{

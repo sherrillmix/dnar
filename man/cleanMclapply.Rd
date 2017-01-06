@@ -4,21 +4,21 @@
 \alias{cleanMclapply}
 \title{A function to break an mclapply into parts, save to disk and run independently}
 \usage{
-cleanMclapply(x, mc.cores, applyFunc, ..., extraCode = "",
-  nSplits = mc.cores, VOCAL = TRUE, envir = .GlobalEnv)
+cleanMclapply(x, applyFunc, ..., mc.cores = parallel::detectCores(),
+  extraCode = "", nSplits = mc.cores, VOCAL = TRUE, envir = .GlobalEnv)
 }
 \arguments{
 \item{x}{vector/list to apply over}
-
-\item{mc.cores}{number of cores to use}
 
 \item{applyFunc}{function to apply}
 
 \item{...}{arguments for mclapply}
 
+\item{mc.cores}{number of cores to use}
+
 \item{extraCode}{character vector of setup code (each command self-contained within a cell or concatenated with ;)}
 
-\item{nSplits}{number of splits to make (if > mc.cores then R will restart more frequently)}
+\item{nSplits}{number of splits to make (if > mc.cores then R will restart more frequently and load less data at once)}
 
 \item{VOCAL}{if TRUE then output status information}
 
