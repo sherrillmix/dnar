@@ -198,8 +198,8 @@ chooseAtLeastOneFromEach<-function(n,nGroups,groupSize){
 #' @examples
 #' x<-matrix(c('a','b','a','c'),ncol=2,byrow=TRUE)
 #' y<-matrix(c('a','b','a','d'),ncol=2,byrow=TRUE)
-#' unifrac(x,x)
-#' unifrac(x,y)
+#' unifracMatrix(x,x)
+#' unifracMatrix(x,y)
 unifracMatrix<-function(xx,yy,weighted=TRUE){
   n<-ncol(xx)
   if(ncol(yy)!=n)stop('Number of taxonomic ranks not the same')
