@@ -167,6 +167,8 @@ test_that("Test unifracMatrix",{
   expect_equal(unifracMatrix(list(x,x,rbind(y,x)),weighted=TRUE),outMat)
   outMat<-matrix(c(0,1,1,0),nrow=2)
   expect_equal(unifracMatrix(list(x,NAs)),outMat)
+  expect_message(unifracMatrix(list(x,NAs),vocal=TRUE),'1')
+  expect_message(unifracMatrix(list(x,NAs),vocal=TRUE),'2')
 })
 
 
