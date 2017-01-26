@@ -207,7 +207,9 @@ unifracMatrix<-function(xx,yy=NULL,weighted=TRUE,checkUpstream=TRUE,vocal=FALSE)
     if(!is.list(xx))stop('Please provide a list of matrices if yy is NULL')
     if(checkUpstream)xx<-lapply(xx,function(mat)t(apply(mat,1,cumpaste,sep='_|_')))
     #recurse the individual pairs
-    out<-outer(1:length(xx),1:length(xx),function(iis,jjs)mapply(function(ii,jj){if(vocal&&ii==1)message(jj);unifracMatrix(xx[[ii]],xx[[jj]],weighted=weighted,checkUpstream=FALSE)},iis,jjs))
+    out<-outer(1:length(xx),1:length(xx),function(iis,jjs)mapply(function(ii,jj){if(ii<jj)return(NA);if(vocal&&ii==jj)message(jj);unifracMatrix(xx[[ii]],xx[[jj]],weighted=weighted,checkUpstream=FALSE)},iis,jjs))
+    #assuming symmetric so skipping half
+    out[upper.tri(out)]<-out[lower.tri(out)]
     return(out)
   }
   if(is.list(xx))stop('If xx is a list then yy must be NULL')
