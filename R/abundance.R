@@ -210,7 +210,7 @@ unifracMatrix<-function(xx,yy=NULL,weighted=TRUE,checkUpstream=TRUE,vocal=FALSE,
     #recurse the individual pairs
     if(mc.cores>1)mapplyFunc<-parallel::mcmapply
     else mapplyFunc<-mapply
-    out<-outer(1:length(xx),1:length(xx),function(iis,jjs)mapplyFunc(function(ii,jj,...){if(ii<jj)return(NA);if(vocal&&ii==jj)message(jj);unifracMatrix(xx[[ii]],xx[[jj]],weighted=weighted,checkUpstream=FALSE)},iis,jjs,mc.cores=mc.cores,mc.preschedule=FALSE))
+    out<-outer(1:length(xx),1:length(xx),function(iis,jjs)mapplyFunc(function(ii,jj,...){if(ii<jj)return(NA);if(vocal&&ii==jj)message(jj);unifracMatrix(xx[[ii]],xx[[jj]],weighted=weighted,checkUpstream=FALSE)},iis,jjs,mc.cores=mc.cores))
     #assuming symmetric so skipping half
     out[upper.tri(out)]<-out[lower.tri(out)]
     return(out)
