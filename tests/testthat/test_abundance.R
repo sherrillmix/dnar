@@ -149,4 +149,7 @@ test_that("Test unifracMatrix",{
   expect_equal(unifracMatrix(x,y[c(1,1,2),],TRUE),((2/3-1/2+1/3+1/2)+(1-2/3+1/3))/6)
   expect_equal(unifracMatrix(y,x,TRUE),unifracMatrix(x,y,TRUE))
   expect_equal(unifracMatrix(y,x),unifracMatrix(x,y))
+  expect_equal(unifracMatrix(x,y),unifracMatrix(x,y,checkUpstream=FALSE))
+  expect_equal(unifracMatrix(x[1,,drop=FALSE],z,checkUpstream=FALSE),1/3)
+  expect_equal(unifracMatrix(x[1,,drop=FALSE],z),1)
 })
