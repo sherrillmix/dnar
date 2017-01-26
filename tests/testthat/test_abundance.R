@@ -156,3 +156,10 @@ test_that("Test unifracMatrix",{
   expect_equal(unifracMatrix(x,z),unifracMatrix(x,NAs))
   expect_equal(unifracMatrix(x,z,checkUpstream=TRUE),unifracMatrix(x,NAs,checkUpstream=TRUE))
 })
+
+
+test_that("Test cumpaste",{
+  expect_equal(cumpaste(c('AA','BBB','C')),c('AA','AA BBB','AA BBB C'))
+  expect_equal(cumpaste(c(NA,'BBB','C')),c('NA','NA BBB','NA BBB C'))
+  expect_equal(cumpaste(c('','BBB','C'),sep='><'),c('','><BBB','><BBB><C'))
+}

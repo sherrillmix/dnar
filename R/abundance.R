@@ -236,3 +236,15 @@ unifracMatrix<-function(xx,yy,weighted=TRUE,checkUpstream=TRUE){
   return(sum(dists[,1])/sum(dists[,2]))
 }
 
+#' Cumulative paste convenience function
+#'
+#' @param strs a vector of strings
+#' @param sep a string to be used as the separator in paste
+#' @return a vector of strings the same length as strs with the concatenated strings. Note that NAs will be converted to the string "NA" by paste
+#' @export
+#' @examples
+#' cumpaste(letters,sep='')
+cumpaste<-function(strs,sep=' '){
+  strs[1]<-paste(strs[1])
+  Reduce(function(hh,tt)paste(hh,tt,sep=sep),strs,accumulate=TRUE)
+}
