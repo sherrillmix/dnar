@@ -205,7 +205,7 @@ chooseAtLeastOneFromEach<-function(n,nGroups,groupSize){
 unifracMatrix<-function(xx,yy=NULL,weighted=TRUE,checkUpstream=TRUE,vocal=FALSE){
   if(is.null(yy)){
     if(!is.list(xx))stop('Please provide a list of matrices if yy is NULL')
-    if(checkUpstream)xx<-lapply(xx,function(mat)t(apply(mat,1,cumpaste)))
+    if(checkUpstream)xx<-lapply(xx,function(mat)t(apply(mat,1,cumpaste,sep='_|_')))
     #recurse the individual pairs
     out<-outer(1:length(xx),1:length(xx),function(iis,jjs)mapply(function(ii,jj){if(vocal&&jj==1)message(ii);unifracMatrix(xx[[ii]],xx[[jj]],weighted=weighted,checkUpstream=FALSE)},iis,jjs))
     return(out)
@@ -214,8 +214,8 @@ unifracMatrix<-function(xx,yy=NULL,weighted=TRUE,checkUpstream=TRUE,vocal=FALSE)
   n<-ncol(xx)
   if(ncol(yy)!=n)stop('Number of taxonomic ranks not the same')
   if(checkUpstream){
-    pastedX<-t(apply(xx,1,cumpaste))
-    pastedY<-t(apply(yy,1,cumpaste))
+    pastedX<-t(apply(xx,1,cumpaste,sep='_|_'))
+    pastedY<-t(apply(yy,1,cumpaste,sep='_|_'))
   }else{
     pastedX<-xx
     pastedY<-yy
