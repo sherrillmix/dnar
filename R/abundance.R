@@ -190,7 +190,7 @@ chooseAtLeastOneFromEach<-function(n,nGroups,groupSize){
 
 #' Calculate the shared branch length from a matrix of taxonomic labels
 #'
-#' @param xx a matrix with a row for each read and a column for each taxonomic assignment
+#' @param xx a matrix with a row for each read and a column for each taxonomic assignment or if yy is NULL then a list of matrices
 #' @param yy a matrix with a row for each read and a column for each taxonomic assignment
 #' @param weighted logical indicating whether to sum the differences in reads for each branch or if FALSE to look only at presence absence
 #' @param checkUpstream a logical indicating whether to make sure taxa with the same name are counted separetely if their upstream taxa differ e.g. two species Bos taurus and Repipta taurus. If you are sure this is not a problem, then computation can be reduced by skipping this step.
@@ -201,14 +201,20 @@ chooseAtLeastOneFromEach<-function(n,nGroups,groupSize){
 #' y<-matrix(c('a','b','a','d'),ncol=2,byrow=TRUE)
 #' unifracMatrix(x,x)
 #' unifracMatrix(x,y)
-unifracMatrix<-function(xx,yy,weighted=TRUE,checkUpstream=TRUE){
+unifracMatrix<-function(xx,yy=NULL,weighted=TRUE,checkUpstream=TRUE){
+  if(is.null(yy)){
+    if(!is.list(xx))stop('Please provide a list of matrices if yy is NULL')
+    if(checkUpstream)xx<-lapply(xx,function(mat)t(apply(mat,1,cumpaste)))
+    #recurse the individual pairs
+    out<-outer(1:length(xx),1:length(xx),function(iis,jjs)mapply(function(ii,jj)unifracMatrix(xx[[ii]],xx[[jj]],weighted=weighted,checkUpstream=FALSE),iis,jjs))
+    return(out)
+  }
+  if(is.list(xx))stop('If xx is a list then yy must be NULL')
   n<-ncol(xx)
-  xx[is.na(xx)]<-'__NAFILLER__'
-  yy[is.na(yy)]<-'__NAFILLER__'
   if(ncol(yy)!=n)stop('Number of taxonomic ranks not the same')
   if(checkUpstream){
-    pastedX<-t(apply(xx,1,function(taxas)Reduce(function(hh,tt)paste(hh,tt,sep='_|_'),taxas,accumulate=TRUE)))
-    pastedY<-t(apply(yy,1,function(taxas)Reduce(function(hh,tt)paste(hh,tt,sep='_|_'),taxas,accumulate=TRUE)))
+    pastedX<-t(apply(xx,1,cumpaste))
+    pastedY<-t(apply(yy,1,cumpaste))
   }else{
     pastedX<-xx
     pastedY<-yy

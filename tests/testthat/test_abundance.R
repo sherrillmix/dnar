@@ -155,6 +155,18 @@ test_that("Test unifracMatrix",{
   expect_equal(unifracMatrix(x[1,,drop=FALSE],z),1)
   expect_equal(unifracMatrix(x,z),unifracMatrix(x,NAs))
   expect_equal(unifracMatrix(x,z,checkUpstream=TRUE),unifracMatrix(x,NAs,checkUpstream=TRUE))
+  expect_error(unifracMatrix(x,NULL),'list')
+  expect_error(unifracMatrix(list(x),y),'list')
+  expect_equal(unifracMatrix(list(x)),matrix(0))
+  expect_equal(unifracMatrix(list(x,x,x,x)),matrix(0,ncol=4,nrow=4))
+  xyDist<-unifracMatrix(x,y)
+  outMat<-matrix(rep(c(0,xyDist,0,xyDist,xyDist,0,xyDist,0),each=2),nrow=4)
+  expect_equal(unifracMatrix(list(x,x,y,y)),outMat)
+  xyDist<-unifracMatrix(x,rbind(y,x),weighted=TRUE)
+  outMat<-matrix(c(0,0,xyDist,0,0,xyDist,xyDist,xyDist,0),nrow=3)
+  expect_equal(unifracMatrix(list(x,x,rbind(y,x)),weighted=TRUE),outMat)
+  outMat<-matrix(c(0,1,1,0),nrow=2)
+  expect_equal(unifracMatrix(list(x,NAs)),outMat)
 })
 
 
@@ -162,4 +174,4 @@ test_that("Test cumpaste",{
   expect_equal(cumpaste(c('AA','BBB','C')),c('AA','AA BBB','AA BBB C'))
   expect_equal(cumpaste(c(NA,'BBB','C')),c('NA','NA BBB','NA BBB C'))
   expect_equal(cumpaste(c('','BBB','C'),sep='><'),c('','><BBB','><BBB><C'))
-}
+})
