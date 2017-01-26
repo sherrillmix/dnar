@@ -4,7 +4,7 @@
 \alias{unifracMatrix}
 \title{Calculate the shared branch length from a matrix of taxonomic labels}
 \usage{
-unifracMatrix(xx, yy, weighted = TRUE)
+unifracMatrix(xx, yy, weighted = TRUE, checkUpstream = TRUE)
 }
 \arguments{
 \item{xx}{a matrix with a row for each read and a column for each taxonomic assignment}
@@ -12,6 +12,8 @@ unifracMatrix(xx, yy, weighted = TRUE)
 \item{yy}{a matrix with a row for each read and a column for each taxonomic assignment}
 
 \item{weighted}{logical indicating whether to sum the differences in reads for each branch or if FALSE to look only at presence absence}
+
+\item{checkUpstream}{a logical indicating whether to make sure taxa with the same name are counted separetely if their upstream taxa differ e.g. two species Bos taurus and Repipta taurus. If you are sure this is not a problem, then computation can be reduced by skipping this step.}
 }
 \value{
 the proportion of the shared branches

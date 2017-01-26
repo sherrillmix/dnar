@@ -131,7 +131,7 @@ test_that("Test chooseAtLeastOneFromEach",{
 })
 
 test_that("Test unifracMatrix",{
-  x<-matrix(c('a','b','c','a','b','d'),ncol=3,byrow=TRUE)
+  x<-matrix(c('a','b','c','a','b','cd'),ncol=3,byrow=TRUE)
   y<-matrix(c('a','b','c','a','c','e'),ncol=3,byrow=TRUE)
   z<-matrix(c('x','b','c'),ncol=3,byrow=TRUE)
   expect_equal(unifracMatrix(x,x,TRUE),0)

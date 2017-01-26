@@ -193,6 +193,7 @@ chooseAtLeastOneFromEach<-function(n,nGroups,groupSize){
 #' @param xx a matrix with a row for each read and a column for each taxonomic assignment
 #' @param yy a matrix with a row for each read and a column for each taxonomic assignment
 #' @param weighted logical indicating whether to sum the differences in reads for each branch or if FALSE to look only at presence absence
+#' @param checkUpstream a logical indicating whether to make sure taxa with the same name are counted separetely if their upstream taxa differ e.g. two species Bos taurus and Repipta taurus. If you are sure this is not a problem, then computation can be reduced by skipping this step.
 #' @return the proportion of the shared branches 
 #' @export
 #' @examples
@@ -200,24 +201,36 @@ chooseAtLeastOneFromEach<-function(n,nGroups,groupSize){
 #' y<-matrix(c('a','b','a','d'),ncol=2,byrow=TRUE)
 #' unifracMatrix(x,x)
 #' unifracMatrix(x,y)
-unifracMatrix<-function(xx,yy,weighted=TRUE){
+unifracMatrix<-function(xx,yy,weighted=TRUE,checkUpstream=TRUE){
   n<-ncol(xx)
   if(ncol(yy)!=n)stop('Number of taxonomic ranks not the same')
+  if(checkUpstream){
+    pastedX<-t(apply(xx,1,function(taxas)Reduce(function(hh,tt)paste(hh,tt,sep='_|_'),taxas,accumulate=TRUE)))
+    pastedY<-t(apply(yy,1,function(taxas)Reduce(function(hh,tt)paste(hh,tt,sep='_|_'),taxas,accumulate=TRUE)))
+  }else{
+    pastedX<-xx
+    pastedY<-yy
+  }
   dists<-do.call(rbind,lapply(n:1,function(ii){
-    xTaxa<-table(apply(xx[,1:ii,drop=FALSE],1,paste,collapse='_||_'))
+    xTaxa<-table(pastedX[,ii])
     xTaxa<-xTaxa/sum(xTaxa)
-    yTaxa<-table(apply(yy[,1:ii,drop=FALSE],1,paste,collapse='_||_'))
+    yTaxa<-table(pastedY[,ii])
     yTaxa<-yTaxa/sum(yTaxa)
-    merged<-merge(data.frame('name'=names(xTaxa),'x'=as.numeric(xTaxa)),data.frame('name'=names(yTaxa),'y'=as.numeric(yTaxa)),all=TRUE)
+    #slightly slower
+    #merged<-merge(data.frame('name'=names(xTaxa),'x'=as.numeric(xTaxa)),data.frame('name'=names(yTaxa),'y'=as.numeric(yTaxa)),all=TRUE)
+    allNames<-unique(c(names(yTaxa),names(xTaxa)))
+    merged<-cbind('x'=xTaxa[allNames],'y'=yTaxa[allNames])
     merged[is.na(merged)]<-0
+    rownames(merged)<-allNames
     if(weighted){
-      dists<-apply(merged[,c('x','y')],1,diff)
+      dists<-apply(merged[,c('x','y'),drop=FALSE],1,diff)
       out<-c(sum(abs(dists)),2)
     }else{
-      isDiff<-sum(apply(merged[,c('x','y')]>0,1,function(zz)zz[1]!=zz[2]))
+      isDiff<-sum(apply(merged[,c('x','y'),drop=FALSE]>0,1,function(zz)zz[1]!=zz[2]))
       out<-c(isDiff,nrow(merged))
     }
     return(out)
   }))
   return(sum(dists[,1])/sum(dists[,2]))
 }
+
