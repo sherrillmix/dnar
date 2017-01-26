@@ -194,6 +194,7 @@ chooseAtLeastOneFromEach<-function(n,nGroups,groupSize){
 #' @param yy a matrix with a row for each read and a column for each taxonomic assignment
 #' @param weighted logical indicating whether to sum the differences in reads for each branch or if FALSE to look only at presence absence
 #' @param checkUpstream a logical indicating whether to make sure taxa with the same name are counted separetely if their upstream taxa differ e.g. two species Bos taurus and Repipta taurus. If you are sure this is not a problem, then computation can be reduced by skipping this step.
+#' @param mc.cores an integer giving how many cores to use for multiprocessing if xx is a list
 #' @param vocal only used if xx is a list. If TRUE output the index as each matrix is processed
 #' @return the proportion of the shared branches 
 #' @export
@@ -202,12 +203,14 @@ chooseAtLeastOneFromEach<-function(n,nGroups,groupSize){
 #' y<-matrix(c('a','b','a','d'),ncol=2,byrow=TRUE)
 #' unifracMatrix(x,x)
 #' unifracMatrix(x,y)
-unifracMatrix<-function(xx,yy=NULL,weighted=TRUE,checkUpstream=TRUE,vocal=FALSE){
+unifracMatrix<-function(xx,yy=NULL,weighted=TRUE,checkUpstream=TRUE,vocal=FALSE,mc.cores=1){
   if(is.null(yy)){
     if(!is.list(xx))stop('Please provide a list of matrices if yy is NULL')
     if(checkUpstream)xx<-lapply(xx,function(mat)t(apply(mat,1,cumpaste,sep='_|_')))
     #recurse the individual pairs
-    out<-outer(1:length(xx),1:length(xx),function(iis,jjs)mapply(function(ii,jj){if(ii<jj)return(NA);if(vocal&&ii==jj)message(jj);unifracMatrix(xx[[ii]],xx[[jj]],weighted=weighted,checkUpstream=FALSE)},iis,jjs))
+    if(mc.cores>1)mapplyFunc<-parallel::mcmapply
+    else mapplyFunc<-mapply
+    out<-outer(1:length(xx),1:length(xx),function(iis,jjs)mapplyFunc(function(ii,jj,...){if(ii<jj)return(NA);if(vocal&&ii==jj)message(jj);unifracMatrix(xx[[ii]],xx[[jj]],weighted=weighted,checkUpstream=FALSE)},iis,jjs,mc.cores=mc.cores,mc.preschedule=FALSE))
     #assuming symmetric so skipping half
     out[upper.tri(out)]<-out[lower.tri(out)]
     return(out)

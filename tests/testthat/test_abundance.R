@@ -170,6 +170,7 @@ test_that("Test unifracMatrix",{
   expect_equal(dim(unifracMatrix(rep(list(x,y),20))),c(40,40))
   expect_message(unifracMatrix(list(x,NAs),vocal=TRUE),'1')
   expect_message(unifracMatrix(list(x,NAs),vocal=TRUE),'2')
+  expect_equal(unifracMatrix(list(x,y,z),weighted=FALSE),unifracMatrix(list(x,y,z),weighted=FALSE,mc.cores=2))
 })
 
 

@@ -5,7 +5,7 @@
 \title{Calculate the shared branch length from a matrix of taxonomic labels}
 \usage{
 unifracMatrix(xx, yy = NULL, weighted = TRUE, checkUpstream = TRUE,
-  vocal = FALSE)
+  vocal = FALSE, mc.cores = 1)
 }
 \arguments{
 \item{xx}{a matrix with a row for each read and a column for each taxonomic assignment or if yy is NULL then a list of matrices}
@@ -17,6 +17,8 @@ unifracMatrix(xx, yy = NULL, weighted = TRUE, checkUpstream = TRUE,
 \item{checkUpstream}{a logical indicating whether to make sure taxa with the same name are counted separetely if their upstream taxa differ e.g. two species Bos taurus and Repipta taurus. If you are sure this is not a problem, then computation can be reduced by skipping this step.}
 
 \item{vocal}{only used if xx is a list. If TRUE output the index as each matrix is processed}
+
+\item{mc.cores}{an integer giving how many cores to use for multiprocessing if xx is a list}
 }
 \value{
 the proportion of the shared branches
