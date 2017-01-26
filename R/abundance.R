@@ -203,6 +203,8 @@ chooseAtLeastOneFromEach<-function(n,nGroups,groupSize){
 #' unifracMatrix(x,y)
 unifracMatrix<-function(xx,yy,weighted=TRUE,checkUpstream=TRUE){
   n<-ncol(xx)
+  xx[is.na(xx)]<-'__NAFILLER__'
+  yy[is.na(yy)]<-'__NAFILLER__'
   if(ncol(yy)!=n)stop('Number of taxonomic ranks not the same')
   if(checkUpstream){
     pastedX<-t(apply(xx,1,function(taxas)Reduce(function(hh,tt)paste(hh,tt,sep='_|_'),taxas,accumulate=TRUE)))
