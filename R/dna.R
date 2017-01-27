@@ -823,7 +823,6 @@ pwm<-function(seqs,chars=c('C','G','T','A'),priors=table(chars)-1){
 #' seqs<-c('ACA','ACA','ACA','ACT','ACT','ACC')
 #' seqPwm<-pwm(seqs)
 #' scoreFromPWM(seqs,seqPwm)
-
 scoreFromPWM<-function(seqs,pwm){
 	bases<-rownames(pwm)	
 	nBases<-length(bases)
@@ -845,4 +844,23 @@ scoreFromPWM<-function(seqs,pwm){
 	return(scores)
 }
 
+
+#' Calculate sequence for PWM
+#'
+#' @param pwm a matrix with rows unique bases and columns positions
+#' @param cutoff consider any base with proportion greater than this cutoff present
+#' @export
+#' @return a single character string containing the conensus sequence using ambiguous base codes
+#' @seealso \code{\link{pwm}}, \code{\link{ambiguous2regex}}
+#' @examples
+#' seqs<-c('ACA','ACA','ACA','ACT','ACT','ACC')
+#' seqPwm<-pwm(seqs)
+#' pwmToSeq(seqPwm)
+pwmToSeq<-function(pwm,cut=.2){
+  isPresent<-pwm>cut
+  bases<-matrix(rownames(pwm),nrow=nrow(pwm),ncol=ncol(pwm))
+  bases[!isPresent]<-NA
+  out<-paste(apply(bases,2,function(xx)bases2ambiguous(xx[!is.na(xx)])),collapse=NA)
+  return(out)
+}
 
