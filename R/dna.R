@@ -739,7 +739,6 @@ blat2exons<-function(chroms,names,starts,ends,strands=rep('+',length(names)),len
 	return(output)
 }
 
-
 #' Convert set of starts and ends of exons to introns
 #'
 #' @param starts starts for exons given as a comma separated string for each "gene" or list of numeric vectors
@@ -786,8 +785,6 @@ findIntrons<-function(starts,ends,names=1:length(startList),additionalColumns=NU
 	if(!is.null(additionalColumns))introns<-cbind(introns,additionalColumns[rep(1:nrow(additionalColumns),inCount),])
 	return(introns)
 }
-
-
 
 #' Generate a PWM for a set of sequences
 #'
@@ -844,7 +841,6 @@ scoreFromPWM<-function(seqs,pwm){
 	return(scores)
 }
 
-
 #' Calculate sequence for PWM
 #'
 #' @param pwm a matrix with rows unique bases and columns positions
@@ -856,11 +852,14 @@ scoreFromPWM<-function(seqs,pwm){
 #' seqs<-c('ACA','ACA','ACA','ACT','ACT','ACC')
 #' seqPwm<-pwm(seqs)
 #' pwmToSeq(seqPwm)
-pwmToSeq<-function(pwm,cut=.2){
-  isPresent<-pwm>cut
+pwmToSeq<-function(pwm,cutoff=.2){
+  isPresent<-pwm>=cutoff
   bases<-matrix(rownames(pwm),nrow=nrow(pwm),ncol=ncol(pwm))
   bases[!isPresent]<-NA
-  out<-paste(apply(bases,2,function(xx)bases2ambiguous(xx[!is.na(xx)])),collapse=NA)
+  out<-paste(apply(bases,2,function(xx){
+    if(all(is.na(xx)))return('N')
+    else bases2ambiguous(xx[!is.na(xx)])
+  }),collapse='')
   return(out)
 }
 

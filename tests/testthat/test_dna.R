@@ -359,4 +359,13 @@ test_that("Test scoreFromPWM",{
 	expect_true(all(scoreFromPWM(seqs,pwm)>log(1/26)*500))
 })
 
+test_that("Test pwmToSeq",{
+	pwmMat<-matrix(c(.9,.1,0,0,0,.81,.19,0,2/3,0,0,1/3),nrow=4,ncol=3,dimnames=list(c('A','C','G','T')))
+	expect_equal(pwmToSeq(pwmMat,.5),'ACA')
+	expect_equal(pwmToSeq(pwmMat,.2),'ACW')
+	expect_equal(pwmToSeq(pwmMat,.19),'ASW')
+	expect_equal(pwmToSeq(pwmMat,.9),'ANN')
+	expect_equal(pwmToSeq(pwmMat,.99),'NNN')
+})
+
 
