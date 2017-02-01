@@ -171,6 +171,9 @@ test_that("Test unifracMatrix",{
   expect_message(unifracMatrix(list(x,NAs),vocal=TRUE),'1')
   expect_message(unifracMatrix(list(x,NAs),vocal=TRUE),'2')
   expect_equal(unifracMatrix(list(x,y,z),weighted=FALSE),unifracMatrix(list(x,y,z),weighted=FALSE,mc.cores=2))
+  out<-unifracMatrix(list(x,y,z,y,z,x),weighted=FALSE)
+  expect_equal(out[upper.tri(out)],t(out)[upper.tri(out)])
+  expect_equal(out[lower.tri(out)],t(out)[lower.tri(out)])
 })
 
 
