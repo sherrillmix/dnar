@@ -316,3 +316,17 @@ test_that("Test logAxis",{
     expect_error(logAxis(2,offset=1),NA)
   dev.off()
 })
+
+test_that("Test insetScale",{
+  plotFile<-tempfile()
+  dists<-as.matrix(dist(sort(runif(40))))
+  breaks<-seq(0,1,.01)
+  cols<-rev(heat.colors(length(breaks)-1))
+  pdf(plotFile)
+    heatmap(dists,col=cols)
+    expect_error(insetScale(breaks,cols,label='Distance'),NA)
+    expect_error(insetScale(breaks,cols,insetPos=c(0,0,1,1),label='Distance'),NA)
+    expect_error(insetScale(breaks[-1],cols,label='Distance'),'breaks')
+  dev.off()
+})
+
