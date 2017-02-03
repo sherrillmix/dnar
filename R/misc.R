@@ -635,7 +635,7 @@ insetScale<-function(breaks,col,insetPos=c(.015,.025,.25,.04),label=''){
   graphics::rect(breakPos[-1]+1e-3,insetPos[2],breakPos[-length(breakPos)],insetPos[4],col=col[-1],xpd=NA,border=NA)
   graphics::rect(insetPos[1],insetPos[2],insetPos[3],insetPos[4],xpd=NA)
   prettyLabs<-pretty(breaks)
-  prettyLabs<-prettyLabs[prettyLabs<=max(breaks)&prettyLabs>=max(breaks)]
+  prettyLabs<-prettyLabs[prettyLabs<=max(breaks)&prettyLabs>=min(breaks)]
   prettyPos<-prettyLabs
   prettyPos<-(prettyLabs-(min(breaks[-1])))/((max(breaks[-1]))-(min(breaks[-1])))*(insetPos[3]-insetPos[1])+insetPos[1]
   graphics::segments(prettyPos,insetPos[2],prettyPos,insetPos[2]-diff(insetPos[c(2,4)])*.1,xpd=NA)
