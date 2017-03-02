@@ -33,4 +33,3 @@ for(ii in files){
 }
 seqs<-readFaDir(tmpDir)
 }
-

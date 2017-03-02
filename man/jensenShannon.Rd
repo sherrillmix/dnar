@@ -22,4 +22,3 @@ Calculate Jensen Shannon divergence between two probability distributions
 \examples{
 jensenShannon(1:4,4:1)
 }
-

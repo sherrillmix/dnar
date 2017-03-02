@@ -25,4 +25,3 @@ pwmToSeq(seqPwm)
 \seealso{
 \code{\link{pwm}}, \code{\link{ambiguous2regex}}
 }
-

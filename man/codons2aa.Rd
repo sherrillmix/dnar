@@ -25,4 +25,3 @@ Convert codon to amino acid
 codons2aa(c('AUG','GTT','AGG','GTA'))
 codons2aa(dna2codons('ATGTTTATTGGG')[[1]])
 }
-

@@ -21,4 +21,3 @@ Remove gap characters from DNA sequences
 degap(c('...ACTATATA----ACATG--G..','ATTAT--T'))
 degap(c('1000111011'),'0')
 }
-

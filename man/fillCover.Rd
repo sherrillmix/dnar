@@ -21,4 +21,3 @@ filled in data.frame
 Fill zeros in cover data
 }
 \keyword{internal}
-

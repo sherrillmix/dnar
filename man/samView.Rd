@@ -26,4 +26,3 @@ data.frame with columns as read.sam
 \description{
 Call samtools view on a sam/bam file
 }
-

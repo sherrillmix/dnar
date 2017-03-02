@@ -18,4 +18,3 @@ Find covered ranges in binary data
 \examples{
 binary2range(c(FALSE,TRUE,FALSE,TRUE,TRUE,TRUE))
 }
-

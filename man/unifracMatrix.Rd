@@ -32,4 +32,3 @@ y<-matrix(c('a','b','a','d'),ncol=2,byrow=TRUE)
 unifracMatrix(x,x)
 unifracMatrix(x,y)
 }
-

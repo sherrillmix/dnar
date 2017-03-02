@@ -20,4 +20,3 @@ Convert fastq chars to integer quals
 \examples{
 qualToInts(c('!@#$','ABCI+'))
 }
-

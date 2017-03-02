@@ -25,4 +25,3 @@ movingStat(1:10,max)
 movingStat(1:20,min)
 movingStat(rnorm(100),mean,5)
 }
-

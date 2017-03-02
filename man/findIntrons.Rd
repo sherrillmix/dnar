@@ -25,4 +25,3 @@ Convert set of starts and ends of exons to introns
 \examples{
 findIntrons(c('1,100','50,150,8000'),c('50,150','148,185,9000'))
 }
-

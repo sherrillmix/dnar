@@ -22,4 +22,3 @@ data.frame with columns chr, pos and counts
 \description{
 Pull counts from a bam file for target region
 }
-

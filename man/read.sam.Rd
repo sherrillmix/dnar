@@ -21,4 +21,3 @@ dataframe with columns qName, flag, tName, pos, cigar, seq
 \description{
 Read a sam file
 }
-

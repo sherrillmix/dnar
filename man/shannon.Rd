@@ -23,4 +23,3 @@ Calculate Shannon diversity of a vector
 shannon(1:10)
 shannon(1:10,base=2)
 }
-

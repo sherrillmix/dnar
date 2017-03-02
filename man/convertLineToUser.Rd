@@ -22,4 +22,3 @@ plot(1:10)
 points(rep(5,5),convertLineToUser(0:4,1),xpd=NA)
 points(convertLineToUser(0:4,2),rep(5,5),xpd=NA)
 }
-

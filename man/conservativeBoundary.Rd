@@ -28,4 +28,3 @@ mat2<-matrix(c(10,1,1,10),nrow=2)
 fish2<-fisher.test(mat2)
 conservativeBoundary(fish2$conf.int,1)
 }
-

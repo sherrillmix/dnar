@@ -18,4 +18,3 @@ Convert amino acids to dna regex
 \examples{
 aa2dna(c('MATX','MGCATKRVX'))
 }
-

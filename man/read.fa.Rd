@@ -25,4 +25,3 @@ x<-generateFasta(100,bases=c('A','C','T','G','\\n','-'))
 write.fa(x$name,x$seq,file)
 y<-read.fa(file)
 }
-

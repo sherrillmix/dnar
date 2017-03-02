@@ -23,4 +23,3 @@ Loop through list, get unique names and make sure every element has those names
 fillList(list(c('a'=1,'b'=2),c('c'=3)))
 fillList(list(c('a'=1,'b'=2),c('c'=3)),namesList='a')
 }
-

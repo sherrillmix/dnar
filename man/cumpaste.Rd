@@ -20,4 +20,3 @@ Cumulative paste convenience function
 \examples{
 cumpaste(letters,sep='')
 }
-

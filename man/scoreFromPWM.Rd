@@ -22,4 +22,3 @@ seqs<-c('ACA','ACA','ACA','ACT','ACT','ACC')
 seqPwm<-pwm(seqs)
 scoreFromPWM(seqs,seqPwm)
 }
-

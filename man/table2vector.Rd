@@ -18,4 +18,3 @@ Convenience function for converting 1-d table to named vector
 \examples{
 table2vector(1:10)
 }
-

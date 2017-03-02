@@ -18,4 +18,3 @@ Swap case of a string
 \examples{
 toggleCase(c('AGTCcccT','AbCdEfG'))
 }
-

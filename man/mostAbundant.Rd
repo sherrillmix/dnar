@@ -19,4 +19,3 @@ Convenience function for picking first most abundant of a set of values
 mostAbundant(c(1:10,1))
 mostAbundant(c('d',rep(letters,10)))
 }
-

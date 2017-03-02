@@ -21,4 +21,3 @@ Find flow corresponding to a given base position
 indexFlow(seq2flow('CCTTAA'),1:6)
 indexFlow(seq2flow('GTGTG'),1:5)
 }
-

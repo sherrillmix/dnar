@@ -30,4 +30,3 @@ four column data frame of chr, start, end and strand of coordinates
 \description{
 Run liftover to convert coordinates from one genome version to another
 }
-

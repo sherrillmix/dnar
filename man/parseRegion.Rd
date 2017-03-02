@@ -19,4 +19,3 @@ Parse a region string into chr, start, end and strand
 parseRegion(c('chr1:12345-23456','chrX:2222:3333'))
 parseRegion(c('chr1:12345-23456+','chrX:2222:3333-','chrX:2222:3333*'))
 }
-

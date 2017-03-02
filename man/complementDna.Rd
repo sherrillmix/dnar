@@ -21,4 +21,3 @@ Complement DNA
 complementDna(c('CTAG','ATCCAC'))
 complementDna(c('CT[AC]G','ATNRY'))
 }
-

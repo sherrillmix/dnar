@@ -21,4 +21,3 @@ runBlat(faFile, gfClientOptions = "", outFile = gsub("\\\\.fn?a$", ".blat",
 \description{
 Start a blat server, run blat on file and kill blat server
 }
-

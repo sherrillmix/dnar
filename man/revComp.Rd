@@ -19,4 +19,3 @@ Reverse complement dna
 revComp(c('CTAG','ATCCAC'))
 revComp(c('CT[AC]G','ATNRY'))
 }
-

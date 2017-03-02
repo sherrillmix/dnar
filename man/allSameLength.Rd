@@ -15,4 +15,3 @@ logical indicating whether all input are the same length
 \description{
 Convenience function to check all args are same length
 }
-

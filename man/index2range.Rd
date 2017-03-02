@@ -19,4 +19,3 @@ Find covered ranges with numerical index data
 index2range(c(1:100,300:450))
 index2range(c(1:100,2:110))
 }
-

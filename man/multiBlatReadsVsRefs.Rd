@@ -25,4 +25,3 @@ multiBlatReadsVsRefs(reads, refs, outFile, nCore = 4, tmpDir = tempdir(),
 \description{
 Run blatReadsVsRefs in parallel
 }
-

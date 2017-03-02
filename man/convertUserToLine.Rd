@@ -24,4 +24,3 @@ points(5.5,0,xpd=NA)
 mtext('Test2',2,convertUserToLine(0,2))
 points(0,5.5,xpd=NA)
 }
-

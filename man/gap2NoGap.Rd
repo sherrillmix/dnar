@@ -21,4 +21,3 @@ Convert gapped coordinates to what the coordinates would be without gaps
 gap2NoGap('AA-TT-GG',7)
 gap2NoGap('AAA----TT-GG',1:10)
 }
-

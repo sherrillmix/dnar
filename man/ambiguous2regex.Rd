@@ -22,4 +22,3 @@ grepl(dnaRegex,c('ATGT','ACAT','AGTT'))
 \references{
 \url{https://en.wikipedia.org/wiki/Nucleic_acid_notation}
 }
-

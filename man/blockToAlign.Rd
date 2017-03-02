@@ -23,4 +23,3 @@ data.frame with sequences aligned in columns qSeq and tSeq
 \description{
 Convert blocks from blat into alignment
 }
-

@@ -22,4 +22,3 @@ Find gaps in blat coordinates
 \examples{
 blatFindGaps('1,100,200','4,200,300','99,50,100')
 }
-

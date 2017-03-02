@@ -40,4 +40,3 @@ y<-3
 cacheOperation(cache,function(x)sum(x^y),1:10,OVERWRITE=TRUE)
 cacheOperation(cache,mean,x=1:100,OVERWRITE=TRUE,EXCLUDE='x')
 }
-

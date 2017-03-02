@@ -21,4 +21,3 @@ Use the case of a string to highlight a pattern. For example, highlighting AC in
 highlightString('AGA',c('TTAGATTAGA','AGAGA'))
 highlightString('aga',tolower(c('TTAGATTAGA','AGAGA')))
 }
-

@@ -24,4 +24,3 @@ Amino acid for RNA codons
 \url{https://en.wikipedia.org/wiki/Genetic_code}
 }
 \keyword{datasets}
-

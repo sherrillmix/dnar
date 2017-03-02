@@ -22,4 +22,3 @@ seqSplit('ACACA','ACA')
 seqSplit('ACACA','ACA',fill='-')
 seqSplit(c('ACACA','ACA'),'TCACA')
 }
-

@@ -21,4 +21,3 @@ Stack regions into smallest number of lines (using greedy algorithm)
 stackRegions(1:10,1:10+2)
 stackRegions(1:10,1:10+5)
 }
-

@@ -29,4 +29,3 @@ blastString<-c(
 read.blast(textConnection(blastString))
 
 }
-

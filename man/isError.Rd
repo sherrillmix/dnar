@@ -21,4 +21,3 @@ isError(c(list(1:3),list(simpleError('Error!'))))
 \seealso{
 \code{\link[parallel]{mclapply}}
 }
-

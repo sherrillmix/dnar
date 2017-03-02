@@ -12,4 +12,3 @@ killBlat(port)
 \description{
 Kill blat running on a given port
 }
-

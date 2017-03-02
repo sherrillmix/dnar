@@ -21,4 +21,3 @@ Note to escape a '\code{]}' using this you'll have to use \code{perl=TRUE} in th
 \examples{
 escapeRegexBracketChars(c(']','\\\\','-','A','B'))
 }
-

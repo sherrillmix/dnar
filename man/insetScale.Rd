@@ -28,4 +28,3 @@ insetScale(breaks,cols,label='Distance')
 \seealso{
 \code{\link[stats]{heatmap}}, \code{\link[graphics]{image}}
 }
-

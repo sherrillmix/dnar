@@ -22,4 +22,3 @@ pRare(4,10,10,10)
 \description{
 Calculate the probability of observing observedX species from nGroups groups with groupsize members with n observations
 }
-

@@ -15,4 +15,3 @@ data.frame with columns start, value, end and chr
 \description{
 Read a UCSC wiggle file
 }
-

@@ -30,4 +30,3 @@ more
 extra lines'
 read.phd(textConnection(phd))
 }
-

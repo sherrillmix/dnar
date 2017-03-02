@@ -25,4 +25,3 @@ chooseAtLeastOneFromEach(10,10,2)
 \seealso{
 \code{\link{pRare}}
 }
-

@@ -30,4 +30,3 @@ fastq<-c(
 )
 read.fastq(textConnection(fastq))
 }
-

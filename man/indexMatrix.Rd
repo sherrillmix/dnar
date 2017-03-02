@@ -24,4 +24,3 @@ Convenience function for selecting multiple elements from a matrix by rows and c
 \examples{
 indexMatrix(c(1,2,3),c(1,2,1),matrix(1:9,nrow=3,byrow=TRUE))
 }
-

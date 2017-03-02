@@ -22,4 +22,3 @@ Trim sequences to the first occurrence of a given length of unambiguous bases, e
 \examples{
 trimNs('NNNANNACTNGAGANNNNAAN',3)
 }
-

@@ -18,4 +18,3 @@ write.fa(names, dna, fileName, isGz = grepl(".gz$", fileName))
 \description{
 Writes sequences to a fasta file
 }
-

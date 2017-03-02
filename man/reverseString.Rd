@@ -20,4 +20,3 @@ Reverse strings
 \examples{
 reverseString(c("ABCDEFG","Reverse"))
 }
-

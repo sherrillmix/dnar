@@ -26,4 +26,3 @@ rareEquation(1:20)
 \seealso{
 \code{\link{rarefy}}
 }
-

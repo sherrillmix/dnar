@@ -19,4 +19,3 @@ dataframe with qStarts,tStarts,sizes if !startEnds or dataframe with starts, end
 \description{
 Convert cigar and starts to qStarts, tStarts, blockSizes as in blat
 }
-

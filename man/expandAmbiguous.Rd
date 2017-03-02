@@ -21,4 +21,3 @@ expandAmbiguous(c('AACACANAT',"ACCHB"))
 \references{
 \url{https://en.wikipedia.org/wiki/Nucleic_acid_notation}
 }
-

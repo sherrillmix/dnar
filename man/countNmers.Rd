@@ -21,4 +21,3 @@ Count nMers in a string
 countNmers('AATTAATT',2)
 countNmers('AATTAATT',3)
 }
-

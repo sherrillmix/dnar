@@ -30,4 +30,3 @@ Generate fake name and sequence data
 generateFasta(10,10:20)
 generateFasta(10,10:20,generateQuals=TRUE)
 }
-

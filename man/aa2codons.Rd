@@ -24,4 +24,3 @@ aa2codons(c('A','T','X'))
 aa2codons(c('A','T','X'),regex=FALSE)
 aa2codons(c('Glu','Ala','Xxx'),type='abbr')
 }
-

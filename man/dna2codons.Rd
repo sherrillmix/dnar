@@ -23,4 +23,3 @@ dna2codons('ACATTTGGG',1)
 dna2codons(c('ACATTTGGG','AAATTAGGC'))
 dna2codons(c('ACATTTGGG','AAATTAGGC'),c(1,2))
 }
-

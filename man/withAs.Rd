@@ -25,4 +25,3 @@ withAs(xx=longNameDataFrame,xx$a+xx$b+d)
 anotherDf<-data.frame('c'=2:12)
 withAs(xx=longNameDataFrame,zz=anotherDf,xx$a+xx$b+zz$c)
 }
-

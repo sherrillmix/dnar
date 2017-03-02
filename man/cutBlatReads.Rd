@@ -24,4 +24,3 @@ vector of sequences
 \description{
 Take the output from blat and make continous reads out of it
 }
-

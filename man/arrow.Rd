@@ -32,4 +32,3 @@ Find coords for arrow plotting
 plot(1:10)
 polygon(arrow(1:5,3:7*1.5,2:6))
 }
-

@@ -16,4 +16,3 @@ tryCatch(stopError('Error: we had ',sum(1:10),' problems'),error=function(e)prin
 \description{
 Convenience function for stop(simpleError())
 }
-

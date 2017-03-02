@@ -16,4 +16,3 @@ object.sizes()
 \description{
 Convenience function to list objects by size
 }
-

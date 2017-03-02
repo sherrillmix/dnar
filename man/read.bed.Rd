@@ -17,4 +17,3 @@ list with a dataframe with columns chr, start and end for each track
 \description{
 Read a bed file
 }
-

@@ -26,4 +26,3 @@ Find the  order of one vector in another
 \examples{
 orderIn(c('z','c','a','t'),letters)
 }
-

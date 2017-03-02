@@ -25,4 +25,3 @@ runBlatNoServer(reads = NULL, refs, blatArgs = "", outFile = "out.blat",
 \description{
 Run blat from blat executable instead of gfserver/client
 }
-

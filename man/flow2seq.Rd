@@ -22,4 +22,3 @@ flow2seq(1:4)
 flow2seq(1:4,letters[1:4])
 flow2seq(c(0,4,0,0,9,2,3))
 }
-

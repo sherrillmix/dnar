@@ -23,4 +23,3 @@ SAM/BAM flags
 \url{https://samtools.github.io/hts-specs/SAMv1.pdf}
 }
 \keyword{datasets}
-

@@ -30,4 +30,3 @@ Check predictions of glm by cross validation
 z<-data.frame('x'=1:11,y=c(rnorm(10,1:10),100))
 cv.glm.par(glm(y~x,data=z))
 }
-

@@ -28,4 +28,3 @@ dataframe of blat data
 \description{
 Read a blat file
 }
-

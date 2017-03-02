@@ -21,4 +21,3 @@ Convert ungapped coordinates to what the coordinates would be with gaps
 noGap2Gap('AA-TT-GG',5)
 noGap2Gap('AAA----TT-GG',1:7)
 }
-

@@ -23,4 +23,3 @@ Generate a PWM for a set of sequences
 pwm(c('ACTG','ACTT','ACTT','ACGT'))
 pwm(c('ACTG','ACTT','ACTT','ACGT'),priors=c('C'=1,'G'=1,'T'=1,'A'=1))
 }
-

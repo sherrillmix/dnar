@@ -17,4 +17,3 @@ logical indicating whether any argument contains NA
 \description{
 Convenience function to check whether any  args have NAs
 }
-

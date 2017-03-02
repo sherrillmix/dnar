@@ -23,4 +23,3 @@ blatReadsVsRefs(reads, refs, outFile, faToTwoBit = "faToTwoBit",
 \description{
 Make a 2bit file from one set of reads and blat another set against it
 }
-

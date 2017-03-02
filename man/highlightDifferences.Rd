@@ -19,4 +19,3 @@ highlightDifferences('TATATTCTTT','TATATCCTTT')
 \description{
 Switch the case of positions in seq1 that mismatch seq2
 }
-

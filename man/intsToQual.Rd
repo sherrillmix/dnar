@@ -20,4 +20,3 @@ Convert fastq chars to integer quals
 \examples{
 intsToQual(1:40)
 }
-

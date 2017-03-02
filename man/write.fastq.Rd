@@ -20,4 +20,3 @@ write.fastq(names, seqs, quals, fileName, isGz = grepl(".gz$", fileName))
 \description{
 Writes a fastq file
 }
-

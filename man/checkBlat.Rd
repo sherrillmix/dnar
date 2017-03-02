@@ -15,4 +15,3 @@ TRUE if blat running on port otherwise FALSE
 \description{
 Check if blat is running on port
 }
-

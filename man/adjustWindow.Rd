@@ -14,4 +14,3 @@ adjustWindow(width = as.integer(Sys.getenv("COLUMNS")))
 Convenience function for selecting multiple elements from a matrix by x,y position
 convenience function to resize R console window
 }
-

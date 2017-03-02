@@ -25,4 +25,3 @@ multiRunBlatNoServer(reads, refs, outFile, nCore = 4, tmpDir = tempdir(),
 \description{
 Run blat from parallel blat executables
 }
-

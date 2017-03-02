@@ -27,4 +27,3 @@ wilsonInt(100,1)
 \references{
 \url{http://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval}
 }
-

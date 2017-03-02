@@ -22,4 +22,3 @@ print(samFlags)
 samFlag(1:10,'paired')
 samFlag(1:10,'unmapped')
 }
-

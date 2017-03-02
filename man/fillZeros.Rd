@@ -22,4 +22,3 @@ Fill missing position with zeros
 \examples{
 fillZeros(c(1:3,6:7,9),data.frame('count'=1:6))
 }
-

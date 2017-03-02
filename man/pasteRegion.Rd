@@ -25,4 +25,3 @@ Make region from chr start end
 pasteRegion(c('chr1','chr2'),c(100,1235),c(200,2346))
 pasteRegion(c('chr1','chr2'),c(100,1235),c(200,2346),c('*','-'))
 }
-
