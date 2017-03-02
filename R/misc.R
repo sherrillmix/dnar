@@ -293,7 +293,7 @@ cleanMclapply<-function(x,applyFunc,...,mc.cores=parallel::detectCores(),extraCo
     stop(simpleError('Problem running multi R code'))
   }
   if(VOCAL)message("Loading split outputs")
-  out<-do.call(c,lapply(outFiles,function(outFile){load(outFile);return(out)}))
+  out<-do.call(c,lapply(outFiles,function(outFile){if(VOCAL)cat('.');load(outFile);return(out)}))
   return(out)
 }
 
