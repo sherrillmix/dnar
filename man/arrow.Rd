@@ -2,15 +2,15 @@
 % Please edit documentation in R/misc.R
 \name{arrow}
 \alias{arrow}
-\title{Find coords for arrow plotting}
+\title{Find coords for plotting horizontal arrows}
 \usage{
-arrow(left, right, y, arrowLength = diff(graphics::par("usr")[1:2]) * 0.05,
+arrow(tail, head, y, arrowLength = diff(graphics::par("usr")[1:2]) * 0.05,
   shaft = 0.2, point = 0.4, concat = TRUE)
 }
 \arguments{
-\item{left}{left coordinate of block}
+\item{tail}{x coordinate for tail of the arrow}
 
-\item{right}{right coordinate of block}
+\item{head}{x coordinate for the head of the arrow}
 
 \item{y}{y position for middle of block}
 
@@ -26,9 +26,11 @@ arrow(left, right, y, arrowLength = diff(graphics::par("usr")[1:2]) * 0.05,
 a data.frame with columns x and y specifying coordinates for arrows
 }
 \description{
-Find coords for arrow plotting
+Find coords for plotting horizontal arrows
 }
 \examples{
 plot(1:10)
 polygon(arrow(1:5,3:7*1.5,2:6))
+polygon(arrow(3:6,1:4/1.5,7:10))
+polygon(arrow(7:10,7:10+0:3*.1,7:10))
 }

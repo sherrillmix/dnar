@@ -396,10 +396,10 @@ convertUserToLine<-function(usr,axis=1){
   return(out)
 }
 
-#' Find coords for arrow plotting
+#' Find coords for plotting horizontal arrows
 #'
-#' @param left left coordinate of block
-#' @param right right coordinate of block
+#' @param tail x coordinate for tail of the arrow
+#' @param head x coordinate for the head of the arrow
 #' @param y y position for middle of block
 #' @param arrowLength arrow length in usr coords
 #' @param shaft half of shaft thickness in usr coords
@@ -410,11 +410,14 @@ convertUserToLine<-function(usr,axis=1){
 #' @examples
 #' plot(1:10)
 #' polygon(arrow(1:5,3:7*1.5,2:6))
-arrow<-function(left,right,y,arrowLength=diff(graphics::par('usr')[1:2])*.05,shaft=.2,point=.4,concat=TRUE){
-  if(any(left>right))stop(simpleError('Left border > right border of arrow'))
-  arrowX<-right-arrowLength
-  arrowX<-ifelse(arrowX<left,left+(right-left)/10,arrowX)
-  coords<-mapply(function(left,right,y,arrowX){data.frame('x'=c(left,arrowX,arrowX,right,arrowX,arrowX,left),'y'=y+c(shaft,shaft,point,0,-point,-shaft,-shaft))},left,right,y,arrowX,SIMPLIFY=FALSE)
+#' polygon(arrow(3:6,1:4/1.5,7:10))
+#' polygon(arrow(7:10,7:10+0:3*.1,7:10))
+arrow<-function(tail,head,y,arrowLength=diff(graphics::par('usr')[1:2])*.05,shaft=.2,point=.4,concat=TRUE){
+  isLeft<-tail<head
+  arrowX<-head+arrowLength*ifelse(isLeft,-1,1)
+  arrowX<-ifelse(arrowX<tail&isLeft,tail+(head-tail)/10,arrowX)
+  arrowX<-ifelse(arrowX>tail&!isLeft,head+(tail-head)/10,arrowX)
+  coords<-mapply(function(tail,head,y,arrowX){data.frame('x'=c(tail,arrowX,arrowX,head,arrowX,arrowX,tail),'y'=y+c(shaft,shaft,point,0,-point,-shaft,-shaft))},tail,head,y,arrowX,SIMPLIFY=FALSE)
   if(concat)coords<-do.call(rbind,lapply(coords,function(x)return(rbind(x,c(NA,NA)))))
   return(coords)
 }

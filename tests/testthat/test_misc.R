@@ -218,7 +218,10 @@ test_that("Test arrow",{
   expect_equal(length(arrow(1:10,11,2,concat=FALSE)),10)
   expect_equal(sum(is.na(arrow(1:10,20,2)$x)),10)
   expect_equal(sum(is.na(arrow(1:10,20,2)$y)),10)
-  expect_error(arrow(5.1,5,2),'border')
+  expect_error(arrow(5.1,5,2),NA) #now does both directions
+  expect_equal(sum(is.na(arrow(10:1,20,2)$x)),10)
+  expect_equal(sum(is.na(arrow(10:1,20,2)$y)),10)
+  expect_equal(unique(na.omit(arrow(10,10,2)$x)),10)
   dev.off()
 })
 
