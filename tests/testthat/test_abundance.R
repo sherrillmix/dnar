@@ -182,3 +182,15 @@ test_that("Test cumpaste",{
   expect_equal(cumpaste(c(NA,'BBB','C')),c('NA','NA BBB','NA BBB C'))
   expect_equal(cumpaste(c('','BBB','C'),sep='><'),c('','><BBB','><BBB><C'))
 })
+
+
+test_that("Test rarefyCounts",{
+  expect_equal(replicate(10,sum(rarefyCounts(1:100,123))),rep(123,10))
+  expect_equal(replicate(10,length(rarefyCounts(c(1,1,1,10000),1))),rep(4,10))
+  expect_equal(replicate(10,sum(rarefyCounts(c(1,1,1,1),3)>0)),rep(3,10))
+  expect_equal(rarefyCounts(100:1,sum(100:1)),100:1)
+  expect_equal(rarefyCounts(1:200,sum(1:200)),1:200)
+  expect_equal(rarefyCounts(1:200,0),rep(0,200))
+  expect_error(rarefyCounts(1:200,-1),'invalid')
+  expect_error(rarefyCounts(1:2,10),'larger')
+})

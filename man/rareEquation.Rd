@@ -24,5 +24,5 @@ Calculate rarefaction using formula
 rareEquation(1:20)
 }
 \seealso{
-\code{\link{rarefy}}
+\code{\link{rarefy}}, \code{link{rarefyCounts}}
 }

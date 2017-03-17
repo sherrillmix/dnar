@@ -103,7 +103,7 @@ chao<-function(counts){
 #' @param ... Additional arguments to statFunc
 #' @export
 #' @return Dataframe of calculated quantiles with rownames of the number of samples drawn
-#' @seealso \code{\link{rareEquation}}, \code{\link{chao}}
+#' @seealso \code{\link{rareEquation}}, \code{\link{chao}}, \code{link{rarefyCounts}}
 #' @examples
 #' rarefy(1:20,reps=100)
 #' rarefy(1:20,reps=100,chaoAdjust=TRUE)
@@ -134,7 +134,7 @@ rarefy<-function(counts,samples=unique(round(sum(counts)*seq(.1,1,.1))),reps=100
 #' @param minObs Minimum number of counts to be counted as present e.g. minObs=2 discards singletons
 #' @export
 #' @return Vector with predicted rarefied counts for entries and the sampled number of reads for names
-#' @seealso \code{\link{rarefy}}
+#' @seealso \code{\link{rarefy}}, \code{link{rarefyCounts}}
 #' @examples
 #' rareEquation(1:20)
 rareEquation<-function(counts,samples=unique(round(sum(counts)*seq(.1,1,.1))),minObs=1){
@@ -148,6 +148,21 @@ rareEquation<-function(counts,samples=unique(round(sum(counts)*seq(.1,1,.1))),mi
   }
   names(out)<-samples
   return(out)
+}
+
+#' Generate rarefied counts from a vector of counts
+#' 
+#' @param counts a vector of counts 
+#' @param n rarefy down to n counts
+#' @export
+#' @return a vector of the same length as counts with rarefied counts summing to n
+#' @seealso \code{link{rarefy}}, \code{link{rareEquation}}
+#' @examples
+#' rarefyCounts(1:10,10)
+rarefyCounts<-function(counts,n){
+  rarefied<-sample(rep(1:length(counts),counts),n)
+  out<-table(factor(rarefied,levels=1:length(counts)))
+  return(as.vector(out))
 }
 
 #' Calculate the probability of observing observedX species from nGroups groups with groupsize members with n observations
