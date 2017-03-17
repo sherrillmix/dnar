@@ -191,6 +191,7 @@ test_that("Test rarefyCounts",{
   expect_equal(rarefyCounts(100:1,sum(100:1)),100:1)
   expect_equal(rarefyCounts(1:200,sum(1:200)),1:200)
   expect_equal(rarefyCounts(1:200,0),rep(0,200))
+  expect_equal(rarefyCounts(c('a'=1,'b'=2,'zz'=3),0),c('a'=0,'b'=0,'zz'=0))
   expect_error(rarefyCounts(1:200,-1),'invalid')
   expect_error(rarefyCounts(1:2,10),'larger')
 })

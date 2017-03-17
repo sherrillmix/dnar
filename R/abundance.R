@@ -161,8 +161,9 @@ rareEquation<-function(counts,samples=unique(round(sum(counts)*seq(.1,1,.1))),mi
 #' rarefyCounts(1:10,10)
 rarefyCounts<-function(counts,n){
   rarefied<-sample(rep(1:length(counts),counts),n)
-  out<-table(factor(rarefied,levels=1:length(counts)))
-  return(as.vector(out))
+  out<-as.vector(table(factor(rarefied,levels=1:length(counts))))
+  names(out)<-names(counts)
+  return(out)
 }
 
 #' Calculate the probability of observing observedX species from nGroups groups with groupsize members with n observations
