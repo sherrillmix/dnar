@@ -333,3 +333,19 @@ test_that("Test insetScale",{
   dev.off()
 })
 
+test_that("Test slantAxis",{
+  plotFile<-tempfile()
+  pdf(plotFile)
+    plot(1:1000,log='y',yaxt='n')
+    expect_error(slantAxis(),'missing')
+    expect_equal(slantAxis(1,1:4),NULL)
+    labels<-c('A label','Another label','A longer longer label','A really really\nlong label')
+    expect_error(slantAxis(1,seq(2,8,2),labels),NA)
+    expect_error(slantAxis(2,seq(2,8,2),labels),NA)
+    expect_error(slantAxis(3,seq(2,8,2),labels),NA)
+    expect_warning(slantAxis(3,seq(2,8,2),labels,notARealArgument=1),'parameter')
+    expect_error(slantAxis(4,seq(2,8,2),labels,srt=-30,cex=.8,axisArgs=list(col.ticks='red'),lwd=2),NA)
+  dev.off()
+})
+
+
