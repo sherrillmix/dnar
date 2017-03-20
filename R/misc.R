@@ -442,11 +442,11 @@ slantAxis<-function(side,at,labels=at,srt=ifelse(side %in% c(1,4),-45,45),locati
 #' polygon(arrow(1:5,3:7*1.5,2:6))
 #' polygon(arrow(3:6,1:4/1.5,7:10))
 #' polygon(arrow(7:10,7:10+0:3*.1,7:10))
+#' polygon(arrow(6:9,6:9-0:3*.1,7:10))
 arrow<-function(tail,head,y,arrowLength=diff(graphics::par('usr')[1:2])*.05,shaft=.2,point=.4,concat=TRUE){
   isLeft<-tail<head
   arrowX<-head+arrowLength*ifelse(isLeft,-1,1)
-  arrowX<-ifelse(arrowX<tail&isLeft,tail+(head-tail)/10,arrowX)
-  arrowX<-ifelse(arrowX>tail&!isLeft,head+(tail-head)/10,arrowX)
+  arrowX<-ifelse((arrowX<tail&isLeft)|(arrowX>tail&!isLeft),tail+(head-tail)/10,arrowX)
   coords<-mapply(function(tail,head,y,arrowX){data.frame('x'=c(tail,arrowX,arrowX,head,arrowX,arrowX,tail),'y'=y+c(shaft,shaft,point,0,-point,-shaft,-shaft))},tail,head,y,arrowX,SIMPLIFY=FALSE)
   if(concat)coords<-do.call(rbind,lapply(coords,function(x)return(rbind(x,c(NA,NA)))))
   return(coords)

@@ -33,4 +33,5 @@ plot(1:10)
 polygon(arrow(1:5,3:7*1.5,2:6))
 polygon(arrow(3:6,1:4/1.5,7:10))
 polygon(arrow(7:10,7:10+0:3*.1,7:10))
+polygon(arrow(6:9,6:9-0:3*.1,7:10))
 }
