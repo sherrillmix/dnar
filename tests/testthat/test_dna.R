@@ -63,11 +63,16 @@ test_that("Test seqSplit",{
 })
 
 test_that("Test blatFindGaps",{
-	expect_equal(blatFindGaps(c('1,100,200','1','1,10,20,30'),c('4,200,300','100','1,1001,2001,3001'),c('99,50,100','10000','3,4,5,6')),
+	expect_equal(blatFindGaps(c('1,100,200,300,302','1','1,10,20,30,36'),c('4,200,300,400,402','100','1,1001,2001,3001,3007'),c('99,50,100,2,2','10000','3,4,5,6,7')),
 		list(
-			data.frame(qStartAfter=c(99,149),qGaps=c(0,50),tStartAfter=c(102,249),tGaps=c(97,50)),
+			data.frame(qStartAfter=c(99,149,299,301),qGaps=c(0,50,0,0),tStartAfter=c(102,249,399,401),tGaps=c(97,50,0,0)),
 			data.frame(qStartAfter=-99,qGaps=-99,tStartAfter=-99,tGaps=-99)[0,],
-			data.frame(qStartAfter=c(3,13,24),qGaps=c(6,6,5),tStartAfter=c(3,1004,2005),tGaps=c(997,996,995))
+			data.frame(qStartAfter=c(3,13,24,35),qGaps=c(6,6,5,0),tStartAfter=c(3,1004,2005,3006),tGaps=c(997,996,995,0))
+		)
+	)
+  expect_equal(blatFindGaps(c('1,100,200,300'),c('4,200,300,400'),c('99,50,100,20000')),
+		list(
+			data.frame(qStartAfter=c(99,149,299),qGaps=c(0,50,0),tStartAfter=c(102,249,399),tGaps=c(97,50,0))
 		)
 	)
 	expect_error(blatFindGaps(c('1,100,200','1','1,10,20,30'),c('4,200,300','100','1,1001,2001,3001'),c('99,50,100','10000')),'Length')

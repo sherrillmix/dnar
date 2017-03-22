@@ -675,8 +675,8 @@ blatFindGaps<-function(qStarts,tStarts,blockSizes){
 	gaps<-mapply(function(qStarts,tStarts,blockSizes){
 		tEnds<-tStarts+blockSizes-1
 		qEnds<-qStarts+blockSizes-1
-		qGaps<-findIntrons(qStarts,qEnds)
-		tGaps<-findIntrons(tStarts,tEnds)
+		qGaps<-findIntrons(list(qStarts),list(qEnds))
+		tGaps<-findIntrons(list(tStarts),list(tEnds))
 		if(nrow(qGaps)!=nrow(tGaps))stop(simpleError('Mismatch in target and query introns'))
 		out<-data.frame('qStartAfter'=qGaps$startAfter,'qGaps'=qGaps$length,'tStartAfter'=tGaps$startAfter,'tGaps'=tGaps$length)
 		return(out)
@@ -765,7 +765,7 @@ findIntrons<-function(starts,ends,names=1:length(startList),additionalColumns=NU
 	inEnds<-lapply(startList,function(x)x[-1]-1)
 	inStarts<-lapply(endList,function(x)x[-length(x)]+1)
 	if(any(sapply(inEnds,length)!=sapply(inStarts,length)))stop(simpleError('Intron ends and starts not equal length'))
-	problemIndex<-mapply(function(x,y)which(x<y),inEnds,inStarts)
+	problemIndex<-mapply(function(x,y)which(x<y),inEnds,inStarts,SIMPLIFY=FALSE)
 	problems<-which(sapply(problemIndex,length)>0)
 	for(problem in problems){
 		for(thisIndex in problemIndex[[problem]]){
