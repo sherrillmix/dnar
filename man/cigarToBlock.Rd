@@ -19,3 +19,9 @@ dataframe with qStarts,tStarts,sizes if !startEnds or dataframe with starts, end
 \description{
 Convert cigar and starts to qStarts, tStarts, blockSizes as in blat
 }
+\examples{
+cigars<-c('100M','10H10M1000H','10M10I20M10D2M','10S10M10H','100M10000N100M')
+starts<-1:5
+cigarToBlock(cigars,starts)
+cigarToBlock(cigars,starts,startEnds=TRUE)
+}

@@ -511,6 +511,11 @@ trimNs<-function(seqs,nonNStretch=c(10,10),nChars=c("N")){
 #' @param startEnds if FALSE single line with comma separated starts, if TRUE data.frame with single start, end and id column
 #' @export
 #' @return dataframe with qStarts,tStarts,sizes if !startEnds or dataframe with starts, ends and ids if startEnds
+#' @examples
+#' cigars<-c('100M','10H10M1000H','10M10I20M10D2M','10S10M10H','100M10000N100M')
+#' starts<-1:5
+#' cigarToBlock(cigars,starts)
+#' cigarToBlock(cigars,starts,startEnds=TRUE)
 cigarToBlock<-function(cigars,starts,startEnds=FALSE){
 	#M=match, I=insertion in query, D=deletion in query, N="intron" deletion in query, S=soft clipping (clip sequence), H=hard clipping (sequence was already clipped)
 	nAligns<-length(starts)
@@ -573,6 +578,9 @@ cigarToBlock<-function(cigars,starts,startEnds=FALSE){
 #' @param sizes comma separated lengths of matches e.g. from blat or cigarToBlock
 #' @export
 #' @return data.frame with sequences aligned in columns qSeq and tSeq
+#' @examples
+#' blockToAlign('ABEC','BCD','2,4','1,2','1,1')
+#' blockToAlign(c('ABC','CDE'),c('BCD','ABCDE'),c('1,3','1'),c('1,2','3'),c('1,1','3'))
 blockToAlign<-function(seqs,tSeqs,qStarts,tStarts,sizes){
 	nSeqs<-length(seqs)
 	if(length(tSeqs)==1)tSeqs<-rep(tSeqs,length(seqs))

@@ -23,3 +23,7 @@ data.frame with sequences aligned in columns qSeq and tSeq
 \description{
 Convert blocks from blat into alignment
 }
+\examples{
+blockToAlign('ABEC','BCD','2,4','1,2','1,1')
+blockToAlign(c('ABC','CDE'),c('BCD','ABCDE'),c('1,3','1'),c('1,2','3'),c('1,1','3'))
+}
