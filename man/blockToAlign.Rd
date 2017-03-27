@@ -26,4 +26,10 @@ Convert blocks from blat into alignment
 \examples{
 blockToAlign('ABEC','BCD','2,4','1,2','1,1')
 blockToAlign(c('ABC','CDE'),c('BCD','ABCDE'),c('1,3','1'),c('1,2','3'),c('1,1','3'))
+blocks<-cigarToBlock(c('3M','2M1I1M'),1:2)
+blockToAlign(
+  c('ATC','ATGC'),
+  c('ATCT','GATCT'),
+  blocks$qStarts,blocks$tStarts,blocks$sizes
+)
 }
