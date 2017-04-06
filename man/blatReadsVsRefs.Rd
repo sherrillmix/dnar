@@ -4,7 +4,7 @@
 \alias{blatReadsVsRefs}
 \title{Make a 2bit file from one set of reads and blat another set against it}
 \usage{
-blatReadsVsRefs(reads, refs, outFile, faToTwoBit = "faToTwoBit",
+blatReadsVsRefs(reads, refs, outFile = NULL, faToTwoBit = "faToTwoBit",
   tmpDir = tempfile("dir"), ...)
 }
 \arguments{
@@ -12,13 +12,16 @@ blatReadsVsRefs(reads, refs, outFile, faToTwoBit = "faToTwoBit",
 
 \item{refs}{vector of reference reads with names}
 
-\item{outFile}{file to write blat to (if ends in .gz then isGz defaults to true and writes to gzipped file)}
+\item{outFile}{file to write blat to (if ends in .gz then isGz defaults to true and writes to gzipped file). If NULL then output to temp file, read in and return.}
 
 \item{faToTwoBit}{path to faToTwoBit program from blat}
 
 \item{tmpDir}{directory to store working files}
 
 \item{...}{additional arguments to run blat}
+}
+\value{
+NULL if outFile defined or an alignment data.frame if outFile is NULL
 }
 \description{
 Make a 2bit file from one set of reads and blat another set against it

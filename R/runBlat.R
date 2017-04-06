@@ -157,23 +157,34 @@ multiRunBlatNoServer<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),isGz=
 #'
 #' @param reads vector of query reads with names
 #' @param refs vector of reference reads with names
-#' @param outFile file to write blat to (if ends in .gz then isGz defaults to true and writes to gzipped file)
+#' @param outFile file to write blat to (if ends in .gz then isGz defaults to true and writes to gzipped file). If NULL then output to temp file, read in and return.
 #' @param faToTwoBit path to faToTwoBit program from blat
 #' @param tmpDir directory to store working files
 #' @param ... additional arguments to run blat
 #' @export
-#' @return NULL
-blatReadsVsRefs<-function(reads,refs,outFile,faToTwoBit='faToTwoBit',tmpDir=tempfile('dir'),...){
+#' @return NULL if outFile defined or an alignment data.frame if outFile is NULL
+blatReadsVsRefs<-function(reads,refs,outFile=NULL,faToTwoBit='faToTwoBit',tmpDir=tempfile('dir'),...){
 	dir.create(tmpDir)
+  if(is.null(outFile)){
+    isTmp<-TRUE
+    outFile<-tempfile()
+  }else{
+    isTmp<-FALSE
+  }
+  if(is.null(names(reads)))names(reads)<-1:length(reads)
 	readFile<-sprintf('%s/read.fa',tmpDir)
 	write.fa(names(reads),reads,readFile)
 	refFile<-sprintf('%s/refs.fa',tmpDir)
+  if(is.null(names(refs)))names(refs)<-1:length(refs)
 	write.fa(names(refs),refs,refFile)
 	twobitFile<-sprintf('%s/refs.2bit',tmpDir)
 	system(sprintf('%s %s %s',faToTwoBit,refFile,twobitFile))
 	runBlat(readFile,outFile=outFile,bit2=twobitFile,...)
 	file.remove(twobitFile,refFile,readFile,tmpDir)
-	return(NULL)
+  if(!isTmp)return(NULL)
+  out<-read.blat(outFile)
+  file.remove(outFile)
+  return(out)
 }
 
 #' Run blatReadsVsRefs in parallel
