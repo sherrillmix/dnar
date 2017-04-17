@@ -610,10 +610,9 @@ withAs<-function(...,expr=NULL){
 #' @export
 #' @return An invisible list containing the minor and major axis label positions
 #' @examples
-#' plot(1:1000,yaxt='n',log='xy',xaxt='n')
+#' plot(1:1000,log='xy',xaxt='n',yaxt='n')
 #' logAxis(las=1)
-#' plot(1:1000,yaxt='n',log='xy',xaxt='n')
-#' logAxis(1,las=1,exponent=FALSE)
+#' logAxis(1,exponent=FALSE)
 logAxis<-function(side=2,exponent=TRUE,addExtra=!exponent,minorTcl=-.2,axisMin=-Inf,offset=0,...){
   if(side %in% c(2,4)) parX<-sort(graphics::par('usr')[3:4])
   else parX<-sort(graphics::par('usr')[1:2])

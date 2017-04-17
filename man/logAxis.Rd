@@ -29,8 +29,7 @@ An invisible list containing the minor and major axis label positions
 Adds a log axis to the current plot with \code{log='x'} or \code{log='y'} with ticks and labels specified with powers of 10
 }
 \examples{
-plot(1:1000,yaxt='n',log='xy',xaxt='n')
+plot(1:1000,log='xy',xaxt='n',yaxt='n')
 logAxis(las=1)
-plot(1:1000,yaxt='n',log='xy',xaxt='n')
-logAxis(1,las=1,exponent=FALSE)
+logAxis(1,exponent=FALSE)
 }
