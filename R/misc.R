@@ -666,7 +666,6 @@ insetScale<-function(breaks,col,insetPos=c(.025,.015,.04,.25),label=''){
   breakPos<-((breaks)-(min(breaks)))/max((breaks)-(min(breaks)))*(insetPos[4]-insetPos[2])+insetPos[2]
   #add a bit of offset to avoid pdf viewers displaying breaks between exact rectangle border meeting
   offsetPos<-breakPos[-1]+c(rep(1e-3*diff(range(breakPos)),length(breakPos)-2),0)
-  print(offsetPos)
   graphics::rect(breakPos[-length(breakPos)],insetPos[1],offsetPos,insetPos[3],col=col,xpd=NA,border=NA)
   graphics::rect(insetPos[2],insetPos[1],insetPos[4],insetPos[3],xpd=NA)
   prettyLabs<-pretty(breaks)
