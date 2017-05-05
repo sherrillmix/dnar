@@ -663,8 +663,11 @@ logAxis<-function(side=2,exponent=TRUE,addExtra=!exponent,minorTcl=-.2,axisMin=-
 insetScale<-function(breaks,col,insetPos=c(.025,.015,.04,.25),label=''){
   if(length(breaks)!=length(col)+1)stop('Number of breaks must be one more than colors')
   insetPos<-c(graphics::grconvertY(insetPos[1],'nfc','user'),graphics::grconvertX(insetPos[2],'nfc','user'),graphics::grconvertY(insetPos[3],'nfc','user'),graphics::grconvertX(insetPos[4],'nfc','user'))
-  breakPos<-((breaks[-1])-(min(breaks[-1])))/max((breaks[-1])-(min(breaks[-1])))*(insetPos[4]-insetPos[2])+insetPos[2]
-  graphics::rect(breakPos[-length(breakPos)],insetPos[1],breakPos[-1]+1e-3*diff(range(breakPos)),insetPos[3],col=col[-1],xpd=NA,border=NA)
+  breakPos<-((breaks)-(min(breaks)))/max((breaks)-(min(breaks)))*(insetPos[4]-insetPos[2])+insetPos[2]
+  #add a bit of offset to avoid pdf viewers displaying breaks between exact rectangle border meeting
+  offsetPos<-breakPos[-1]+rep(c(1e-3*diff(range(breakPos)),0),c(length(breakPos)-2,1))
+  print(offsetPos)
+  graphics::rect(breakPos[-length(breakPos)],insetPos[1],offsetPos,insetPos[3],col=col,xpd=NA,border=NA)
   graphics::rect(insetPos[2],insetPos[1],insetPos[4],insetPos[3],xpd=NA)
   prettyLabs<-pretty(breaks)
   prettyLabs<-prettyLabs[prettyLabs<=max(breaks)&prettyLabs>=min(breaks)]
