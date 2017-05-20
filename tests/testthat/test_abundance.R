@@ -195,3 +195,12 @@ test_that("Test rarefyCounts",{
   expect_error(rarefyCounts(1:200,-1),'invalid')
   expect_error(rarefyCounts(1:2,10),'larger')
 })
+
+test_that("Test gini",{
+  #http://shlegeris.com/gini
+  expect_equal(gini(1:10),.3)
+  expect_equal(gini(20:1),gini(1:20))
+  expect_equal(gini(0:1),.5)
+  expect_equal(gini(c(rep(0,99),1)),.99)
+  expect_equal(gini(rep(1,99)),0)
+})

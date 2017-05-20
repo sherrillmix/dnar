@@ -276,3 +276,20 @@ cumpaste<-function(strs,sep=' '){
   strs[1]<-paste(strs[1])
   Reduce(function(hh,tt)paste(hh,tt,sep=sep),strs,accumulate=TRUE)
 }
+
+#' Calculate Gini index
+#' 
+#' @param x a vector of numerical values
+#' @return a single numeric giving the Gini index
+#' @references \url{https://en.wikipedia.org/wiki/Gini_coefficient}
+#' @export
+#' @examples
+#' gini(1:10)
+#' gini(rep(1,100))
+#' gini(c(rep(0,100),1))
+gini<-function(x){
+  x<-sort(x)
+  n<-length(x)
+  return(2*sum(x*1:n)/n/sum(x)-(n+1)/n)
+}
+
