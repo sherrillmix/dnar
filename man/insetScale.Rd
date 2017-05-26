@@ -4,7 +4,8 @@
 \alias{insetScale}
 \title{Add an inset color scale to a plot}
 \usage{
-insetScale(breaks, col, insetPos = c(0.025, 0.015, 0.04, 0.25), label = "")
+insetScale(breaks, col, insetPos = c(0.025, 0.015, 0.04, 0.25), label = "",
+  offset = 0.001)
 }
 \arguments{
 \item{breaks}{a set of finite numeric breakpoints for the colours: must have one more breakpoint than colour and be in increasing order.}
@@ -14,6 +15,8 @@ insetScale(breaks, col, insetPos = c(0.025, 0.015, 0.04, 0.25), label = "")
 \item{insetPos}{a four element numeric vector giving the position of the bottom, left, top and right edges of the scale in nfc coordinates (0 = bottom/left of figure, 1 = top/right of figure)}
 
 \item{label}{a character string giving label for color scale}
+
+\item{offset}{add a small offset to rectangles to suppress pdf viewers showing a gap at exact border between rectangles}
 }
 \description{
 Adds an inset color scale to a plot without disrupting future plotting. Especially useful with \code{heatmap} or \code{image} plots.
