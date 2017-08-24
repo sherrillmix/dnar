@@ -198,6 +198,7 @@ blatReadsVsRefs<-function(reads,refs,outFile=NULL,faToTwoBit='faToTwoBit',tmpDir
 #' @export
 #' @return NULL
 multiBlatReadsVsRefs<-function(reads,refs,outFile,nCore=4,tmpDir=tempdir(),isGz=grepl('.gz$',outFile),...){
+  if(is.null(names(reads)))names(reads)<-1:length(reads)
 	prefix<-paste(sample(c(letters,LETTERS),20,TRUE),collapse='')
 	if(!file.exists(tmpDir))dir.create(tmpDir)
 	bigRun<-parallel::mclapply(mapply(function(x,y)list(x,y),split(reads,sort(rep(1:nCore,length.out=length(reads)))),1:nCore,SIMPLIFY=FALSE),function(x){
