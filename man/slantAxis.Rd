@@ -5,7 +5,7 @@
 \title{Label axis with slanted labels}
 \usage{
 slantAxis(side, at, labels = at, srt = ifelse(side \%in\% c(1, 4), -45, 45),
-  location = 1.2, axisArgs = list(), ...)
+  location = 1.2, adj = ifelse(side == 2, 1, 0), axisArgs = list(), ...)
 }
 \arguments{
 \item{side}{an integer specifying which side to draw axis on. 1=bottom, 2=left, 3=top and 4=right.}
@@ -17,6 +17,8 @@ slantAxis(side, at, labels = at, srt = ifelse(side \%in\% c(1, 4), -45, 45),
 \item{srt}{a numeric specifying string rotation in degrees}
 
 \item{location}{an integer specifying the line to start the text}
+
+\item{adj}{one or two values in [0, 1] which specify the x (and optionally y) adjustment of the labels.  On most devices values outside that interval will also work.}
 
 \item{axisArgs}{a list of additional arguments for axis}
 

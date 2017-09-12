@@ -403,6 +403,7 @@ convertUserToLine<-function(usr,axis=1){
 #' @param labels character vector of tick labels
 #' @param srt a numeric specifying string rotation in degrees
 #' @param location an integer specifying the line to start the text
+#' @param adj one or two values in [0, 1] which specify the x (and optionally y) adjustment of the labels.  On most devices values outside that interval will also work.
 #' @param axisArgs a list of additional arguments for axis
 #' @param ... additional arguments to text
 #' @return NULL
@@ -415,9 +416,9 @@ convertUserToLine<-function(usr,axis=1){
 #' slantAxis(2,seq(2,8,2),labels)
 #' slantAxis(3,seq(2,8,2),labels)
 #' slantAxis(4,seq(2,8,2),labels,srt=-30,cex=.8,axisArgs=list(col.ticks='red'),lwd=2)
-slantAxis<-function(side,at,labels=at,srt=ifelse(side %in% c(1,4),-45,45),location=1.2,axisArgs=list(),...){
+slantAxis<-function(side,at,labels=at,srt=ifelse(side %in% c(1,4),-45,45),location=1.2,adj=ifelse(side==2,1,0),axisArgs=list(),...){
+  
   do.call(graphics::axis,c(list(side,at,label=FALSE),axisArgs))
-  adj<-ifelse(side==2,1,0)
   if(side %in% c(1,3)){
     graphics::text(at, convertLineToUser(location,side), srt = srt, adj = adj, labels = labels, xpd = TRUE,...)
   }else{
