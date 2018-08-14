@@ -4,12 +4,14 @@
 \alias{pwmToSeq}
 \title{Calculate sequence for PWM}
 \usage{
-pwmToSeq(pwm, cutoff = 0.2)
+pwmToSeq(pwm, cutoff = 0.2, singleCutoff = cutoff)
 }
 \arguments{
 \item{pwm}{a matrix with rows unique bases and columns positions}
 
 \item{cutoff}{consider any base with proportion greater than this cutoff present}
+
+\item{singleCutoff}{only label base with a single bases if the proportion is greater than this cutoff}
 }
 \value{
 a single character string containing the conensus sequence using ambiguous base codes

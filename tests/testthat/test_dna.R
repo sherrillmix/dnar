@@ -371,6 +371,9 @@ test_that("Test pwmToSeq",{
   expect_equal(pwmToSeq(pwmMat,.19),'ASW')
   expect_equal(pwmToSeq(pwmMat,.9),'ANN')
   expect_equal(pwmToSeq(pwmMat,.99),'NNN')
+  expect_equal(pwmToSeq(pwmMat,.19,.99),'NNW')
+  expect_equal(pwmToSeq(pwmMat,.19,.9),'ANW')
+  expect_equal(pwmToSeq(pwmMat,.4,.9),'ANN')
 })
 
 

@@ -859,6 +859,7 @@ scoreFromPWM<-function(seqs,pwm){
 #'
 #' @param pwm a matrix with rows unique bases and columns positions
 #' @param cutoff consider any base with proportion greater than this cutoff present
+#' @param singleCutoff only label base with a single bases if the proportion is greater than this cutoff
 #' @export
 #' @return a single character string containing the conensus sequence using ambiguous base codes
 #' @seealso \code{\link{pwm}}, \code{\link{ambiguous2regex}}
@@ -866,8 +867,8 @@ scoreFromPWM<-function(seqs,pwm){
 #' seqs<-c('ACA','ACA','ACA','ACT','ACT','ACC')
 #' seqPwm<-pwm(seqs)
 #' pwmToSeq(seqPwm)
-pwmToSeq<-function(pwm,cutoff=.2){
-  isPresent<-pwm>=cutoff
+pwmToSeq<-function(pwm,cutoff=.2,singleCutoff=cutoff){
+  isPresent<-apply(pwm,2,function(xx)if(sum(xx>cutoff)>1)xx>=cutoff else xx>=singleCutoff)
   bases<-matrix(rownames(pwm),nrow=nrow(pwm),ncol=ncol(pwm))
   bases[!isPresent]<-NA
   out<-paste(apply(bases,2,function(xx){
