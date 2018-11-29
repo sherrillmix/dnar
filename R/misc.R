@@ -417,12 +417,11 @@ convertUserToLine<-function(usr,axis=1){
 #' slantAxis(3,seq(2,8,2),labels)
 #' slantAxis(4,seq(2,8,2),labels,srt=-30,cex=.8,axisArgs=list(col.ticks='red'),lwd=2)
 slantAxis<-function(side,at,labels=at,srt=ifelse(side %in% c(1,4),-45,45),location=1.2,adj=ifelse(side==2,1,0),axisArgs=list(),...){
-  
   do.call(graphics::axis,c(list(side,at,label=FALSE),axisArgs))
   if(side %in% c(1,3)){
-    graphics::text(at, convertLineToUser(location,side), srt = srt, adj = adj, labels = labels, xpd = TRUE,...)
+    graphics::text(at, convertLineToUser(location,side), srt = srt, adj = adj, labels = labels, xpd = NA,...)
   }else{
-    graphics::text(convertLineToUser(location,side),at, srt = srt, adj = adj, labels = labels, xpd = TRUE,...)
+    graphics::text(convertLineToUser(location,side),at, srt = srt, adj = adj, labels = labels, xpd = NA,...)
   }
   return(invisible(NULL))
 }
