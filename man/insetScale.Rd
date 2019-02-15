@@ -5,7 +5,7 @@
 \title{Add an inset color scale to a plot}
 \usage{
 insetScale(breaks, col, insetPos = c(0.025, 0.015, 0.04, 0.25), main = "",
-  offset = 0.001, at = NULL, labels = NULL)
+  offset = 0.001, at = NULL, labels = NULL, cex = 1)
 }
 \arguments{
 \item{breaks}{a set of finite numeric breakpoints for the colours: must have one more breakpoint than colour and be in increasing order.}
@@ -21,6 +21,8 @@ insetScale(breaks, col, insetPos = c(0.025, 0.015, 0.04, 0.25), main = "",
 \item{at}{positions for labels on the axis}
 
 \item{labels}{labels for the axis}
+
+\item{cex}{character size for axis and labels}
 }
 \description{
 Adds an inset color scale to a plot without disrupting future plotting. Especially useful with \code{heatmap} or \code{image} plots.
