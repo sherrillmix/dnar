@@ -5,7 +5,7 @@
 \title{Add multiple text labels to the left axis of a plot}
 \usage{
 multiYAxis(pos, labs, spacer = 0.3, start = 1, cex = 1.1,
-  axisArgs = list(), ...)
+  axisArgs = list(), align = c("l", "c"), ...)
 }
 \arguments{
 \item{pos}{position of axis labels in user coordinates}
@@ -20,6 +20,8 @@ multiYAxis(pos, labs, spacer = 0.3, start = 1, cex = 1.1,
 
 \item{axisArgs}{a list of additional arguments for axis}
 
+\item{align}{either 'c' for centered text or 'l' for left justified text}
+
 \item{...}{additional arguments to text}
 }
 \description{
@@ -28,7 +30,10 @@ Adds columns of labels to the left axis of a plot e.g. for displaying multiple p
 \examples{
 par(mar=c(4,10,1,1))
 plot(1:10,1:10,ylab='',yaxt='n')
-multiYAxis(1:10,data.frame('a'=1:10,'b'=91:100,'c'=1234091:1234100))
+multiYAxis(1:10,data.frame('a'=1:10,'b'=91:100,'c'=c('Longword','Word',1:8),stringsAsFactors=FALSE))
+plot(1:10,1:10,ylab='',yaxt='n')
+multiYAxis(1:10,data.frame('a'=1:10,'b'=91:100,'c'=c('Longword','Word',1:8),
+  stringsAsFactors=FALSE),align='c')
 }
 \seealso{
 \code{\link[graphics]{image}}, \code{\link[graphics]{text}}

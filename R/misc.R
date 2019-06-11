@@ -696,6 +696,7 @@ insetScale<-function(breaks,col,insetPos=c(.025,.015,.04,.25),main='',offset=1e-
 #' @param start where to start the axis labels i.e. the right side of the widest teXt in righmost column. Specified in lines
 #' @param cex character size for labels
 #' @param axisArgs a list of additional arguments for axis
+#' @param align either 'c' for centered text or 'l' for left justified text
 #' @param ... additional arguments to text
 #' @export
 #' @seealso \code{\link[graphics]{image}}, \code{\link[graphics]{text}}
@@ -703,13 +704,17 @@ insetScale<-function(breaks,col,insetPos=c(.025,.015,.04,.25),main='',offset=1e-
 #' @examples
 #' par(mar=c(4,10,1,1))
 #' plot(1:10,1:10,ylab='',yaxt='n')
-#' multiYAxis(1:10,data.frame('a'=1:10,'b'=91:100,'c'=1234091:1234100))
-multiYAxis<-function(pos,labs,spacer=.3,start=1,cex=1.1,axisArgs=list(),...){
+#' multiYAxis(1:10,data.frame('a'=1:10,'b'=91:100,'c'=c('Longword','Word',1:8),stringsAsFactors=FALSE))
+#' plot(1:10,1:10,ylab='',yaxt='n')
+#' multiYAxis(1:10,data.frame('a'=1:10,'b'=91:100,'c'=c('Longword','Word',1:8),
+#'   stringsAsFactors=FALSE),align='c')
+multiYAxis<-function(pos,labs,spacer=.3,start=1,cex=1.1,axisArgs=list(),align=c('l','c'),...){
+  align<-match.arg(align)
   start<-convertLineToUser(start,2)
   spacer<-convertLineToUser(1,2)-convertLineToUser(1+spacer,2)
   widths<-apply(labs,2,function(xx)max(graphics::strwidth(xx,cex=cex)))
-  centers<-c(rev(cumsum(rev(widths)+spacer))[-1],0)+widths*.5
-  graphics::text(rep(start-centers,each=nrow(labs)),rep(pos,ncol(labs)),unlist(labs),xpd=NA,cex=cex,...)
+  centers<-c(rev(cumsum(rev(widths)+spacer))[-1],0)+widths*ifelse(align=='c',.5,0)
+  graphics::text(rep(start-centers,each=nrow(labs)),rep(pos,ncol(labs)),unlist(labs),xpd=NA,cex=cex,adj=ifelse(align=='c',.5,1),...)
   do.call(graphics::axis,c(list(2,pos,label=FALSE),axisArgs))
   invisible(NULL)
 }
