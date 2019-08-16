@@ -22,6 +22,6 @@ d<-3:12
 longNameDataFrame<-data.frame('a'=1:10,'b'=2:11)
 with(longNameDataFrame,a+b+d)
 withAs(xx=longNameDataFrame,xx$a+xx$b+d)
-anotherDf<-data.frame('c'=2:12)
-withAs(xx=longNameDataFrame,zz=anotherDf,xx$a+xx$b+zz$c)
+anotherDf<-data.frame('c'=3:12)
+withAs(xx=longNameDataFrame,zz=anotherDf$c*10,xx$a+xx$b+zz)
 }
