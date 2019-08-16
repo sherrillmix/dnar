@@ -4,8 +4,8 @@
 \alias{arrow}
 \title{Find coords for plotting horizontal arrows}
 \usage{
-arrow(tail, head, y, arrowLength = diff(graphics::par("usr")[1:2]) * 0.05,
-  shaft = 0.2, point = 0.4, concat = TRUE)
+arrow(tail, head, y, arrowLength = diff(graphics::par("usr")[1:2]) *
+  0.05, shaft = 0.2, point = 0.4, concat = TRUE)
 }
 \arguments{
 \item{tail}{x coordinate for tail of the arrow}

@@ -4,8 +4,9 @@
 \alias{runBlatNoServer}
 \title{Run blat from blat executable instead of gfserver/client}
 \usage{
-runBlatNoServer(reads = NULL, refs, blatArgs = "", outFile = "out.blat",
-  blat = "blat", tmpDir = tempdir(), readFile = NULL)
+runBlatNoServer(reads = NULL, refs, blatArgs = "",
+  outFile = "out.blat", blat = "blat", tmpDir = tempdir(),
+  readFile = NULL)
 }
 \arguments{
 \item{reads}{named vector of sequences}

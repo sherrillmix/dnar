@@ -4,8 +4,9 @@
 \alias{readLargeBlat}
 \title{Read a large blat file piece by piece}
 \usage{
-readLargeBlat(fileName, nHeader = 5, nrows = 1e+06, isGz = grepl(".gz$",
-  fileName), filterFunc = function(x) rep(TRUE, nrow(x)), ...)
+readLargeBlat(fileName, nHeader = 5, nrows = 1e+06,
+  isGz = grepl(".gz$", fileName), filterFunc = function(x) rep(TRUE,
+  nrow(x)), ...)
 }
 \arguments{
 \item{fileName}{name of file}

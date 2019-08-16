@@ -5,7 +5,8 @@
 \title{A function to break an mclapply into parts, save to disk and run independently}
 \usage{
 cleanMclapply(x, applyFunc, ..., mc.cores = parallel::detectCores(),
-  extraCode = "", nSplits = mc.cores, VOCAL = TRUE, envir = .GlobalEnv)
+  extraCode = "", nSplits = mc.cores, VOCAL = TRUE,
+  envir = .GlobalEnv)
 }
 \arguments{
 \item{x}{vector/list to apply over}

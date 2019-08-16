@@ -4,8 +4,8 @@
 \alias{multiRunBlatNoServer}
 \title{Run blat from parallel blat executables}
 \usage{
-multiRunBlatNoServer(reads, refs, outFile, nCore = 4, tmpDir = tempdir(),
-  isGz = grepl(".gz$", outFile), ...)
+multiRunBlatNoServer(reads, refs, outFile, nCore = 4,
+  tmpDir = tempdir(), isGz = grepl(".gz$", outFile), ...)
 }
 \arguments{
 \item{reads}{named vector of sequences}

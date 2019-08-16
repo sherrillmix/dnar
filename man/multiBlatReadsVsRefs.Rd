@@ -4,8 +4,8 @@
 \alias{multiBlatReadsVsRefs}
 \title{Run blatReadsVsRefs in parallel}
 \usage{
-multiBlatReadsVsRefs(reads, refs, outFile, nCore = 4, tmpDir = tempdir(),
-  isGz = grepl(".gz$", outFile), ...)
+multiBlatReadsVsRefs(reads, refs, outFile, nCore = 4,
+  tmpDir = tempdir(), isGz = grepl(".gz$", outFile), ...)
 }
 \arguments{
 \item{reads}{vector of query reads with names}

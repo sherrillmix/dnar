@@ -4,8 +4,9 @@
 \alias{slantAxis}
 \title{Label axis with slanted labels}
 \usage{
-slantAxis(side, at, labels = at, srt = ifelse(side \%in\% c(1, 4), -45, 45),
-  location = 1.2, adj = ifelse(side == 2, 1, 0), axisArgs = list(), ...)
+slantAxis(side, at, labels = at, srt = ifelse(side \%in\% c(1, 4), -45,
+  45), location = 1.2, adj = ifelse(side == 2, 1, 0),
+  axisArgs = list(), ...)
 }
 \arguments{
 \item{side}{an integer specifying which side to draw axis on. 1=bottom, 2=left, 3=top and 4=right.}

@@ -4,8 +4,8 @@
 \alias{cacheOperation}
 \title{Cache an operation to disk or load if cache file present}
 \usage{
-cacheOperation(cacheFile, operation, ..., OVERWRITE = FALSE, VOCAL = TRUE,
-  EXCLUDE = NULL)
+cacheOperation(cacheFile, operation, ..., OVERWRITE = FALSE,
+  VOCAL = TRUE, EXCLUDE = NULL)
 }
 \arguments{
 \item{cacheFile}{File location to save data to}
