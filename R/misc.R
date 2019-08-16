@@ -286,7 +286,7 @@ cleanMclapply<-function(x,applyFunc,...,mc.cores=parallel::detectCores(),extraCo
   }
   if(VOCAL)message("Running")
   if(VOCAL)message("Logs: ",paste(logFiles,collapse=', '))
-  exitCode<-parallel::mclapply(mapply(c,scriptFiles,logFiles,SIMPLIFY=FALSE),function(x){out<-system(sprintf("R CMD BATCH --no-save --no-restore %s %s",x[1],x[2]));if(VOCAL)cat('.');return(out)},mc.cores=mc.cores)
+  exitCode<-parallel::mclapply(mapply(c,scriptFiles,logFiles,SIMPLIFY=FALSE),function(x){out<-system(sprintf("${R_HOME}/bin/R CMD BATCH --no-save --no-restore %s %s",x[1],x[2]));if(VOCAL)cat('.');return(out)},mc.cores=mc.cores)
   if(VOCAL)cat('\n')
   if(any(exitCode!=0)){
     if(VOCAL)message(paste(utils::tail(readLines(logFiles[exitCode!=0][1]),30),collapse='\n'))
