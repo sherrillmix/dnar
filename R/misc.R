@@ -405,6 +405,7 @@ convertUserToLine<-function(usr,axis=1){
 #' @param location an integer specifying the line to start the text
 #' @param adj one or two values in [0, 1] which specify the x (and optionally y) adjustment of the labels.  On most devices values outside that interval will also work.
 #' @param axisArgs a list of additional arguments for axis
+#' @param textOffsets a vector of the same length at giving offsets in user coordintes for the labels
 #' @param ... additional arguments to text
 #' @return NULL
 #' @export
@@ -416,12 +417,12 @@ convertUserToLine<-function(usr,axis=1){
 #' slantAxis(2,seq(2,8,2),labels)
 #' slantAxis(3,seq(2,8,2),labels)
 #' slantAxis(4,seq(2,8,2),labels,srt=-30,cex=.8,axisArgs=list(col.ticks='red'),lwd=2)
-slantAxis<-function(side,at,labels=at,srt=ifelse(side %in% c(1,4),-45,45),location=1.2,adj=ifelse(side==2,1,0),axisArgs=list(),...){
+slantAxis<-function(side,at,labels=at,srt=ifelse(side %in% c(1,4),-45,45),location=1.2,adj=ifelse(side==2,1,0),axisArgs=list(),textOffsets=rep(0,length(at)),...){
   do.call(graphics::axis,c(list(side,at,label=FALSE),axisArgs))
   if(side %in% c(1,3)){
-    graphics::text(at, convertLineToUser(location,side), srt = srt, adj = adj, labels = labels, xpd = NA,...)
+    graphics::text(at+textOffsets, convertLineToUser(location,side), srt = srt, adj = adj, labels = labels, xpd = NA,...)
   }else{
-    graphics::text(convertLineToUser(location,side),at, srt = srt, adj = adj, labels = labels, xpd = NA,...)
+    graphics::text(convertLineToUser(location,side),at+textOffsets, srt = srt, adj = adj, labels = labels, xpd = NA,...)
   }
   return(invisible(NULL))
 }
