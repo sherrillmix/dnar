@@ -684,7 +684,7 @@ insetScale<-function(breaks,col,insetPos=c(.025,.015,.04,.25),main='',offset=1e-
   if(is.null(labels))labels<-at
   convertPos<-(at-(min(breaks)))/((max(breaks))-(min(breaks)))*(insetPos[4]-insetPos[2])+insetPos[2]
   graphics::segments(convertPos,insetPos[1],convertPos,insetPos[1]-diff(insetPos[c(1,3)])*.1,xpd=NA)
-  graphics::text(convertPos+labXOffset+diff(insetPos[c(2,4)]),insetPos[1]-diff(insetPos[c(1,3)])*.175+labYOffset*diff(insetPos[c(1,3)]),labels,xpd=NA,adj=c(.5,1),cex=.85*cex)
+  graphics::text(convertPos+labXOffset*diff(insetPos[c(2,4)]),insetPos[1]-diff(insetPos[c(1,3)])*.175+labYOffset*diff(insetPos[c(1,3)]),labels,xpd=NA,adj=c(.5,1),cex=.85*cex)
   graphics::text(mean(insetPos[c(2,4)]),insetPos[3]+diff(insetPos[c(1,3)])*.45,main,xpd=NA,adj=c(.5,0),cex=cex)
   invisible(NULL)
 }
