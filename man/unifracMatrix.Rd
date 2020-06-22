@@ -4,8 +4,14 @@
 \alias{unifracMatrix}
 \title{Calculate the shared branch length from a matrix of taxonomic labels}
 \usage{
-unifracMatrix(xx, yy = NULL, weighted = TRUE, checkUpstream = TRUE,
-  vocal = FALSE, mc.cores = 1)
+unifracMatrix(
+  xx,
+  yy = NULL,
+  weighted = TRUE,
+  checkUpstream = TRUE,
+  vocal = FALSE,
+  mc.cores = 1
+)
 }
 \arguments{
 \item{xx}{a matrix with a row for each read and a column for each taxonomic assignment or if yy is NULL then a list of matrices}

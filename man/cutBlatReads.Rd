@@ -4,8 +4,7 @@
 \alias{cutBlatReads}
 \title{Take the output from blat and make continous reads out of it}
 \usage{
-cutBlatReads(seqs, starts, fillStarts = NULL, fillEnds = NULL,
-  gaps = NULL)
+cutBlatReads(seqs, starts, fillStarts = NULL, fillEnds = NULL, gaps = NULL)
 }
 \arguments{
 \item{seqs}{comma separated target sequences from blat}

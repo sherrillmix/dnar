@@ -4,8 +4,12 @@
 \alias{findIntrons}
 \title{Convert set of starts and ends of exons to introns}
 \usage{
-findIntrons(starts, ends, names = 1:length(startList),
-  additionalColumns = NULL)
+findIntrons(
+  starts,
+  ends,
+  names = 1:length(startList),
+  additionalColumns = NULL
+)
 }
 \arguments{
 \item{starts}{starts for exons given as a comma separated string for each "gene" or list of numeric vectors}

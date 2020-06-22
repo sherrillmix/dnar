@@ -4,8 +4,12 @@
 \alias{pullRegion}
 \title{Pull counts from a bam file for target region}
 \usage{
-pullRegion(reg, files, bam2depthBinary = "./bam2depth",
-  fillMissingZeros = TRUE)
+pullRegion(
+  reg,
+  files,
+  bam2depthBinary = "./bam2depth",
+  fillMissingZeros = TRUE
+)
 }
 \arguments{
 \item{reg}{region in the format "chrX:123545-123324"}

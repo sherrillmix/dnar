@@ -4,8 +4,16 @@
 \alias{multiYAxis}
 \title{Add multiple text labels to the left axis of a plot}
 \usage{
-multiYAxis(pos, labs, spacer = 0.3, start = 1, cex = 1.1,
-  axisArgs = list(), align = c("l", "c"), ...)
+multiYAxis(
+  pos,
+  labs,
+  spacer = 0.3,
+  start = 1,
+  cex = 1.1,
+  axisArgs = list(),
+  align = c("l", "c"),
+  ...
+)
 }
 \arguments{
 \item{pos}{position of axis labels in user coordinates}

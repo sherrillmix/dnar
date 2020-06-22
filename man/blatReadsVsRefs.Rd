@@ -4,8 +4,14 @@
 \alias{blatReadsVsRefs}
 \title{Make a 2bit file from one set of reads and blat another set against it}
 \usage{
-blatReadsVsRefs(reads, refs, outFile = NULL, faToTwoBit = "faToTwoBit",
-  tmpDir = tempfile("dir"), ...)
+blatReadsVsRefs(
+  reads,
+  refs,
+  outFile = NULL,
+  faToTwoBit = "faToTwoBit",
+  tmpDir = tempfile("dir"),
+  ...
+)
 }
 \arguments{
 \item{reads}{vector of query reads with names}

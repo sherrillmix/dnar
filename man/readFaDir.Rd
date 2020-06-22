@@ -4,8 +4,13 @@
 \alias{readFaDir}
 \title{Read in a bunch of fasta files in a target directory}
 \usage{
-readFaDir(dir = ".", suffix = "\\\\.(fn?a|fasta)$",
-  recursive = FALSE, vocal = FALSE, ...)
+readFaDir(
+  dir = ".",
+  suffix = "\\\\.(fn?a|fasta)$",
+  recursive = FALSE,
+  vocal = FALSE,
+  ...
+)
 }
 \arguments{
 \item{dir}{target directory}

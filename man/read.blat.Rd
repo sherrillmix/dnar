@@ -4,8 +4,15 @@
 \alias{read.blat}
 \title{Read a blat file}
 \usage{
-read.blat(fileName, skips = 5, calcScore = TRUE, fixStarts = TRUE,
-  nCols = 21, filterFunction = NULL, ...)
+read.blat(
+  fileName,
+  skips = 5,
+  calcScore = TRUE,
+  fixStarts = TRUE,
+  nCols = 21,
+  filterFunction = NULL,
+  ...
+)
 }
 \arguments{
 \item{fileName}{name of file}

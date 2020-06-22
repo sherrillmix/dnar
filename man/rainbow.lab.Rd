@@ -4,8 +4,14 @@
 \alias{rainbow.lab}
 \title{Rainbow based on circle of lab color space}
 \usage{
-rainbow.lab(n, start = 1.5, end = -3, alpha = 1, lightScale = 0,
-  lightMultiple = 0.7)
+rainbow.lab(
+  n,
+  start = 1.5,
+  end = -3,
+  alpha = 1,
+  lightScale = 0,
+  lightMultiple = 0.7
+)
 }
 \arguments{
 \item{n}{number of colors desired}

@@ -4,12 +4,14 @@
 \name{samFlags}
 \alias{samFlags}
 \title{SAM/BAM flags}
-\format{A data frame with 64 rows one for each codon and columns:
+\format{
+A data frame with 64 rows one for each codon and columns:
 \describe{
   \item{short}{short name for SAM flags}
   \item{desc}{longer description of SAM flags}
   \item{bit}{bit corresponding to the SAM flag}
-}}
+}
+}
 \source{
 system.file("data-raw", "makeData.R", package = "dnar")
 }

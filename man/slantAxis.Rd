@@ -4,9 +4,17 @@
 \alias{slantAxis}
 \title{Label axis with slanted labels}
 \usage{
-slantAxis(side, at, labels = at, srt = ifelse(side \%in\% c(1, 4), -45,
-  45), location = 1.2, adj = ifelse(side == 2, 1, 0),
-  axisArgs = list(), textOffsets = rep(0, length(at)), ...)
+slantAxis(
+  side,
+  at,
+  labels = at,
+  srt = ifelse(side \%in\% c(1, 4), -45, 45),
+  location = 1.2,
+  adj = ifelse(side == 2, 1, 0),
+  axisArgs = list(),
+  textOffsets = rep(0, length(at)),
+  ...
+)
 }
 \arguments{
 \item{side}{an integer specifying which side to draw axis on. 1=bottom, 2=left, 3=top and 4=right.}
@@ -33,7 +41,7 @@ Label axis with slanted labels
 \examples{
 par(mar=c(8,8,8,8))
 plot(1:10,xlab='',ylab='',xaxt='n',yaxt='n')
-labels<-c('A label','Another label','A longer longer label','A really really\\nlong label')
+labels<-c('A label','Another label','A longer longer label','A really really\nlong label')
 slantAxis(1,seq(2,8,2),labels)
 slantAxis(2,seq(2,8,2),labels)
 slantAxis(3,seq(2,8,2),labels)

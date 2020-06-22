@@ -4,9 +4,14 @@
 \alias{generateFasta}
 \title{Generate fake name and sequence data}
 \usage{
-generateFasta(nSeq = 10000, nChar = 100:1000, bases = c("A", "C",
-  "T", "G", "-", "N"), generateQuals = FALSE, qualRange = 1:40,
-  baseQual = 33)
+generateFasta(
+  nSeq = 10000,
+  nChar = 100:1000,
+  bases = c("A", "C", "T", "G", "-", "N"),
+  generateQuals = FALSE,
+  qualRange = 1:40,
+  baseQual = 33
+)
 }
 \arguments{
 \item{nSeq}{number of sequences to generate}

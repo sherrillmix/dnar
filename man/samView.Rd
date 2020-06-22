@@ -4,8 +4,14 @@
 \alias{samView}
 \title{Call samtools view on a sam/bam file}
 \usage{
-samView(fileName, samArgs = "", ..., samtoolsBinary = "samtools",
-  vocal = FALSE, samCommand = "view")
+samView(
+  fileName,
+  samArgs = "",
+  ...,
+  samtoolsBinary = "samtools",
+  vocal = FALSE,
+  samCommand = "view"
+)
 }
 \arguments{
 \item{fileName}{vector of sam/bam files to read}

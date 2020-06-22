@@ -4,9 +4,18 @@
 \alias{blat2exons}
 \title{Take coordinates of blat matches and split into a single line for each exon}
 \usage{
-blat2exons(chroms, names, starts, ends, strands = rep("+",
-  length(names)), lengths = TRUE, extraCols = NULL,
-  extraSplits = NULL, prefix = "ex", adjustStart = 0)
+blat2exons(
+  chroms,
+  names,
+  starts,
+  ends,
+  strands = rep("+", length(names)),
+  lengths = TRUE,
+  extraCols = NULL,
+  extraSplits = NULL,
+  prefix = "ex",
+  adjustStart = 0
+)
 }
 \arguments{
 \item{chroms}{Chromosome or other identifier}

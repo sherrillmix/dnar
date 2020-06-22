@@ -4,8 +4,11 @@
 \alias{fillCover}
 \title{Fill zeros in cover data}
 \usage{
-fillCover(cover, posCol = "pos",
-  countCols = colnames(cover)[grep("counts", colnames(cover))])
+fillCover(
+  cover,
+  posCol = "pos",
+  countCols = colnames(cover)[grep("counts", colnames(cover))]
+)
 }
 \arguments{
 \item{cover}{output from pullRegion with missing zero positions}

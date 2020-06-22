@@ -4,7 +4,9 @@
 \name{reverseAmbiguous}
 \alias{reverseAmbiguous}
 \title{Reverse lookup for ambiguous base codes}
-\format{A vector with names giving sortedconcatenated strings of bases for ambiguous base codes with items giving the corresponding ambiguous base code}
+\format{
+A vector with names giving sortedconcatenated strings of bases for ambiguous base codes with items giving the corresponding ambiguous base code
+}
 \source{
 system.file("data-raw", "makeData.R", package = "dnar")
 }

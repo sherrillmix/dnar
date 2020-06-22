@@ -4,8 +4,10 @@
 \alias{escapeRegexBracketChars}
 \title{Convenience function to escape characters for insertion into regex brackets}
 \usage{
-escapeRegexBracketChars(regexChars, escapeChars = c("^", "-", "[", "]",
-  "\\\\"))
+escapeRegexBracketChars(
+  regexChars,
+  escapeChars = c("^", "-", "[", "]", "\\\\")
+)
 }
 \arguments{
 \item{regexChars}{a vector of single characters to escape if in escapeChars}

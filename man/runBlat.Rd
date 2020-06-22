@@ -4,8 +4,13 @@
 \alias{runBlat}
 \title{Start a blat server, run blat on file and kill blat server}
 \usage{
-runBlat(faFile, gfClientOptions = "", outFile = gsub("\\\\.fn?a$",
-  ".blat", faFile), gfClient = "gfClient", ...)
+runBlat(
+  faFile,
+  gfClientOptions = "",
+  outFile = gsub("\\\\.fn?a$", ".blat", faFile),
+  gfClient = "gfClient",
+  ...
+)
 }
 \arguments{
 \item{faFile}{path to fasta file for alignment}

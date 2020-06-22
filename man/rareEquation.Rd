@@ -4,8 +4,11 @@
 \alias{rareEquation}
 \title{Calculate rarefaction using formula}
 \usage{
-rareEquation(counts, samples = unique(round(sum(counts) * seq(0.1, 1,
-  0.1))), minObs = 1)
+rareEquation(
+  counts,
+  samples = unique(round(sum(counts) * seq(0.1, 1, 0.1))),
+  minObs = 1
+)
 }
 \arguments{
 \item{counts}{Counts of species}

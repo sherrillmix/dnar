@@ -4,8 +4,15 @@
 \alias{startBlat}
 \title{Start a blat server}
 \usage{
-startBlat(nibDir, options = "", gfServer = "gfServer", bit2 = NULL,
-  startPort = 37900, nibSuffix = ".nib", wait = 120)
+startBlat(
+  nibDir,
+  options = "",
+  gfServer = "gfServer",
+  bit2 = NULL,
+  startPort = 37900,
+  nibSuffix = ".nib",
+  wait = 120
+)
 }
 \arguments{
 \item{nibDir}{directory containing nib files to align against}

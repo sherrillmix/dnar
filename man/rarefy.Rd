@@ -4,9 +4,16 @@
 \alias{rarefy}
 \title{Calculate rarefaction using boostrapping}
 \usage{
-rarefy(counts, samples = unique(round(sum(counts) * seq(0.1, 1, 0.1))),
-  reps = 1000, chaoAdjust = FALSE, replace = FALSE, minObs = 1,
-  statFunc = stats::quantile, ...)
+rarefy(
+  counts,
+  samples = unique(round(sum(counts) * seq(0.1, 1, 0.1))),
+  reps = 1000,
+  chaoAdjust = FALSE,
+  replace = FALSE,
+  minObs = 1,
+  statFunc = stats::quantile,
+  ...
+)
 }
 \arguments{
 \item{counts}{Counts of species}

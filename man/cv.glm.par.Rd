@@ -4,8 +4,14 @@
 \alias{cv.glm.par}
 \title{Check predictions of glm by cross validation}
 \usage{
-cv.glm.par(model, data = eval(modelCall$data), K = nrow(data),
-  nCores = 1, subsets = NULL, vocal = FALSE)
+cv.glm.par(
+  model,
+  data = eval(modelCall$data),
+  K = nrow(data),
+  nCores = 1,
+  subsets = NULL,
+  vocal = FALSE
+)
 }
 \arguments{
 \item{model}{a glm to cross validate}

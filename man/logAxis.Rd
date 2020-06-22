@@ -4,9 +4,17 @@
 \alias{logAxis}
 \title{Add a pretty log axis to a plot}
 \usage{
-logAxis(side = 2, exponent = TRUE, addExtra = !exponent,
-  minorTcl = -0.2, axisMin = -Inf, axisMax = Inf, offset = 0,
-  col.ticks = "black", ...)
+logAxis(
+  side = 2,
+  exponent = TRUE,
+  addExtra = !exponent,
+  minorTcl = -0.2,
+  axisMin = -Inf,
+  axisMax = Inf,
+  offset = 0,
+  col.ticks = "black",
+  ...
+)
 }
 \arguments{
 \item{side}{an integer specifying which side of the plot the axis is to be drawn on.  The axis is placed as follows: 1=below, 2=left, 3=above and 4=right.}

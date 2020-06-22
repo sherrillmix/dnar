@@ -4,7 +4,9 @@
 \name{ambiguousBaseCodes}
 \alias{ambiguousBaseCodes}
 \title{Ambiguous base codes}
-\format{A vector with names corresponding to ambiguous base codes and items giving concatenated strings of corresponding bases}
+\format{
+A vector with names corresponding to ambiguous base codes and items giving concatenated strings of corresponding bases
+}
 \source{
 system.file("data-raw", "makeData.R", package = "dnar")
 }

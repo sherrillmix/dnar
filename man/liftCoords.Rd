@@ -4,8 +4,16 @@
 \alias{liftCoords}
 \title{Run liftover to convert coordinates from one genome version to another}
 \usage{
-liftCoords(chr, start, end, strand, chainFile, liftoverBin = "liftOver",
-  vocal = FALSE, removeNAs = TRUE)
+liftCoords(
+  chr,
+  start,
+  end,
+  strand,
+  chainFile,
+  liftoverBin = "liftOver",
+  vocal = FALSE,
+  removeNAs = TRUE
+)
 }
 \arguments{
 \item{chr}{vector of chromosomes}

@@ -4,13 +4,15 @@
 \name{aminoAcids}
 \alias{aminoAcids}
 \title{Amino acid for RNA codons}
-\format{A data frame with 64 rows, one for each RNA codon, with 4 columns:
+\format{
+A data frame with 64 rows, one for each RNA codon, with 4 columns:
 \describe{
   \item{codon}{3 RNA bases coding for an amino acid (DNA Ts will be coded as RNA Us)}
   \item{abbr}{3 letter abbreviation for amino acid (stop codons are coded as Xxx)}
   \item{code}{single letter code for amino acid. Stop codons are coded as X}
   \item{name}{name of the amino acids. Stop codons given their color in parenthesis}
-}}
+}
+}
 \source{
 system.file("data-raw", "makeData.R", package = "dnar")
 }
