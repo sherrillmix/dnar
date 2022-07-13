@@ -14,7 +14,7 @@ pwmToSeq(pwm, cutoff = 0.2, singleCutoff = cutoff)
 \item{singleCutoff}{only label base with a single bases if the proportion is greater than this cutoff}
 }
 \value{
-a single character string containing the conensus sequence using ambiguous base codes
+a single character string containing the consensus sequence using ambiguous base codes
 }
 \description{
 Calculate sequence for PWM
