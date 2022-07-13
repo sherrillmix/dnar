@@ -2,6 +2,7 @@
 
 export(aa2codons)
 export(aa2dna)
+export(addSnpsToGenome)
 export(adjustWindow)
 export(allSameLength)
 export(ambiguous2regex)

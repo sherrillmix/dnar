@@ -861,7 +861,7 @@ scoreFromPWM<-function(seqs,pwm){
 #' @param cutoff consider any base with proportion greater than this cutoff present
 #' @param singleCutoff only label base with a single bases if the proportion is greater than this cutoff
 #' @export
-#' @return a single character string containing the conensus sequence using ambiguous base codes
+#' @return a single character string containing the consensus sequence using ambiguous base codes
 #' @seealso \code{\link{pwm}}, \code{\link{ambiguous2regex}}
 #' @examples
 #' seqs<-c('ACA','ACA','ACA','ACT','ACT','ACC')
@@ -878,3 +878,51 @@ pwmToSeq<-function(pwm,cutoff=.2,singleCutoff=cutoff){
   return(out)
 }
 
+#' Add SNPs and indels to a reference sequence
+#'
+#' @param ref a string giving a reference sequence to be edited
+#' @param snps a character vector giving SNPs in the format reference nucleotide, 1-based position and mutant nucleotide with no spaces .e.g. A3T would mean that the reference CCACC changed to CCTCC
+#' @param insertions a character vector giving insertions in the format 1-based position of the nucleotide prior to the insertion and the inserted nucleotides with no space e.g. 3TT would mean that the reference CCACC changed to CCATTCC
+#' @param deletions a character vector giving insertions in the format 1-based position of the first nucleotide of the deletions, dash and position of the last nucleotide of the insertion with no space e.g. 2-4 would mean that the reference CCACC changed to C---C
+#' @export
+#' @return a single character string containing the reference modified to contain the specified SNPs and indels
+#' @seealso \code{\link{degap}}
+#' @examples
+#' addSnpsToGenome('ABCDEFGHIJKL',c('B2Z','D4Y'))
+#' addSnpsToGenome('ABCDEFGHIJKL',deletions=c('1-4','6'))
+#' addSnpsToGenome('ABCDEFGHIJKL',insertions=c('4XYZ','6VW'))
+addSnpsToGenome<-function(ref,snps=NULL,insertions=NULL,deletions=NULL){
+  out<-ref
+  if(!is.null(snps)){
+    pos<-as.numeric(substring(snps,2,nchar(snps)-1))
+    if(any(pos< 1))stop('SNP coordinate less than 1')
+    if(any(pos>nchar(ref)))stop('SNP coordinate longer than reference')
+    wt<-substring(snps,1,1)
+    mut<-substring(snps,nchar(snps))
+    refWt<-substring(ref,pos,pos)
+    if(any(refWt!=wt))stop('Mismatch in reference and wildtype SNP: ',paste(snps[refWt!=wt],collapse=','))
+    for(ii in 1:length(pos))substring(out,pos[ii],pos[ii])<-mut[ii]
+  }
+  if(!is.null(deletions)){
+    if(any(!grepl('^[0-9]+(-[0-9]+)?$',deletions)))stop('Malformed deletion ',paste(deletions[!grepl('^[0-9]+(-[0-9]+)?$',deletions)],collapse=', '))
+    pos1<-as.numeric(sub('-.*','',deletions))
+    pos2<-as.numeric(sub('.*-','',deletions))
+    if(any(c(pos1,pos2)< 1))stop('Deletion coordinate less than 1')
+    if(any(c(pos1,pos2)>nchar(ref)))stop('Deletion coordinate longer than reference')
+    for(ii in 1:length(pos1)){
+      substring(out,pos1[ii],pos2[ii])<-paste(rep('-',pos2[ii]-pos1[ii]+1),collapse='')
+    }
+  }
+  if(!is.null(insertions)){
+    if(any(!grepl('^[0-9]+',insertions)))stop('Malformed insertion ',paste(insertions[!grepl('^[0-9]+',insertions)],collapse=', '))
+    pos<-as.numeric(sub('[^0-9].*$','',insertions))
+    if(any(pos< 0))stop('Insertion coordinate less than 0')
+    if(any(pos>nchar(ref)))stop('Insertion coordinate longer than reference')
+    insert<-sub('^[0-9]+','',insertions)
+    pos<-pos+cumsum(c(0,nchar(insert)[-length(insert)]))
+    for(ii in 1:length(pos)){
+      out<-paste(substring(out,1,pos[ii]),insert[ii],substring(out,pos[ii]+1),sep='')
+    }
+  }
+  return(out)
+}
